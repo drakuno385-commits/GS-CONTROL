@@ -224,11 +224,16 @@ const App = () => {
 
   // --- FILTERING LOGIC --- //
   const parseDateBR = (dateStr) => {
-    if(!dateStr) return null;
-    const parts = dateStr.split(/[\/\-]/); 
-    if(parts.length === 3) {
-      if (parts[2].length === 4) return new Date(parts[2], parts[1]-1, parts[0]);
-      if (parts[0].length === 4) return new Date(parts[0], parts[1]-1, parts[2]);
+    if (!dateStr) return null;
+    try {
+      const str = dateStr.toString().trim().split(' ')[0]; // Remove time if exists
+      const parts = str.split(/[\/\-]/); 
+      if (parts.length === 3) {
+        if (parts[2].length === 4) return new Date(parts[2], parseInt(parts[1])-1, parts[0]);
+        if (parts[0].length === 4) return new Date(parts[0], parseInt(parts[1])-1, parts[2]);
+      }
+    } catch (e) {
+      console.warn("Date parse error", dateStr, e);
     }
     return null;
   };
@@ -249,6 +254,9 @@ const App = () => {
       if (rowDate) {
         if (filters.dataInicio && rowDate < new Date(filters.dataInicio + 'T00:00:00')) return false;
         if (filters.dataFim && rowDate > new Date(filters.dataFim + 'T23:59:59')) return false;
+      } else {
+        // Se a data existe mas não conseguiu parsear, exclui do filtro para não dar falso positivo
+        return false;
       }
     }
     return true;
@@ -464,8 +472,7 @@ const App = () => {
     const atestadoClienteData = {};
 
     rawAtestados.forEach(row => {
-      // Basic filtering by client
-      if (filters.cliente && row.nomecli && row.nomecli.toString().toUpperCase().trim() !== filters.cliente.toString().toUpperCase().trim()) return;
+      if (!checkFilters(row, 'iniocor', 'nomecli')) return;
 
       const pessoaNome = row.nomevigil ? row.nomevigil.toUpperCase().trim() : (row.codvigil ? row.codvigil.toString().trim() : "DESCONHECIDO");
       const clienteGrpAtest = row.nomecli ? row.nomecli.trim() : "Sem Cliente";
