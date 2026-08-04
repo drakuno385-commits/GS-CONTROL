@@ -34,7 +34,6 @@ const App = () => {
 
   useEffect(() => {
     localStorage.setItem('acoweb_menu', activeMenu);
-    setFilters({ dataInicio: '', dataFim: '', cliente: '', posto: '' });
   }, [activeMenu]);
 
   useEffect(() => {
@@ -75,7 +74,11 @@ const App = () => {
   const [rawAtestados, setRawAtestados] = useState([]);
 
   // Filters State
-  const [filters, setFilters] = useState({ dataInicio: '', dataFim: '', cliente: '', posto: '' });
+  const initF = { dataInicio: '', dataFim: '', cliente: '', posto: '' };
+  const [allFilters, setAllFilters] = useState({
+    rh: {...initF}, frota: {...initF}, disciplina: {...initF}, atestados: {...initF}, monitoramento: {...initF}, app_supervisor: {...initF}, usuarios: {...initF}, apresentacao: {...initF}
+  });
+  const filters = allFilters[activeMenu] || initF;
 
   // Calculated States for RH
   const [efetivoPorCliente, setEfetivoPorCliente] = useState([]);
@@ -1456,14 +1459,17 @@ const App = () => {
                   onChange={(e) => {
                     const val = e.target.value;
                     if (!val) {
-                      setFilters({ ...filters, dataInicio: '', dataFim: '' });
+                      setAllFilters({ ...allFilters, [activeMenu]: { ...filters, dataInicio: '', dataFim: '' } });
                     } else {
                       const [year, month] = val.split('-');
                       const lastDay = new Date(year, month, 0).getDate();
-                      setFilters({ 
-                        ...filters, 
-                        dataInicio: `${val}-01`, 
-                        dataFim: `${val}-${lastDay}` 
+                      setAllFilters({ 
+                        ...allFilters, 
+                        [activeMenu]: {
+                          ...filters,
+                          dataInicio: `${val}-01`, 
+                          dataFim: `${val}-${lastDay}` 
+                        }
                       });
                     }
                   }}
