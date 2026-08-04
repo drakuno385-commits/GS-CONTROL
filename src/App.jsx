@@ -4,7 +4,7 @@ import { supabase } from './supabaseClient';
 import { 
   LayoutDashboard, Users, Settings, Upload, UserCheck, UserX, Briefcase, 
   Activity, Truck, Fuel, Map, DollarSign, AlertTriangle, Scale, Loader2, Cloud, Filter, FileText, CheckCircle, Droplet, Shield, Menu,
-  Car, MapPin, Smartphone, LogOut, Download
+  Car, MapPin, Smartphone, LogOut, Download, Stethoscope, X
 } from 'lucide-react';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area, PieChart, Pie, Cell, ComposedChart, LabelList } from 'recharts';
 import Login from './components/Login';
@@ -82,6 +82,9 @@ const App = () => {
   const [folgasTrabalhadas, setFolgasTrabalhadas] = useState([]);
   const [reservaTecnica, setReservaTecnica] = useState([]);
   const [totalsRH, setTotalsRH] = useState({ efetivo: 0, faltas: 0, folgas: 0 });
+  const [atestadosRanking, setAtestadosRanking] = useState([]);
+  const [atestadosPorCliente, setAtestadosPorCliente] = useState([]);
+  const [selectedAtestadoPerson, setSelectedAtestadoPerson] = useState(null);
 
   // Calculated States for Frota
   const [frotaDesempenho, setFrotaDesempenho] = useState([]); 
@@ -378,6 +381,8 @@ const App = () => {
     const globalFaltas = new Set();
     const globalFolgas = new Set();
     const globalFolgasTrab = new Set();
+    const atestadoData = {};
+    const atestadoClienteData = {};
     
     rawPresencas.forEach(row => {
       if (!checkFilters(row, 'data', 'cliente')) return;
@@ -400,6 +405,21 @@ const App = () => {
         if (!faltasData[tipoFalta]) faltasData[tipoFalta] = new Set();
         faltasData[tipoFalta].add(uniqueEventId);
         globalFaltas.add(uniqueEventId);
+      }
+      
+      if (sithoje.includes("ATESTADO")) {
+        const clienteGrpAtest = row.cliente ? row.cliente.trim() : (row.posto ? row.posto.trim() : "Sem Cliente");
+        const pessoaNome = row.nome ? row.nome.toUpperCase().trim() : (row.re ? row.re.toString().trim() : "DESCONHECIDO");
+        
+        if (!atestadoData[pessoaNome]) atestadoData[pessoaNome] = { nome: pessoaNome, dias: [], cliente: clienteGrpAtest, total: 0 };
+        // avoid duplicate events for the same day
+        if (!atestadoData[pessoaNome].dias.some(d => d.data === row.data)) {
+          atestadoData[pessoaNome].dias.push({ data: row.data, posto: row.posto || clienteGrpAtest });
+          atestadoData[pessoaNome].total++;
+        }
+        
+        if (!atestadoClienteData[clienteGrpAtest]) atestadoClienteData[clienteGrpAtest] = new Set();
+        atestadoClienteData[clienteGrpAtest].add(uniqueEventId);
       }
       
       const clienteGrp = row.cliente ? row.cliente.trim() : (row.posto ? row.posto.trim() : "Sem Cliente");
@@ -442,6 +462,23 @@ const App = () => {
     if (faltasSorted.length > 5) {
       arrFaltas.push({ name: 'Outros', value: faltasSorted.slice(5).reduce((acc, curr) => acc + curr.value, 0) });
     }
+
+    const arrAtestados = Object.values(atestadoData)
+      .sort((a, b) => b.total - a.total)
+      .map(p => {
+        let cor = '#10b981'; // verde
+        if (p.total >= 5) cor = '#ef4444'; // vermelho
+        else if (p.total >= 3) cor = '#f59e0b'; // amarelo
+        return { ...p, cor };
+      });
+      
+    const arrAtestCliente = Object.keys(atestadoClienteData)
+      .map(k => ({ cliente: k, total: atestadoClienteData[k].size }))
+      .sort((a, b) => b.total - a.total)
+      .slice(0, 15);
+      
+    setAtestadosRanking(arrAtestados.slice(0, 50)); // Top 50 campeões
+    setAtestadosPorCliente(arrAtestCliente);
 
     setPresencaDiaria(arrPresenca);
     setTiposDeFalta(arrFaltas);
@@ -865,6 +902,119 @@ const App = () => {
     document.body.removeChild(link);
   };
 
+  const renderAtestados = () => (
+    <>
+      <div className="charts-grid" style={{ gridTemplateColumns: '1fr 1fr' }}>
+        <div className="card chart-card glass-panel" style={{ overflowY: 'auto', maxHeight: '600px' }}>
+          <div className="chart-header" style={{ marginBottom: '16px' }}>
+            <div className="chart-title" style={{ color: '#ef4444' }}>Campeões de Atestado (Ranking)</div>
+          </div>
+          <div className="reserva-table">
+            {atestadosRanking && atestadosRanking.length > 0 ? (
+              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                <thead>
+                  <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', color: '#94a3b8' }}>
+                    <th style={{ padding: '12px 8px', fontWeight: 500 }}>Nome do Colaborador</th>
+                    <th style={{ padding: '12px 8px', fontWeight: 500, textAlign: 'center' }}>Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {atestadosRanking.map((row, idx) => (
+                    <tr 
+                      key={idx} 
+                      onClick={() => setSelectedAtestadoPerson(row)}
+                      style={{ 
+                        borderBottom: '1px solid rgba(255,255,255,0.05)', 
+                        background: `rgba(${row.cor === '#ef4444' ? '239, 68, 68' : row.cor === '#f59e0b' ? '245, 158, 11' : '16, 185, 129'}, 0.1)`,
+                        cursor: 'pointer',
+                        transition: 'all 0.2s'
+                      }}
+                      onMouseOver={(e) => e.currentTarget.style.filter = 'brightness(1.2)'}
+                      onMouseOut={(e) => e.currentTarget.style.filter = 'brightness(1)'}
+                    >
+                      <td style={{ padding: '12px 8px' }}>
+                        <div>{row.nome}</div>
+                        <div style={{ fontSize: '11px', color: '#94a3b8' }}>{row.cliente}</div>
+                      </td>
+                      <td style={{ padding: '12px 8px', color: row.cor, fontWeight: 700, textAlign: 'center', fontSize: '18px' }}>
+                        {row.total}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <div style={{color: '#94a3b8', padding: '12px'}}>Nenhum atestado encontrado.</div>
+            )}
+          </div>
+        </div>
+
+        <div className="card chart-card glass-panel" style={{ maxHeight: '600px' }}>
+          <div className="chart-header"><div className="chart-title">Atestados por Cliente (Top 15)</div></div>
+          <div className="chart-wrapper">
+            {atestadosPorCliente.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={atestadosPorCliente} layout="vertical" margin={{ top: 5, right: 30, left: 100, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" horizontal={true} vertical={false}/>
+                  <XAxis type="number" stroke="#94a3b8" />
+                  <YAxis dataKey="cliente" type="category" stroke="#94a3b8" width={120} tick={{fontSize: 11}} />
+                  <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }} />
+                  <Bar dataKey="total" name="Total de Atestados" fill="#f43f5e" radius={[0, 4, 4, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (<div style={{color: '#94a3b8', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%'}}>Sem dados</div>)}
+          </div>
+        </div>
+      </div>
+
+      {selectedAtestadoPerson && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, 
+          background: 'rgba(0,0,0,0.8)', zIndex: 9999,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          backdropFilter: 'blur(4px)'
+        }}>
+          <div className="card glass-panel" style={{ width: '90%', maxWidth: '500px', maxHeight: '80vh', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '12px' }}>
+              <h2 style={{ fontSize: '18px', color: '#fff', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Stethoscope size={20} color={selectedAtestadoPerson.cor} />
+                Detalhes do Colaborador
+              </h2>
+              <button onClick={() => setSelectedAtestadoPerson(null)} style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer' }}>
+                <X size={24} />
+              </button>
+            </div>
+            
+            <div style={{ marginBottom: '16px' }}>
+              <div style={{ fontSize: '20px', fontWeight: 'bold', color: selectedAtestadoPerson.cor }}>{selectedAtestadoPerson.nome}</div>
+              <div style={{ color: '#94a3b8', fontSize: '14px', marginTop: '4px' }}>Cliente Principal: {selectedAtestadoPerson.cliente}</div>
+              <div style={{ color: '#e2e8f0', fontSize: '14px', marginTop: '4px' }}>Total de Dias Apresentados: <strong>{selectedAtestadoPerson.total}</strong></div>
+            </div>
+
+            <div style={{ overflowY: 'auto', flex: 1, border: '1px solid rgba(255,255,255,0.05)', borderRadius: '8px', background: 'rgba(0,0,0,0.2)' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                <thead style={{ position: 'sticky', top: 0, background: '#1e293b' }}>
+                  <tr style={{ color: '#94a3b8' }}>
+                    <th style={{ padding: '12px 16px', fontWeight: 500 }}>Data do Atestado</th>
+                    <th style={{ padding: '12px 16px', fontWeight: 500 }}>Posto / Cliente</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {selectedAtestadoPerson.dias.map((d, idx) => (
+                    <tr key={idx} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                      <td style={{ padding: '12px 16px', color: '#e2e8f0' }}>{d.data}</td>
+                      <td style={{ padding: '12px 16px', color: '#94a3b8', fontSize: '12px' }}>{d.posto}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+
   const renderDisciplina = () => (
     <>
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '16px' }}>
@@ -1075,6 +1225,10 @@ const App = () => {
                 <FileText size={20} />
                 <span>Disciplina</span>
               </a>
+              <a className={`nav-item ${activeMenu === 'atestados' ? 'active' : ''}`} onClick={() => setActiveMenu('atestados')}>
+                <Stethoscope size={20} />
+                <span>Campeões de Atestado</span>
+              </a>
               <a className={`nav-item ${activeMenu === 'monitoramento' ? 'active' : ''}`} onClick={() => setActiveMenu('monitoramento')}>
                 <MapPin size={20} />
                 <span>Monitoramento</span>
@@ -1135,6 +1289,7 @@ const App = () => {
         {activeMenu === 'rh' && renderRH()}
         {activeMenu === 'frota' && renderFrota()}
         {activeMenu === 'disciplina' && renderDisciplina()}
+        {activeMenu === 'atestados' && renderAtestados()}
         {activeMenu === 'monitoramento' && <Monitoramento currentUser={currentUser} />}
         {activeMenu === 'app_supervisor' && <SupervisorApp currentUser={currentUser} />}
         {activeMenu === 'usuarios' && <Usuarios currentUser={currentUser} />}
