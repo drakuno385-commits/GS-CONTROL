@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Camera, UploadCloud, MapPin, Building, CheckCircle, Loader2 } from 'lucide-react';
+import { Camera, UploadCloud, MapPin, Building, CheckCircle, Loader2, Info, X, Plus } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 
 const SupervisorApp = ({ currentUser }) => {
@@ -8,8 +8,10 @@ const SupervisorApp = ({ currentUser }) => {
   
   const [selectedCliente, setSelectedCliente] = useState(''); // nomecli
   const [selectedPostoId, setSelectedPostoId] = useState(''); // id
-  const [foto, setFoto] = useState(null);
-  const [preview, setPreview] = useState(null);
+  const [tipoVisita, setTipoVisita] = useState('Visita Normal');
+  
+  const [fotos, setFotos] = useState([]);
+  const [previews, setPreviews] = useState([]);
   
   const [loading, setLoading] = useState(false);
   const [fetchingData, setFetchingData] = useState(true);
@@ -46,18 +48,23 @@ const SupervisorApp = ({ currentUser }) => {
   const postosFiltrados = postos.filter(p => p.nomecli === selectedCliente).sort((a, b) => a.nomepos.localeCompare(b.nomepos));
 
   const handleFotoChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setFoto(file);
-      const objectUrl = URL.createObjectURL(file);
-      setPreview(objectUrl);
+    const files = Array.from(e.target.files);
+    if (files.length > 0) {
+      setFotos(prev => [...prev, ...files]);
+      const newPreviews = files.map(f => URL.createObjectURL(f));
+      setPreviews(prev => [...prev, ...newPreviews]);
     }
+  };
+
+  const removeFoto = (index) => {
+    setFotos(prev => prev.filter((_, i) => i !== index));
+    setPreviews(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!selectedPostoId || !foto) {
-      alert("Por favor, selecione um posto e tire a foto do livro de ocorrências.");
+    if (!selectedPostoId || fotos.length === 0) {
+      alert("Por favor, selecione um posto e adicione pelo menos uma foto.");
       return;
     }
 
@@ -66,21 +73,19 @@ const SupervisorApp = ({ currentUser }) => {
     try {
       const posto = postos.find(p => p.id === selectedPostoId);
       
-      const fileExt = foto.name.split('.').pop();
-      const fileName = `visita_${currentUser.id}_${Date.now()}.${fileExt}`;
-      const filePath = `${fileName}`;
+      const uploadPromises = fotos.map(async (foto) => {
+        const fileExt = foto.name.split('.').pop();
+        const fileName = `visita_${currentUser.id}_${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+        const { error: uploadError } = await supabase.storage.from('fotos_visitas').upload(fileName, foto);
+        
+        if (uploadError) throw uploadError;
 
-      const { error: uploadError } = await supabase.storage
-        .from('fotos_visitas')
-        .upload(filePath, foto);
+        const { data: publicUrlData } = supabase.storage.from('fotos_visitas').getPublicUrl(fileName);
+        return publicUrlData.publicUrl;
+      });
 
-      if (uploadError) throw uploadError;
-
-      const { data: publicUrlData } = supabase.storage
-        .from('fotos_visitas')
-        .getPublicUrl(filePath);
-
-      const fotoUrl = publicUrlData.publicUrl;
+      const urls = await Promise.all(uploadPromises);
+      const fotoUrlJoined = urls.join(',');
 
       const { error: insertError } = await supabase
         .from('visitas')
@@ -92,7 +97,8 @@ const SupervisorApp = ({ currentUser }) => {
             nomecli: posto.nomecli,
             codpos: posto.codpos,
             nomepos: posto.nomepos,
-            foto_url: fotoUrl 
+            tipo_visita: tipoVisita,
+            foto_url: fotoUrlJoined 
           }
         ]);
 
@@ -104,8 +110,9 @@ const SupervisorApp = ({ currentUser }) => {
         setSuccess(false);
         setSelectedCliente('');
         setSelectedPostoId('');
-        setFoto(null);
-        setPreview(null);
+        setTipoVisita('Visita Normal');
+        setFotos([]);
+        setPreviews([]);
       }, 3000);
 
     } catch (error) {
@@ -132,7 +139,7 @@ const SupervisorApp = ({ currentUser }) => {
         <div className="card glass-panel" style={{ textAlign: 'center', padding: '40px 20px', borderColor: '#10b981' }}>
           <CheckCircle size={64} color="#10b981" style={{ margin: '0 auto 16px' }} />
           <h2 style={{ color: '#10b981', marginBottom: '8px' }}>Visita Registrada!</h2>
-          <p style={{ color: '#94a3b8' }}>A foto foi enviada para a central de monitoramento com sucesso.</p>
+          <p style={{ color: '#94a3b8' }}>O registro foi enviado para a central de monitoramento com sucesso.</p>
         </div>
       ) : (
         <div className="card glass-panel">
@@ -184,65 +191,83 @@ const SupervisorApp = ({ currentUser }) => {
 
             <div className="form-group">
               <label style={{ display: 'block', marginBottom: '8px', color: '#cbd5e1' }}>
+                <Info size={16} style={{ display: 'inline', marginRight: '6px', verticalAlign: 'text-bottom' }}/> 
+                Tipo de Registro
+              </label>
+              <select 
+                className="custom-input" 
+                value={tipoVisita} 
+                onChange={(e) => setTipoVisita(e.target.value)}
+                required
+                style={{ width: '100%', padding: '12px', background: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', borderRadius: '8px' }}
+              >
+                <option value="Chegada">Chegada no Posto</option>
+                <option value="Saída">Saída do Posto</option>
+                <option value="Visita Normal">Visita de Rotina (Normal)</option>
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label style={{ display: 'block', marginBottom: '8px', color: '#cbd5e1' }}>
                 <Camera size={16} style={{ display: 'inline', marginRight: '6px', verticalAlign: 'text-bottom' }}/> 
-                Foto do Livro de Ocorrências
+                Fotos do Livro de Ocorrências ({fotos.length})
               </label>
               
-              <label 
-                className="photo-upload-area"
-                style={{ 
-                  display: 'flex', 
-                  flexDirection: 'column', 
-                  alignItems: 'center', 
-                  justifyContent: 'center', 
-                  border: '2px dashed rgba(255,255,255,0.2)', 
-                  borderRadius: '12px', 
-                  padding: preview ? '4px' : '40px 20px', 
-                  cursor: 'pointer',
-                  background: 'rgba(15, 23, 42, 0.4)',
-                  transition: 'all 0.2s ease',
-                  minHeight: '200px'
-                }}
-              >
-                <input 
-                  type="file" 
-                  accept="image/*" 
-                  capture="environment"
-                  onChange={handleFotoChange} 
-                  style={{ display: 'none' }} 
-                  required
-                />
-                
-                {preview ? (
-                  <div style={{ position: 'relative', width: '100%', height: '100%', borderRadius: '8px', overflow: 'hidden' }}>
-                    <img src={preview} alt="Preview" style={{ width: '100%', height: 'auto', display: 'block', objectFit: 'contain', maxHeight: '300px' }} />
-                    <div style={{ position: 'absolute', bottom: '10px', right: '10px', background: 'rgba(0,0,0,0.7)', padding: '6px 12px', borderRadius: '20px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <Camera size={14} /> Trocar Foto
-                    </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: '12px', marginBottom: '12px' }}>
+                {previews.map((prev, index) => (
+                  <div key={index} style={{ position: 'relative', width: '100%', aspectRatio: '1', borderRadius: '8px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)' }}>
+                    <img src={prev} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <button 
+                      type="button"
+                      onClick={() => removeFoto(index)}
+                      style={{ position: 'absolute', top: '4px', right: '4px', background: 'rgba(239, 68, 68, 0.9)', border: 'none', borderRadius: '50%', width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#fff' }}
+                    >
+                      <X size={14} />
+                    </button>
                   </div>
-                ) : (
-                  <>
-                    <Camera size={48} color="#94a3b8" style={{ marginBottom: '16px' }} />
-                    <span style={{ color: '#cbd5e1', fontWeight: 500, marginBottom: '8px' }}>Tirar Foto Agora</span>
-                    <span style={{ color: '#64748b', fontSize: '13px', textAlign: 'center' }}>Toque para abrir a câmera do seu celular</span>
-                  </>
-                )}
-              </label>
+                ))}
+
+                <label 
+                  style={{ 
+                    display: 'flex', 
+                    flexDirection: 'column', 
+                    alignItems: 'center', 
+                    justifyContent: 'center', 
+                    border: '2px dashed rgba(255,255,255,0.2)', 
+                    borderRadius: '8px', 
+                    cursor: 'pointer',
+                    background: 'rgba(15, 23, 42, 0.4)',
+                    aspectRatio: '1',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    multiple
+                    capture="environment"
+                    onChange={handleFotoChange} 
+                    style={{ display: 'none' }} 
+                  />
+                  <Plus size={32} color="#94a3b8" style={{ marginBottom: '8px' }} />
+                  <span style={{ color: '#cbd5e1', fontSize: '12px', textAlign: 'center', padding: '0 4px' }}>Adicionar Foto</span>
+                </label>
+              </div>
             </div>
 
             <button 
               type="submit" 
-              disabled={loading || !foto || !selectedPostoId}
+              disabled={loading || fotos.length === 0 || !selectedPostoId}
               style={{ 
                 marginTop: '10px',
                 padding: '16px', 
-                background: loading || !foto || !selectedPostoId ? 'rgba(59, 130, 246, 0.5)' : 'linear-gradient(to right, #3b82f6, #2563eb)', 
+                background: loading || fotos.length === 0 || !selectedPostoId ? 'rgba(59, 130, 246, 0.5)' : 'linear-gradient(to right, #3b82f6, #2563eb)', 
                 color: '#fff', 
                 border: 'none', 
                 borderRadius: '8px', 
                 fontSize: '16px',
                 fontWeight: 600,
-                cursor: loading || !foto || !selectedPostoId ? 'not-allowed' : 'pointer',
+                cursor: loading || fotos.length === 0 || !selectedPostoId ? 'not-allowed' : 'pointer',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',

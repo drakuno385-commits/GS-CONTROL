@@ -179,26 +179,38 @@ const Monitoramento = ({ currentUser }) => {
                     {visita.codcli && <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px', marginLeft: '20px' }}>Cód: {visita.codcli}</div>}
                   </td>
                   <td style={{ padding: '16px', color: '#cbd5e1', fontSize: '14px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
                       <MapPin size={14} color="#94a3b8" /> {visita.nomepos}
+                      <span style={{ 
+                        marginLeft: '8px', padding: '2px 8px', borderRadius: '12px', fontSize: '11px', fontWeight: 600,
+                        background: visita.tipo_visita === 'Chegada' ? 'rgba(16, 185, 129, 0.1)' : 
+                                    visita.tipo_visita === 'Saída' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(59, 130, 246, 0.1)',
+                        color: visita.tipo_visita === 'Chegada' ? '#10b981' : 
+                               visita.tipo_visita === 'Saída' ? '#ef4444' : '#3b82f6'
+                      }}>
+                        {visita.tipo_visita || 'Visita Normal'}
+                      </span>
                     </div>
                     {visita.codpos && <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px', marginLeft: '20px' }}>Cód: {visita.codpos}</div>}
                   </td>
                   <td style={{ padding: '16px', textAlign: 'center' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
-                      <a 
-                        href={visita.foto_url} 
-                        target="_blank" 
-                        rel="noreferrer"
-                        style={{ 
-                          display: 'inline-flex', alignItems: 'center', gap: '6px', 
-                          padding: '6px 12px', background: 'rgba(59, 130, 246, 0.1)', 
-                          color: '#3b82f6', borderRadius: '20px', textDecoration: 'none',
-                          fontSize: '13px', fontWeight: 600, transition: 'all 0.2s'
-                        }}
-                      >
-                        <ImageIcon size={14} /> Ver Foto <ExternalLink size={14} />
-                      </a>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                      {(visita.foto_url || '').split(',').filter(url => url.trim() !== '').map((url, index, arr) => (
+                        <a 
+                          key={index}
+                          href={url.trim()} 
+                          target="_blank" 
+                          rel="noreferrer"
+                          style={{ 
+                            display: 'inline-flex', alignItems: 'center', gap: '6px', 
+                            padding: '6px 12px', background: 'rgba(59, 130, 246, 0.1)', 
+                            color: '#3b82f6', borderRadius: '20px', textDecoration: 'none',
+                            fontSize: '13px', fontWeight: 600, transition: 'all 0.2s'
+                          }}
+                        >
+                          <ImageIcon size={14} /> Foto {arr.length > 1 ? index + 1 : ''} <ExternalLink size={14} />
+                        </a>
+                      ))}
                       
                       {currentUser?.role === 'MASTER' && (
                         <button 
@@ -212,7 +224,7 @@ const Monitoramento = ({ currentUser }) => {
                         >
                           <Trash2 size={16} />
                         </button>
-                      )}
+                      )}   )}
                     </div>
                   </td>
                 </tr>
