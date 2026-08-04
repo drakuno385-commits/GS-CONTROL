@@ -591,18 +591,32 @@ const App = () => {
         };
         const hasField = (keyStr) => firstRowKeys.some(k => k.toLowerCase().trim() === keyStr.toLowerCase());
 
-        if (hasField('nomevigil')) {
-          setActiveMenu('rh');
+        let sheetType = 'unknown';
+        if (hasField('nomevigil')) sheetType = 'efetivos';
+        else if (hasField('nomeocor') || hasField('codocor')) sheetType = 'disciplina';
+        else if (hasField('sithoje')) sheetType = 'presencas';
+        else if (hasField('placa')) sheetType = 'frota';
+
+        let isValidForPage = false;
+        if (activeMenu === 'rh' && (sheetType === 'efetivos' || sheetType === 'presencas')) isValidForPage = true;
+        else if (activeMenu === 'disciplina' && sheetType === 'disciplina') isValidForPage = true;
+        else if (activeMenu === 'frota' && sheetType === 'frota') isValidForPage = true;
+        else if (activeMenu === 'atestados' && sheetType === 'presencas') isValidForPage = true;
+
+        if (!isValidForPage) {
+          alert("Esta planilha não pertence a esta página. Por favor, acesse o menu correto antes de importar.");
+          return;
+        }
+
+        if (sheetType === 'efetivos') {
           uploadToSupabase('efetivos', data, row => ({ 
             re: getField(row, 're'), nomevigil: getField(row, 'nomevigil'), cliente: getField(row, 'cliente'), posto: getField(row, 'posto') 
           }), true);
-        } else if (hasField('nomeocor') || hasField('codocor')) {
-          setActiveMenu('disciplina');
+        } else if (sheetType === 'disciplina') {
           uploadToSupabase('disciplina', data, row => ({ 
             re: getField(row, 're'), nome: getField(row, 'nome'), data: getField(row, 'data'), codocor: getField(row, 'codocor'), nomeocor: getField(row, 'nomeocor'), tipo: getField(row, 'tipo'), area: getField(row, 'area') 
           }), true);
-        } else if (hasField('sithoje')) {
-          setActiveMenu(prev => (prev === 'atestados' || prev === 'rh') ? prev : 'rh');
+        } else if (sheetType === 'presencas') {
           uploadToSupabase('presencas', data, row => ({ 
             data: getField(row, 'data'), cliente: getField(row, 'cliente'), sithoje: getField(row, 'sithoje'), posto: getField(row, 'posto'), re: getField(row, 're'), nome: getField(row, 'nome'), tipo: getField(row, 'tipo') 
           }), false);
