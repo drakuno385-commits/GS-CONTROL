@@ -320,7 +320,10 @@ const App = () => {
     setReservaTecnica(reservaList);
 
     const checkEfetivoFilters = (row) => {
-      if (row.posto && row.posto.toString().toUpperCase().includes('FALTA INJUSTIFICADA')) return false;
+      if (row.posto) {
+        const p = row.posto.toString().toUpperCase();
+        if (p.includes('FALTA INJUSTIFICADA') || p.includes('RESERVA JURIDICA') || p.includes('RESERVA JURÍDICA')) return false;
+      }
       if (filters.cliente) {
         if (filters.cliente.toUpperCase().trim() === 'RESERVA TECNICA' && row.re) {
           if (!globalReservaSet.has(row.re.toString().trim())) return false;
