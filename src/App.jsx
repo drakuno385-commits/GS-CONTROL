@@ -4,7 +4,7 @@ import { supabase } from './supabaseClient';
 import { 
   LayoutDashboard, Users, Settings, Upload, UserCheck, UserX, Briefcase, 
   Activity, Truck, Fuel, Map, DollarSign, AlertTriangle, Scale, Loader2, Cloud, Filter, FileText, CheckCircle, Droplet, Shield, Menu,
-  Car, MapPin, Smartphone, LogOut
+  Car, MapPin, Smartphone, LogOut, Download
 } from 'lucide-react';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area, PieChart, Pie, Cell, ComposedChart, LabelList } from 'recharts';
 import Login from './components/Login';
@@ -833,8 +833,53 @@ const App = () => {
     </>
   );
 
-    const renderDisciplina = () => (
+    const handleExportDisciplina = () => {
+    const faltasData = rawDisciplina.filter(r => checkFilters(r, 'data', null) && r.tipo && r.tipo.toUpperCase().includes('S'));
+    
+    if (faltasData.length === 0) {
+      alert("Nenhum dado encontrado para exportar com os filtros atuais.");
+      return;
+    }
+
+    const csvRows = [
+      ['RE', 'NOME', 'DATA DA FALTA', 'POSTO', 'AREA'].join(';')
+    ];
+    
+    faltasData.forEach(row => {
+      const rowData = [
+        row.re || '',
+        row.nome || '',
+        row.data || '',
+        row.posto || '',
+        row.area || ''
+      ].map(v => `"${v}"`);
+      csvRows.push(rowData.join(';'));
+    });
+    
+    const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + csvRows.join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `Relatorio_Faltas_Disciplina_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const renderDisciplina = () => (
     <>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '16px' }}>
+        <button 
+          onClick={handleExportDisciplina}
+          style={{ 
+            display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px', 
+            background: 'rgba(59, 130, 246, 0.2)', color: '#3b82f6', border: '1px solid rgba(59, 130, 246, 0.4)', 
+            borderRadius: '8px', cursor: 'pointer', fontWeight: 600, transition: 'all 0.2s' 
+          }}
+        >
+          <Download size={18} /> Exportar Faltas (CSV)
+        </button>
+      </div>
       <div className="stats-grid">
         <div className="card stat-card glass-panel">
           <div className="stat-title">Faltas (Tipo S)</div>
