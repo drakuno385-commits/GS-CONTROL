@@ -221,7 +221,10 @@ const App = () => {
   };
 
   const checkFilters = (row, dateKey, clientKey) => {
-    if (row.posto && row.posto.toString().toUpperCase().includes('FALTA INJUSTIFICADA')) return false;
+    if (row.posto) {
+      const p = row.posto.toString().toUpperCase();
+      if (p.includes('FALTA INJUSTIFICADA') || p.includes('RESERVA JURIDICA') || p.includes('RESERVA JURÍDICA')) return false;
+    }
     if (filters.cliente && clientKey && row[clientKey]) {
       if (row[clientKey].toString().toUpperCase().trim() !== filters.cliente.toString().toUpperCase().trim()) return false;
     }
