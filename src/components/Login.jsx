@@ -18,15 +18,28 @@ export default function Login({ onLoginSuccess }) {
     setLoading(true);
 
     try {
+      const email = `${username}@acoweb.sistema`;
+      
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email: email,
+        password: password
+      });
+
+      if (authError || !authData.user) {
+        setError('Usuário ou senha incorretos.');
+        setLoading(false);
+        return;
+      }
+
+      // Buscar os dados do usuário (role, primeiro_acesso) na tabela
       const { data, error } = await supabase
         .from('app_usuarios')
         .select('*')
-        .eq('username', username)
-        .eq('password', password)
+        .eq('id', authData.user.id)
         .single();
 
       if (error || !data) {
-        setError('Usuário ou senha incorretos.');
+        setError('Erro ao recuperar perfil do usuário.');
         setLoading(false);
         return;
       }
@@ -54,15 +67,27 @@ export default function Login({ onLoginSuccess }) {
     
     setLoading(true);
     try {
+      // Atualiza a senha no Supabase Auth
+      const { error: authError } = await supabase.auth.updateUser({
+        password: newPassword
+      });
+
+      if (authError) {
+        setError('Erro ao atualizar a senha de autenticação.');
+        setLoading(false);
+        return;
+      }
+
+      // Atualiza o status de primeiro_acesso na tabela
       const { data, error } = await supabase
         .from('app_usuarios')
-        .update({ password: newPassword, primeiro_acesso: false })
+        .update({ primeiro_acesso: false })
         .eq('id', userDoc.id)
         .select()
         .single();
 
       if (error) {
-        setError('Erro ao atualizar a senha.');
+        setError('Erro ao atualizar status do usuário.');
         setLoading(false);
         return;
       }

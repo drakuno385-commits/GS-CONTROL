@@ -61,65 +61,64 @@ const Usuarios = ({ currentUser }) => {
 
     if (editingId) {
       // Editar
-      const updateData = {
-        username: formData.username,
-        role: formData.role
-      };
-      
-      // Se preencheu a senha, reseta também
       if (formData.password) {
-        updateData.password = formData.password;
-        updateData.primeiro_acesso = true;
+        // Usa a RPC segura para resetar a senha (Master action)
+        const { error: resetError } = await supabase.rpc('reset_password_admin', {
+          p_user_id: editingId,
+          p_new_password: formData.password
+        });
+        
+        if (resetError) {
+          alert("Erro ao resetar senha: " + resetError.message);
+          return;
+        }
       }
       
-      const { error } = await supabase
+      const { error: updateError } = await supabase
         .from('app_usuarios')
-        .update(updateData)
+        .update({ role: formData.role, username: formData.username })
         .eq('id', editingId);
         
-      if (!error) {
+      if (!updateError) {
         fetchUsuarios();
         setIsModalOpen(false);
       } else {
-        alert("Erro ao atualizar: " + error.message);
+        alert("Erro ao atualizar: " + updateError.message);
       }
     } else {
-      // Criar
+      // Criar novo usuário via RPC segura
       if (!formData.password) {
         alert("Senha inicial é obrigatória para novos usuários.");
         return;
       }
       
-      const { error } = await supabase
-        .from('app_usuarios')
-        .insert([{
-          username: formData.username,
-          password: formData.password,
-          role: formData.role,
-          primeiro_acesso: true
-        }]);
-        
+      const { error } = await supabase.rpc('create_user_admin', {
+        p_username: formData.username,
+        p_password: formData.password,
+        p_role: formData.role
+      });
+
       if (!error) {
         fetchUsuarios();
         setIsModalOpen(false);
       } else {
-        alert("Erro ao criar: Usuário pode já existir.");
+        alert("Erro ao criar usuário: " + error.message);
       }
     }
   };
 
-  const handleDelete = async (id, username) => {
+  const handleDeleteUser = async (id, username) => {
     if (id === currentUser.id) {
       alert("Você não pode excluir o próprio usuário logado!");
       return;
     }
     
     if (window.confirm(`Tem certeza que deseja excluir o usuário ${username}?`)) {
-      const { error } = await supabase.from('app_usuarios').delete().eq('id', id);
+      const { error } = await supabase.rpc('delete_user_admin', { p_user_id: id });
       if (!error) {
         fetchUsuarios();
       } else {
-        alert("Erro ao deletar.");
+        alert("Erro ao deletar: " + error.message);
       }
     }
   };
@@ -127,14 +126,16 @@ const Usuarios = ({ currentUser }) => {
   const handleResetPassword = async (id, username) => {
     const newPass = prompt(`Digite a nova senha temporária para ${username}:`, '123456');
     if (newPass) {
-      const { error } = await supabase
-        .from('app_usuarios')
-        .update({ password: newPass, primeiro_acesso: true })
-        .eq('id', id);
+      const { error } = await supabase.rpc('reset_password_admin', {
+        p_user_id: id,
+        p_new_password: newPass
+      });
         
       if (!error) {
         alert(`Senha de ${username} redefinida com sucesso!`);
         fetchUsuarios();
+      } else {
+        alert("Erro ao resetar senha: " + error.message);
       }
     }
   };
