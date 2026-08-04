@@ -99,6 +99,7 @@ const App = () => {
   const [discFaltasPorArea, setDiscFaltasPorArea] = useState([]);
   const [discRanking, setDiscRanking] = useState([]);
   const [discAlertas, setDiscAlertas] = useState([]);
+  const [selectedDisciplinaPerson, setSelectedDisciplinaPerson] = useState(null);
   const [totalsDisc, setTotalsDisc] = useState({ total_s: 0 });
 
   // List of unique clients for the filter dropdown
@@ -576,11 +577,17 @@ const App = () => {
       }
       if (!faltasArea[area]) faltasArea[area] = 0;
       faltasArea[area]++;
-      if (!faltasPessoa[nome]) faltasPessoa[nome] = 0;
-      faltasPessoa[nome]++;
+      if (!faltasPessoa[nome]) faltasPessoa[nome] = { nome, faltas: 0, ocorrencias: [] };
+      faltasPessoa[nome].faltas++;
+      faltasPessoa[nome].ocorrencias.push({
+        data: dataFalta || "Data não informada",
+        nomeocor: row.nomeocor || "Ocorrência",
+        area: row.area || "Não informada",
+        codocor: row.codocor || ""
+      });
     });
 
-    const arrPessoaAll = Object.keys(faltasPessoa).map(k => ({ nome: k, faltas: faltasPessoa[k] })).sort((a, b) => b.faltas - a.faltas);
+    const arrPessoaAll = Object.values(faltasPessoa).sort((a, b) => b.faltas - a.faltas);
     setDiscFaltasPorDia(Object.keys(faltasDia).map(k => ({ dia: k.substring(0, 5), faltas: faltasDia[k], rawDate: k })).sort((a, b) => a.rawDate.localeCompare(b.rawDate)));
     setDiscFaltasPorArea(Object.keys(faltasArea).map(k => ({ name: k, value: faltasArea[k] })).sort((a, b) => b.value - a.value));
     setDiscRanking(arrPessoaAll.slice(0, 10));
@@ -781,24 +788,40 @@ const App = () => {
         <div className="card chart-card glass-panel" style={{ overflowY: 'auto', maxHeight: '400px' }}>
           <div className="chart-header" style={{ marginBottom: '16px' }}><div className="chart-title">Reserva Técnica</div></div>
           <div className="reserva-table">
-            {reservaTecnica && reservaTecnica.length > 0 ? (
-              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-                <thead>
-                  <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', color: '#94a3b8' }}>
-                    <th style={{ padding: '12px 8px', fontWeight: 500 }}>Nome</th>
-                    <th style={{ padding: '12px 8px', fontWeight: 500 }}>Posto Atual</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {reservaTecnica.map((row) => (
-                    <tr key={row.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                      <td style={{ padding: '12px 8px' }}>{row.nome}</td>
-                      <td style={{ padding: '12px 8px', color: '#94a3b8', fontSize: '12px' }}>{row.posto}</td>
+            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', color: '#94a3b8' }}>
+                  <th style={{ padding: '12px 8px', fontWeight: 500 }}>Posição</th>
+                  <th style={{ padding: '12px 8px', fontWeight: 500 }}>Nome</th>
+                  <th style={{ padding: '12px 8px', fontWeight: 500 }}>Total Afastado</th>
+                </tr>
+              </thead>
+              <tbody>
+                {atestadosRanking.map((row, idx) => {
+                  let badge = <span style={{ color: '#94a3b8' }}>{idx + 1}º</span>;
+                  if (idx === 0) badge = <span style={{ fontSize: '18px' }}>🏆</span>;
+                  if (idx === 1) badge = <span style={{ fontSize: '18px' }}>🥈</span>;
+                  if (idx === 2) badge = <span style={{ fontSize: '18px' }}>🥉</span>;
+
+                  return (
+                    <tr 
+                      key={idx} 
+                      onClick={() => setSelectedAtestadoPerson(row)}
+                      style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', cursor: 'pointer', transition: 'background 0.2s', background: 'transparent' }}
+                      onMouseOver={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.02)'}
+                      onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
+                    >
+                      <td style={{ padding: '12px 8px', width: '50px', textAlign: 'center' }}>{badge}</td>
+                      <td style={{ padding: '12px 8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: row.cor }}></div>
+                        {row.nome}
+                      </td>
+                      <td style={{ padding: '12px 8px', color: row.cor, fontWeight: 'bold', fontSize: '15px' }}>{row.total}</td>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            ) : (<div style={{color: '#94a3b8', padding: '12px'}}>Sem registros.</div>)}
+                  )
+                })}
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
@@ -1008,45 +1031,48 @@ const App = () => {
       </div>
 
       {selectedAtestadoPerson && (
-        <div style={{
-          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, 
-          background: 'rgba(0,0,0,0.8)', zIndex: 9999,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          backdropFilter: 'blur(4px)'
-        }}>
-          <div className="card glass-panel" style={{ width: '90%', maxWidth: '500px', maxHeight: '80vh', display: 'flex', flexDirection: 'column' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '12px' }}>
-              <h2 style={{ fontSize: '18px', color: '#fff', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(15, 23, 42, 0.85)', backdropFilter: 'blur(8px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+          <div style={{ background: 'linear-gradient(145deg, #1e293b, #0f172a)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px', padding: '24px', width: '100%', maxWidth: '600px', maxHeight: '85vh', display: 'flex', flexDirection: 'column', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', paddingBottom: '16px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+              <h2 style={{ color: '#e2e8f0', margin: 0, display: 'flex', alignItems: 'center', gap: '12px', fontSize: '20px' }}>
                 <Stethoscope size={20} color={selectedAtestadoPerson.cor} />
-                Detalhes do Colaborador
+                Ficha Médica
               </h2>
-              <button onClick={() => setSelectedAtestadoPerson(null)} style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer' }}>
+              <button onClick={() => setSelectedAtestadoPerson(null)} style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer', transition: 'color 0.2s' }} onMouseOver={(e)=>e.currentTarget.style.color='#fff'} onMouseOut={(e)=>e.currentTarget.style.color='#94a3b8'}>
                 <X size={24} />
               </button>
             </div>
             
-            <div style={{ marginBottom: '16px' }}>
-              <div style={{ fontSize: '20px', fontWeight: 'bold', color: selectedAtestadoPerson.cor }}>{selectedAtestadoPerson.nome}</div>
-              <div style={{ color: '#94a3b8', fontSize: '14px', marginTop: '4px' }}>Cliente Principal: {selectedAtestadoPerson.cliente}</div>
-              <div style={{ color: '#e2e8f0', fontSize: '14px', marginTop: '4px' }}>Total de Dias Apresentados: <strong>{selectedAtestadoPerson.total}</strong></div>
+            <div style={{ marginBottom: '24px' }}>
+              <div style={{ fontSize: '22px', fontWeight: 'bold', color: selectedAtestadoPerson.cor, marginBottom: '8px' }}>{selectedAtestadoPerson.nome}</div>
+              <div style={{ color: '#94a3b8', fontSize: '14px' }}>Cliente Principal: {selectedAtestadoPerson.cliente}</div>
+              <div style={{ color: '#e2e8f0', fontSize: '14px', marginTop: '12px', background: 'rgba(59, 130, 246, 0.1)', padding: '8px 12px', borderRadius: '8px', border: '1px solid rgba(59, 130, 246, 0.2)', display: 'inline-block' }}>
+                Total de Dias Afastado: <strong style={{ color: selectedAtestadoPerson.cor, fontSize: '16px' }}>{selectedAtestadoPerson.total}</strong>
+              </div>
             </div>
 
-            <div style={{ overflowY: 'auto', flex: 1, border: '1px solid rgba(255,255,255,0.05)', borderRadius: '8px', background: 'rgba(0,0,0,0.2)' }}>
+            <div style={{ overflowY: 'auto', flex: 1, border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', background: 'rgba(0,0,0,0.3)', boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.1)' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-                <thead style={{ position: 'sticky', top: 0, background: '#1e293b' }}>
-                  <tr style={{ color: '#94a3b8' }}>
-                    <th style={{ padding: '12px 16px', fontWeight: 500 }}>Período</th>
-                    <th style={{ padding: '12px 16px', fontWeight: 500 }}>Diagnóstico / Hospital</th>
+                <thead style={{ position: 'sticky', top: 0, background: '#1e293b', backdropFilter: 'blur(4px)' }}>
+                  <tr>
+                    <th style={{ padding: '16px', fontWeight: 600, color: '#94a3b8', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Período</th>
+                    <th style={{ padding: '16px', fontWeight: 600, color: '#94a3b8', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Diagnóstico / Hospital</th>
                   </tr>
                 </thead>
                 <tbody>
                   {selectedAtestadoPerson.dias.map((d, idx) => (
-                    <tr key={idx} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                      <td style={{ padding: '12px 16px', color: '#e2e8f0' }}>{d.data}</td>
-                      <td style={{ padding: '12px 16px' }}>
-                        <div style={{ color: '#e2e8f0', fontSize: '13px', fontWeight: 600 }}>{d.doenca}</div>
-                        <div style={{ color: '#94a3b8', fontSize: '12px', marginTop: '4px' }}>Hospital: {d.hosp}</div>
-                        <div style={{ color: '#94a3b8', fontSize: '12px' }}>Médico: {d.medico} {d.crm ? `(CRM: ${d.crm})` : ''}</div>
+                    <tr key={idx} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', transition: 'background 0.2s' }} onMouseOver={(e)=>e.currentTarget.style.background='rgba(255,255,255,0.02)'} onMouseOut={(e)=>e.currentTarget.style.background='transparent'}>
+                      <td style={{ padding: '16px', color: '#e2e8f0', fontSize: '14px', verticalAlign: 'top' }}>{d.data}</td>
+                      <td style={{ padding: '16px' }}>
+                        <div style={{ color: '#e2e8f0', fontSize: '14px', fontWeight: 600 }}>{d.doenca}</div>
+                        <div style={{ color: '#94a3b8', fontSize: '13px', marginTop: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981' }}></div>
+                          Hospital: {d.hosp}
+                        </div>
+                        <div style={{ color: '#94a3b8', fontSize: '13px', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#3b82f6' }}></div>
+                          Médico: {d.medico} {d.crm ? `(CRM: ${d.crm})` : ''}
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -1125,20 +1151,47 @@ const App = () => {
           </div>
         </div>
 
-        <div className="card chart-card glass-panel">
-          <div className="chart-header"><div className="chart-title">Ranking de Faltosos (Top 10)</div></div>
-          <div className="chart-wrapper">
-             {discRanking.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={discRanking} margin={{ top: 20, right: 30, left: 0, bottom: 60 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" vertical={false} />
-                  <XAxis dataKey="nome" stroke="#94a3b8" tick={{fontSize: 10}} interval={0} angle={-45} textAnchor="end" height={80}/>
-                  <YAxis stroke="#94a3b8" />
-                  <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }} />
-                  <Bar dataKey="faltas" name="Total de Faltas (S)" fill="#ef4444" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            ) : (<div style={{color: '#94a3b8', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%'}}>Sem dados</div>)}
+        <div className="card chart-card glass-panel" style={{ overflowY: 'auto', maxHeight: '450px' }}>
+          <div className="chart-header" style={{ marginBottom: '16px' }}>
+            <div className="chart-title" style={{ color: '#ef4444' }}>Ranking de Faltosos (Top 10)</div>
+          </div>
+          <div className="reserva-table">
+            {discRanking && discRanking.length > 0 ? (
+              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                <thead>
+                  <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', color: '#94a3b8' }}>
+                    <th style={{ padding: '12px 8px', fontWeight: 500 }}>Posição</th>
+                    <th style={{ padding: '12px 8px', fontWeight: 500 }}>Nome</th>
+                    <th style={{ padding: '12px 8px', fontWeight: 500 }}>Faltas</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {discRanking.map((row, idx) => {
+                    let badge = <span style={{ color: '#94a3b8' }}>{idx + 1}º</span>;
+                    if (idx === 0) badge = <span style={{ fontSize: '18px' }}>🏆</span>;
+                    if (idx === 1) badge = <span style={{ fontSize: '18px' }}>🥈</span>;
+                    if (idx === 2) badge = <span style={{ fontSize: '18px' }}>🥉</span>;
+                    return (
+                      <tr 
+                        key={idx} 
+                        onClick={() => setSelectedDisciplinaPerson(row)}
+                        style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', cursor: 'pointer', transition: 'background 0.2s', background: 'transparent' }}
+                        onMouseOver={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.02)'}
+                        onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
+                      >
+                        <td style={{ padding: '12px 8px', width: '50px', textAlign: 'center' }}>{badge}</td>
+                        <td style={{ padding: '12px 8px' }}>{row.nome}</td>
+                        <td style={{ padding: '12px 8px', color: '#ef4444', fontWeight: 700 }}>{row.faltas}</td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            ) : (
+              <div style={{color: '#94a3b8', padding: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100px'}}>
+                Importe a planilha de Disciplina
+              </div>
+            )}
           </div>
         </div>
 
@@ -1174,6 +1227,54 @@ const App = () => {
           </div>
         </div>
       </div>
+
+      {selectedDisciplinaPerson && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(15, 23, 42, 0.85)', backdropFilter: 'blur(8px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+          <div style={{ background: 'linear-gradient(145deg, #1e293b, #0f172a)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px', padding: '24px', width: '100%', maxWidth: '600px', maxHeight: '85vh', display: 'flex', flexDirection: 'column', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', paddingBottom: '16px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+              <h2 style={{ color: '#e2e8f0', margin: 0, display: 'flex', alignItems: 'center', gap: '12px', fontSize: '20px' }}>
+                <AlertTriangle size={20} color={selectedDisciplinaPerson.cor || '#ef4444'} />
+                Ficha Disciplinar
+              </h2>
+              <button onClick={() => setSelectedDisciplinaPerson(null)} style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer', transition: 'color 0.2s' }} onMouseOver={(e)=>e.currentTarget.style.color='#fff'} onMouseOut={(e)=>e.currentTarget.style.color='#94a3b8'}>
+                <X size={24} />
+              </button>
+            </div>
+            
+            <div style={{ marginBottom: '24px' }}>
+              <div style={{ fontSize: '22px', fontWeight: 'bold', color: selectedDisciplinaPerson.cor || '#ef4444', marginBottom: '8px' }}>{selectedDisciplinaPerson.nome}</div>
+              <div style={{ color: '#e2e8f0', fontSize: '14px', background: 'rgba(239, 68, 68, 0.1)', padding: '8px 12px', borderRadius: '8px', border: '1px solid rgba(239, 68, 68, 0.2)', display: 'inline-block' }}>
+                Total de Ocorrências: <strong>{selectedDisciplinaPerson.faltas}</strong>
+              </div>
+            </div>
+
+            <div style={{ overflowY: 'auto', flex: 1, border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', background: 'rgba(0,0,0,0.3)', boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.1)' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                <thead style={{ position: 'sticky', top: 0, background: '#1e293b', backdropFilter: 'blur(4px)' }}>
+                  <tr>
+                    <th style={{ padding: '16px', fontWeight: 600, color: '#94a3b8', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Data</th>
+                    <th style={{ padding: '16px', fontWeight: 600, color: '#94a3b8', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Ocorrência / Área</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {selectedDisciplinaPerson.ocorrencias.map((oc, idx) => (
+                    <tr key={idx} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', transition: 'background 0.2s' }} onMouseOver={(e)=>e.currentTarget.style.background='rgba(255,255,255,0.02)'} onMouseOut={(e)=>e.currentTarget.style.background='transparent'}>
+                      <td style={{ padding: '16px', color: '#e2e8f0', fontSize: '14px', verticalAlign: 'top' }}>{oc.data}</td>
+                      <td style={{ padding: '16px' }}>
+                        <div style={{ color: '#e2e8f0', fontSize: '14px', fontWeight: 500 }}>{oc.nomeocor} {oc.codocor ? `(${oc.codocor})` : ''}</div>
+                        <div style={{ color: '#94a3b8', fontSize: '13px', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#3b82f6' }}></div>
+                          {oc.area}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 
