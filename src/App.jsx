@@ -788,40 +788,24 @@ const App = () => {
         <div className="card chart-card glass-panel" style={{ overflowY: 'auto', maxHeight: '400px' }}>
           <div className="chart-header" style={{ marginBottom: '16px' }}><div className="chart-title">Reserva Técnica</div></div>
           <div className="reserva-table">
-            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-              <thead>
-                <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', color: '#94a3b8' }}>
-                  <th style={{ padding: '12px 8px', fontWeight: 500 }}>Posição</th>
-                  <th style={{ padding: '12px 8px', fontWeight: 500 }}>Nome</th>
-                  <th style={{ padding: '12px 8px', fontWeight: 500 }}>Total Afastado</th>
-                </tr>
-              </thead>
-              <tbody>
-                {atestadosRanking.map((row, idx) => {
-                  let badge = <span style={{ color: '#94a3b8' }}>{idx + 1}º</span>;
-                  if (idx === 0) badge = <span style={{ fontSize: '18px' }}>🏆</span>;
-                  if (idx === 1) badge = <span style={{ fontSize: '18px' }}>🥈</span>;
-                  if (idx === 2) badge = <span style={{ fontSize: '18px' }}>🥉</span>;
-
-                  return (
-                    <tr 
-                      key={idx} 
-                      onClick={() => setSelectedAtestadoPerson(row)}
-                      style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', cursor: 'pointer', transition: 'background 0.2s', background: 'transparent' }}
-                      onMouseOver={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.02)'}
-                      onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
-                    >
-                      <td style={{ padding: '12px 8px', width: '50px', textAlign: 'center' }}>{badge}</td>
-                      <td style={{ padding: '12px 8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: row.cor }}></div>
-                        {row.nome}
-                      </td>
-                      <td style={{ padding: '12px 8px', color: row.cor, fontWeight: 'bold', fontSize: '15px' }}>{row.total}</td>
+            {reservaTecnica && reservaTecnica.length > 0 ? (
+              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                <thead>
+                  <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', color: '#94a3b8' }}>
+                    <th style={{ padding: '12px 8px', fontWeight: 500 }}>Nome</th>
+                    <th style={{ padding: '12px 8px', fontWeight: 500 }}>Posto Atual</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {reservaTecnica.map((row) => (
+                    <tr key={row.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                      <td style={{ padding: '12px 8px' }}>{row.nome}</td>
+                      <td style={{ padding: '12px 8px', color: '#94a3b8', fontSize: '12px' }}>{row.posto}</td>
                     </tr>
-                  )
-                })}
-              </tbody>
-            </table>
+                  ))}
+                </tbody>
+              </table>
+            ) : (<div style={{color: '#94a3b8', padding: '12px'}}>Sem registros.</div>)}
           </div>
         </div>
       </div>
@@ -977,33 +961,42 @@ const App = () => {
               <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                 <thead>
                   <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', color: '#94a3b8' }}>
+                    <th style={{ padding: '12px 8px', fontWeight: 500 }}>Posição</th>
                     <th style={{ padding: '12px 8px', fontWeight: 500 }}>Nome do Colaborador</th>
                     <th style={{ padding: '12px 8px', fontWeight: 500, textAlign: 'center' }}>Total</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {atestadosRanking.map((row, idx) => (
-                    <tr 
-                      key={idx} 
-                      onClick={() => setSelectedAtestadoPerson(row)}
-                      style={{ 
-                        borderBottom: '1px solid rgba(255,255,255,0.05)', 
-                        background: `rgba(${row.cor === '#ef4444' ? '239, 68, 68' : row.cor === '#f59e0b' ? '245, 158, 11' : '16, 185, 129'}, 0.1)`,
-                        cursor: 'pointer',
-                        transition: 'all 0.2s'
-                      }}
-                      onMouseOver={(e) => e.currentTarget.style.filter = 'brightness(1.2)'}
-                      onMouseOut={(e) => e.currentTarget.style.filter = 'brightness(1)'}
-                    >
-                      <td style={{ padding: '12px 8px' }}>
-                        <div>{row.nome}</div>
-                        <div style={{ fontSize: '11px', color: '#94a3b8' }}>{row.cliente}</div>
-                      </td>
-                      <td style={{ padding: '12px 8px', color: row.cor, fontWeight: 700, textAlign: 'center', fontSize: '18px' }}>
-                        {row.total}
-                      </td>
-                    </tr>
-                  ))}
+                  {atestadosRanking.map((row, idx) => {
+                    let badge = <span style={{ color: '#94a3b8' }}>{idx + 1}º</span>;
+                    if (idx === 0) badge = <span style={{ fontSize: '18px' }}>🏆</span>;
+                    if (idx === 1) badge = <span style={{ fontSize: '18px' }}>🥈</span>;
+                    if (idx === 2) badge = <span style={{ fontSize: '18px' }}>🥉</span>;
+
+                    return (
+                      <tr 
+                        key={idx} 
+                        onClick={() => setSelectedAtestadoPerson(row)}
+                        style={{ 
+                          borderBottom: '1px solid rgba(255,255,255,0.05)', 
+                          background: `rgba(${row.cor === '#ef4444' ? '239, 68, 68' : row.cor === '#f59e0b' ? '245, 158, 11' : '16, 185, 129'}, 0.1)`,
+                          cursor: 'pointer',
+                          transition: 'all 0.2s'
+                        }}
+                        onMouseOver={(e) => e.currentTarget.style.filter = 'brightness(1.2)'}
+                        onMouseOut={(e) => e.currentTarget.style.filter = 'brightness(1)'}
+                      >
+                        <td style={{ padding: '12px 8px', width: '50px', textAlign: 'center' }}>{badge}</td>
+                        <td style={{ padding: '12px 8px' }}>
+                          <div>{row.nome}</div>
+                          <div style={{ fontSize: '11px', color: '#94a3b8' }}>{row.cliente}</div>
+                        </td>
+                        <td style={{ padding: '12px 8px', color: row.cor, fontWeight: 700, textAlign: 'center', fontSize: '18px' }}>
+                          {row.total}
+                        </td>
+                      </tr>
+                    )
+                  })}
                 </tbody>
               </table>
             ) : (
