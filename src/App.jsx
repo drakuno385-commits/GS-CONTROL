@@ -94,6 +94,15 @@ const App = () => {
 
   // Calculated States for Frota
   const [frotaDesempenho, setFrotaDesempenho] = useState([]); 
+
+  const uniqueClientesAtestados = useMemo(() => {
+    if (activeMenu !== 'atestados') return [];
+    const set = new Set();
+    rawAtestados.forEach(row => {
+      if (row.nomecli) set.add(row.nomecli.toString().toUpperCase().trim());
+    });
+    return Array.from(set).sort();
+  }, [rawAtestados, activeMenu]);
   const [frotaConsumo, setFrotaConsumo] = useState([]); 
   const [frotaRanking, setFrotaRanking] = useState([]); 
   const [frotaCombustivel, setFrotaCombustivel] = useState([]); 
@@ -1484,6 +1493,35 @@ const App = () => {
                   }} 
                 />
               </div>
+
+              {activeMenu === 'atestados' && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <label style={{ color: '#94a3b8', fontSize: '14px', fontWeight: 500 }}>Cliente:</label>
+                  <select 
+                    value={filters.cliente || ''}
+                    onChange={(e) => {
+                      setAllFilters({ 
+                        ...allFilters, 
+                        [activeMenu]: { ...filters, cliente: e.target.value } 
+                      });
+                    }}
+                    style={{ 
+                      background: 'rgba(255,255,255,0.05)', 
+                      border: '1px solid rgba(255,255,255,0.1)', 
+                      color: '#e2e8f0', 
+                      padding: '8px 12px', 
+                      borderRadius: '8px',
+                      outline: 'none',
+                      maxWidth: '200px'
+                    }}
+                  >
+                    <option value="">Todos os Clientes</option>
+                    {uniqueClientesAtestados.map(c => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               <label className="upload-btn">
                 <input type="file" onChange={handleFileUpload} />
