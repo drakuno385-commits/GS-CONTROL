@@ -67,7 +67,7 @@ const SupervisorApp = ({ currentUser }) => {
       return;
     }
     
-    const posto = postos.find(p => p.id === selectedPostoId);
+    const posto = postos.find(p => p.id.toString() === selectedPostoId.toString());
     const novaVisita = {
       postoId: posto.id,
       codcli: posto.codcli,
