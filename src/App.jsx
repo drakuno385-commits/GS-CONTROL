@@ -842,7 +842,7 @@ const App = () => {
     }
 
     const csvRows = [
-      ['RE', 'NOME', 'DATA DA FALTA', 'POSTO', 'AREA'].join(';')
+      ['RE', 'NOME', 'DATA DA FALTA', 'AREA'].join(';')
     ];
     
     faltasData.forEach(row => {
@@ -850,7 +850,6 @@ const App = () => {
         row.re || '',
         row.nome || '',
         row.data || '',
-        row.posto || '',
         row.area || ''
       ].map(v => `"${v}"`);
       csvRows.push(rowData.join(';'));
