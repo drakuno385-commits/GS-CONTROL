@@ -86,6 +86,7 @@ const App = () => {
   const [atestadosRanking, setAtestadosRanking] = useState([]);
   const [atestadosPorCliente, setAtestadosPorCliente] = useState([]);
   const [selectedAtestadoPerson, setSelectedAtestadoPerson] = useState(null);
+  const [totalsAtestados, setTotalsAtestados] = useState({ diasPerdidos: 0, totalColaboradores: 0, clienteCritico: 'Nenhum' });
 
   // Calculated States for Frota
   const [frotaDesempenho, setFrotaDesempenho] = useState([]); 
@@ -500,8 +501,13 @@ const App = () => {
       .sort((a, b) => b.total - a.total)
       .slice(0, 15);
       
-    setAtestadosRanking(arrAtestados.slice(0, 50)); // Top 50 campeões
-    setAtestadosPorCliente(arrAtestCliente);
+      let totalDias = 0;
+      arrAtestados.forEach(p => totalDias += p.total);
+      const critico = arrAtestCliente.length > 0 ? arrAtestCliente[0].cliente : 'Nenhum';
+
+      setAtestadosRanking(arrAtestados.slice(0, 50)); // Top 50 campeões
+      setAtestadosPorCliente(arrAtestCliente);
+      setTotalsAtestados({ diasPerdidos: totalDias, totalColaboradores: arrAtestados.length, clienteCritico: critico });
 
   }, [rawAtestados, filters]);
 
@@ -951,6 +957,21 @@ const App = () => {
 
   const renderAtestados = () => (
     <>
+      <div className="stats-grid" style={{ marginBottom: '24px' }}>
+        <div className="card stat-card glass-panel">
+          <div className="stat-title">Total de Dias Perdidos</div>
+          <div className="stat-value" style={{ color: '#ef4444' }}>{totalsAtestados.diasPerdidos}</div>
+        </div>
+        <div className="card stat-card glass-panel">
+          <div className="stat-title">Colaboradores Afastados</div>
+          <div className="stat-value" style={{ color: '#f59e0b' }}>{totalsAtestados.totalColaboradores}</div>
+        </div>
+        <div className="card stat-card glass-panel" style={{ borderColor: 'var(--border-color)' }}>
+          <div className="stat-title" style={{ color: '#10b981' }}>Cliente Crítico (1º)</div>
+          <div className="stat-value" style={{ color: '#10b981', fontSize: '20px' }}>{totalsAtestados.clienteCritico}</div>
+        </div>
+      </div>
+      
       <div className="charts-grid" style={{ gridTemplateColumns: '1fr 1fr' }}>
         <div className="card chart-card glass-panel" style={{ overflowY: 'auto', maxHeight: '600px' }}>
           <div className="chart-header" style={{ marginBottom: '16px' }}>
