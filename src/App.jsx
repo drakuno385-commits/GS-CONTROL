@@ -34,6 +34,7 @@ const App = () => {
 
   useEffect(() => {
     localStorage.setItem('acoweb_menu', activeMenu);
+    setFilters({ dataInicio: '', dataFim: '', cliente: '', posto: '' });
   }, [activeMenu]);
 
   useEffect(() => {
