@@ -71,6 +71,7 @@ const App = () => {
   const [rawPresencas, setRawPresencas] = useState([]);
   const [rawFrota, setRawFrota] = useState([]);
   const [rawDisciplina, setRawDisciplina] = useState([]);
+  const [rawAtestados, setRawAtestados] = useState([]);
 
   // Filters State
   const [filters, setFilters] = useState({ dataInicio: '', dataFim: '', cliente: '', posto: '' });
@@ -172,6 +173,9 @@ const App = () => {
 
       const dData = await fetchAll('disciplina');
       if (dData.length > 0) setRawDisciplina(dData);
+      
+      const aData = await fetchAll('atestados');
+      if (aData.length > 0) setRawAtestados(aData);
       
       setLastSync(new Date().toLocaleTimeString());
     } catch (error) {
@@ -381,8 +385,6 @@ const App = () => {
     const globalFaltas = new Set();
     const globalFolgas = new Set();
     const globalFolgasTrab = new Set();
-    const atestadoData = {};
-    const atestadoClienteData = {};
     
     rawPresencas.forEach(row => {
       if (!checkFilters(row, 'data', 'cliente')) return;
@@ -405,21 +407,6 @@ const App = () => {
         if (!faltasData[tipoFalta]) faltasData[tipoFalta] = new Set();
         faltasData[tipoFalta].add(uniqueEventId);
         globalFaltas.add(uniqueEventId);
-      }
-      
-      if (sithoje.includes("ATESTADO")) {
-        const clienteGrpAtest = row.cliente ? row.cliente.trim() : (row.posto ? row.posto.trim() : "Sem Cliente");
-        const pessoaNome = row.nome ? row.nome.toUpperCase().trim() : (row.re ? row.re.toString().trim() : "DESCONHECIDO");
-        
-        if (!atestadoData[pessoaNome]) atestadoData[pessoaNome] = { nome: pessoaNome, dias: [], cliente: clienteGrpAtest, total: 0 };
-        // avoid duplicate events for the same day
-        if (!atestadoData[pessoaNome].dias.some(d => d.data === row.data)) {
-          atestadoData[pessoaNome].dias.push({ data: row.data, posto: row.posto || clienteGrpAtest });
-          atestadoData[pessoaNome].total++;
-        }
-        
-        if (!atestadoClienteData[clienteGrpAtest]) atestadoClienteData[clienteGrpAtest] = new Set();
-        atestadoClienteData[clienteGrpAtest].add(uniqueEventId);
       }
       
       const clienteGrp = row.cliente ? row.cliente.trim() : (row.posto ? row.posto.trim() : "Sem Cliente");
@@ -463,6 +450,41 @@ const App = () => {
       arrFaltas.push({ name: 'Outros', value: faltasSorted.slice(5).reduce((acc, curr) => acc + curr.value, 0) });
     }
 
+    setPresencaDiaria(arrPresenca);
+    setTiposDeFalta(arrFaltas);
+    setFolgasTrabalhadas(folgasSorted.slice(0, 10));
+    setTotalsRH(prev => ({ ...prev, efetivo: totalEfetivo, faltas: globalFaltas.size, folgas: globalFolgasTrab.size }));
+  }, [rawEfetivos, rawPresencas, filters]);
+
+  // Process Atestados
+  useEffect(() => {
+    const atestadoData = {};
+    const atestadoClienteData = {};
+
+    rawAtestados.forEach(row => {
+      // Basic filtering by client
+      if (filters.cliente && row.nomecli && row.nomecli.toString().toUpperCase().trim() !== filters.cliente.toString().toUpperCase().trim()) return;
+
+      const pessoaNome = row.nomevigil ? row.nomevigil.toUpperCase().trim() : (row.codvigil ? row.codvigil.toString().trim() : "DESCONHECIDO");
+      const clienteGrpAtest = row.nomecli ? row.nomecli.trim() : "Sem Cliente";
+      const dias = parseFloatBR(row.tot_dias || 0);
+      
+      if (!atestadoData[pessoaNome]) atestadoData[pessoaNome] = { nome: pessoaNome, dias: [], cliente: clienteGrpAtest, total: 0 };
+      
+      atestadoData[pessoaNome].dias.push({ 
+        data: (row.iniocor || '') + ' a ' + (row.fimocor || ''), 
+        posto: clienteGrpAtest,
+        doenca: row.doenca || row.codcid || 'Não informada',
+        hosp: row.nomehosp || 'Não informado',
+        medico: row.nomemedi || 'Não informado',
+        crm: row.crm || ''
+      });
+      atestadoData[pessoaNome].total += dias;
+
+      if (!atestadoClienteData[clienteGrpAtest]) atestadoClienteData[clienteGrpAtest] = 0;
+      atestadoClienteData[clienteGrpAtest] += dias;
+    });
+
     const arrAtestados = Object.values(atestadoData)
       .sort((a, b) => b.total - a.total)
       .map(p => {
@@ -473,18 +495,14 @@ const App = () => {
       });
       
     const arrAtestCliente = Object.keys(atestadoClienteData)
-      .map(k => ({ cliente: k, total: atestadoClienteData[k].size }))
+      .map(k => ({ cliente: k, total: atestadoClienteData[k] }))
       .sort((a, b) => b.total - a.total)
       .slice(0, 15);
       
     setAtestadosRanking(arrAtestados.slice(0, 50)); // Top 50 campeões
     setAtestadosPorCliente(arrAtestCliente);
 
-    setPresencaDiaria(arrPresenca);
-    setTiposDeFalta(arrFaltas);
-    setFolgasTrabalhadas(folgasSorted.slice(0, 10));
-    setTotalsRH(prev => ({ ...prev, efetivo: totalEfetivo, faltas: globalFaltas.size, folgas: globalFolgasTrab.size }));
-  }, [rawEfetivos, rawPresencas, filters]);
+  }, [rawAtestados, filters]);
 
   const processFrotaCSV = (data) => {
     let totCusto = 0;
@@ -592,7 +610,8 @@ const App = () => {
         const hasField = (keyStr) => firstRowKeys.some(k => k.toLowerCase().trim() === keyStr.toLowerCase());
 
         let sheetType = 'unknown';
-        if (hasField('nomevigil')) sheetType = 'efetivos';
+        if (hasField('tot_dias') || hasField('nomehosp')) sheetType = 'atestados';
+        else if (hasField('nomevigil')) sheetType = 'efetivos';
         else if (hasField('nomeocor') || hasField('codocor')) sheetType = 'disciplina';
         else if (hasField('sithoje')) sheetType = 'presencas';
         else if (hasField('placa')) sheetType = 'frota';
@@ -601,7 +620,7 @@ const App = () => {
         if (activeMenu === 'rh' && (sheetType === 'efetivos' || sheetType === 'presencas')) isValidForPage = true;
         else if (activeMenu === 'disciplina' && sheetType === 'disciplina') isValidForPage = true;
         else if (activeMenu === 'frota' && sheetType === 'frota') isValidForPage = true;
-        else if (activeMenu === 'atestados' && sheetType === 'presencas') isValidForPage = true;
+        else if (activeMenu === 'atestados' && sheetType === 'atestados') isValidForPage = true;
 
         if (!isValidForPage) {
           alert("Esta planilha não pertence a esta página. Por favor, acesse o menu correto antes de importar.");
@@ -620,7 +639,14 @@ const App = () => {
           uploadToSupabase('presencas', data, row => ({ 
             data: getField(row, 'data'), cliente: getField(row, 'cliente'), sithoje: getField(row, 'sithoje'), posto: getField(row, 'posto'), re: getField(row, 're'), nome: getField(row, 'nome'), tipo: getField(row, 'tipo') 
           }), false);
-        } else if (hasField('placa')) {
+        } else if (sheetType === 'atestados') {
+          uploadToSupabase('atestados', data, row => ({
+            codvigil: getField(row, 'codvigil'), nomevigil: getField(row, 'nomevigil'), nomeocor: getField(row, 'nomeocor'), dtadmissao: getField(row, 'dtadmissao'),
+            codcli: getField(row, 'codcli'), nomecli: getField(row, 'nomecli'), codpos: getField(row, 'codpos'), iniocor: getField(row, 'iniocor'),
+            fimocor: getField(row, 'fimocor'), tot_dias: parseFloatBR(getField(row, 'tot_dias')), codcid: getField(row, 'codcid'), doenca: getField(row, 'doenca'),
+            codhosp: getField(row, 'codhosp'), nomehosp: getField(row, 'nomehosp'), crm: getField(row, 'crm'), nomemedi: getField(row, 'nomemedi')
+          }), true);
+        } else if (sheetType === 'frota') {
           setActiveMenu('frota');
           const mapped = data.map(row => ({
             placa: getField(row, 'placa'), data: getField(row, 'data'), motorista: getField(row, 'motorista'), produto: getField(row, 'produto'),
@@ -1009,15 +1035,19 @@ const App = () => {
               <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                 <thead style={{ position: 'sticky', top: 0, background: '#1e293b' }}>
                   <tr style={{ color: '#94a3b8' }}>
-                    <th style={{ padding: '12px 16px', fontWeight: 500 }}>Data do Atestado</th>
-                    <th style={{ padding: '12px 16px', fontWeight: 500 }}>Posto / Cliente</th>
+                    <th style={{ padding: '12px 16px', fontWeight: 500 }}>Período</th>
+                    <th style={{ padding: '12px 16px', fontWeight: 500 }}>Diagnóstico / Hospital</th>
                   </tr>
                 </thead>
                 <tbody>
                   {selectedAtestadoPerson.dias.map((d, idx) => (
                     <tr key={idx} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                       <td style={{ padding: '12px 16px', color: '#e2e8f0' }}>{d.data}</td>
-                      <td style={{ padding: '12px 16px', color: '#94a3b8', fontSize: '12px' }}>{d.posto}</td>
+                      <td style={{ padding: '12px 16px' }}>
+                        <div style={{ color: '#e2e8f0', fontSize: '13px', fontWeight: 600 }}>{d.doenca}</div>
+                        <div style={{ color: '#94a3b8', fontSize: '12px', marginTop: '4px' }}>Hospital: {d.hosp}</div>
+                        <div style={{ color: '#94a3b8', fontSize: '12px' }}>Médico: {d.medico} {d.crm ? `(CRM: ${d.crm})` : ''}</div>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
