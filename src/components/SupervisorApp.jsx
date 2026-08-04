@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Camera, UploadCloud, MapPin, Building, CheckCircle, Loader2, X, Plus, Clock, Play } from 'lucide-react';
+import { Camera, UploadCloud, MapPin, Building, CheckCircle, Loader2, X, Plus, Clock, Play, Activity } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 
 const SupervisorApp = ({ currentUser }) => {
