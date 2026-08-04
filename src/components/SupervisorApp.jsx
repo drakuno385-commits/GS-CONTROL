@@ -68,6 +68,11 @@ const SupervisorApp = ({ currentUser }) => {
     }
     
     const posto = postos.find(p => p.id.toString() === selectedPostoId.toString());
+    if (!posto) {
+      alert("Erro ao localizar as informações do posto selecionado. Atualize a página e tente novamente.");
+      return;
+    }
+    
     const novaVisita = {
       postoId: posto.id,
       codcli: posto.codcli,
