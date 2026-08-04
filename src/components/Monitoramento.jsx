@@ -224,7 +224,7 @@ const Monitoramento = ({ currentUser }) => {
                         >
                           <Trash2 size={16} />
                         </button>
-                      )}   )}
+                      )}
                     </div>
                   </td>
                 </tr>
