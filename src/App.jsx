@@ -206,7 +206,11 @@ const App = () => {
     
     setSyncProgress(100);
     setSyncStatus('Sincronização concluída!');
-    setTimeout(() => { setIsSyncing(false); setLastSync(new Date().toLocaleTimeString()); }, 2000);
+    setTimeout(() => { 
+      setIsSyncing(false); 
+      setLastSync(new Date().toLocaleTimeString());
+      fetchFromSupabase(); 
+    }, 2000);
   };
 
   // --- FILTERING LOGIC --- //
