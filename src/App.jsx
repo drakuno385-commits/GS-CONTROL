@@ -364,7 +364,7 @@ const App = () => {
     const arrEfetivo = Object.keys(efetivoCliente)
       .map(key => {
         let label = key;
-        if (label.length > 28) label = label.substring(0, 28) + '...';
+        if (label.length > 22) label = label.substring(0, 22) + '...';
         return { cliente: label, efetivo: efetivoCliente[key], fullCliente: key };
       })
       .sort((a, b) => b.efetivo - a.efetivo)
@@ -617,7 +617,7 @@ const App = () => {
           <div className="chart-wrapper">
             {efetivoPorCliente.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={efetivoPorCliente} layout="vertical" margin={{ top: 5, right: 40, left: 160, bottom: 5 }}>
+                <BarChart data={efetivoPorCliente} layout="vertical" margin={{ top: 5, right: 40, left: 120, bottom: 5 }}>
                   <defs>
                     <linearGradient id="colorEfetivo" x1="0" y1="0" x2="1" y2="0">
                       <stop offset="5%" stopColor="#6366f1" stopOpacity={1}/>
@@ -626,9 +626,9 @@ const App = () => {
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" horizontal={true} vertical={false}/>
                   <XAxis type="number" stroke="#94a3b8" hide />
-                  <YAxis dataKey="cliente" type="category" stroke="#94a3b8" width={160} tick={{fontSize: 10}} axisLine={false} tickLine={false} />
+                  <YAxis dataKey="cliente" type="category" stroke="#94a3b8" width={130} tick={{fontSize: 11}} axisLine={false} tickLine={false} />
                   <Tooltip content={<CustomEfetivoTooltip />} cursor={{fill: 'rgba(255,255,255,0.03)'}} />
-                  <Bar dataKey="efetivo" fill="url(#colorEfetivo)" radius={[0, 4, 4, 0]} barSize={16}>
+                  <Bar dataKey="efetivo" fill="url(#colorEfetivo)" radius={[0, 4, 4, 0]} barSize={20}>
                     <LabelList dataKey="efetivo" position="right" fill="#e2e8f0" fontSize={11} fontWeight={600} />
                   </Bar>
                 </BarChart>
