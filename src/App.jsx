@@ -1436,12 +1436,46 @@ const App = () => {
 
       <main className="main-content">
         <header className="header" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <div style={{ display: 'flex', width: '100%', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', width: '100%', justifyContent: 'space-between', alignItems: 'center' }}>
             <h1>Painel de Controle</h1>
-            <label className="upload-btn">
-              <input type="file" onChange={handleFileUpload} />
-              Importar Planilha
-            </label>
+            
+            <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <label style={{ color: '#94a3b8', fontSize: '14px', fontWeight: 500 }}>Mês Referência:</label>
+                <input 
+                  type="month" 
+                  value={filters.dataInicio ? filters.dataInicio.substring(0, 7) : ''}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (!val) {
+                      setFilters({ ...filters, dataInicio: '', dataFim: '' });
+                    } else {
+                      const [year, month] = val.split('-');
+                      const lastDay = new Date(year, month, 0).getDate();
+                      setFilters({ 
+                        ...filters, 
+                        dataInicio: `${val}-01`, 
+                        dataFim: `${val}-${lastDay}` 
+                      });
+                    }
+                  }}
+                  style={{ 
+                    background: 'rgba(255,255,255,0.05)', 
+                    border: '1px solid rgba(255,255,255,0.1)', 
+                    color: '#e2e8f0', 
+                    padding: '8px 12px', 
+                    borderRadius: '8px',
+                    outline: 'none',
+                    colorScheme: 'dark'
+                  }} 
+                />
+              </div>
+
+              <label className="upload-btn">
+                <input type="file" onChange={handleFileUpload} />
+                Importar Planilha
+              </label>
+            </div>
           </div>
         </header>
 
