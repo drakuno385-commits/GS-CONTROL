@@ -602,7 +602,7 @@ const App = () => {
             re: getField(row, 're'), nome: getField(row, 'nome'), data: getField(row, 'data'), codocor: getField(row, 'codocor'), nomeocor: getField(row, 'nomeocor'), tipo: getField(row, 'tipo'), area: getField(row, 'area') 
           }), true);
         } else if (hasField('sithoje')) {
-          setActiveMenu('rh');
+          setActiveMenu(prev => (prev === 'atestados' || prev === 'rh') ? prev : 'rh');
           uploadToSupabase('presencas', data, row => ({ 
             data: getField(row, 'data'), cliente: getField(row, 'cliente'), sithoje: getField(row, 'sithoje'), posto: getField(row, 'posto'), re: getField(row, 're'), nome: getField(row, 'nome'), tipo: getField(row, 'tipo') 
           }), false);
