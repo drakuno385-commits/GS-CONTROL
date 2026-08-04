@@ -103,6 +103,27 @@ const App = () => {
     });
     return Array.from(set).sort();
   }, [rawAtestados, activeMenu]);
+
+  const uniqueClientesRH = useMemo(() => {
+    if (activeMenu !== 'rh') return [];
+    const set = new Set();
+    rawEfetivos.forEach(row => {
+      if (row.cliente) set.add(row.cliente.toString().toUpperCase().trim());
+    });
+    rawPresencas.forEach(row => {
+      if (row.cliente) set.add(row.cliente.toString().toUpperCase().trim());
+    });
+    return Array.from(set).sort();
+  }, [rawEfetivos, rawPresencas, activeMenu]);
+
+  const uniqueAreasDisciplina = useMemo(() => {
+    if (activeMenu !== 'disciplina') return [];
+    const set = new Set();
+    rawDisciplina.forEach(row => {
+      if (row.area) set.add(row.area.toString().toUpperCase().trim());
+    });
+    return Array.from(set).sort();
+  }, [rawDisciplina, activeMenu]);
   const [frotaConsumo, setFrotaConsumo] = useState([]); 
   const [frotaRanking, setFrotaRanking] = useState([]); 
   const [frotaCombustivel, setFrotaCombustivel] = useState([]); 
@@ -275,10 +296,10 @@ const App = () => {
     return true;
   };
 
-  useEffect(() => {
-    processFrotaCSV(rawFrota.filter(r => checkFilters(r, 'data', null)));
-    processDisciplinaCSV(rawDisciplina.filter(r => checkFilters(r, 'data', null)));
-  }, [rawFrota, rawDisciplina, filters]);
+    useEffect(() => {
+      processFrotaCSV(rawFrota.filter(r => checkFilters(r, 'data', null)));
+      processDisciplinaCSV(rawDisciplina.filter(r => checkFilters(r, 'data', 'area')));
+    }, [rawFrota, rawDisciplina, filters]);
 
   const parseFloatBR = (val) => {
     if (!val) return 0;
@@ -1459,9 +1480,10 @@ const App = () => {
           <div style={{ display: 'flex', width: '100%', justifyContent: 'space-between', alignItems: 'center' }}>
             <h1>Painel de Controle</h1>
             
-            <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <label style={{ color: '#94a3b8', fontSize: '14px', fontWeight: 500 }}>Mês Referência:</label>
+            <div style={{ display: 'flex', gap: '20px', alignItems: 'center', background: 'rgba(30, 41, 59, 0.4)', padding: '8px 16px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', backdropFilter: 'blur(10px)' }}>
+              
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <label style={{ color: '#cbd5e1', fontSize: '13px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Mês Ref:</label>
                 <input 
                   type="month" 
                   value={filters.dataInicio ? filters.dataInicio.substring(0, 7) : ''}
@@ -1483,46 +1505,64 @@ const App = () => {
                     }
                   }}
                   style={{ 
-                    background: 'rgba(255,255,255,0.05)', 
-                    border: '1px solid rgba(255,255,255,0.1)', 
-                    color: '#e2e8f0', 
-                    padding: '8px 12px', 
+                    background: 'rgba(15, 23, 42, 0.6)', 
+                    border: '1px solid rgba(148, 163, 184, 0.2)', 
+                    color: '#f8fafc', 
+                    padding: '6px 12px', 
                     borderRadius: '8px',
                     outline: 'none',
-                    colorScheme: 'dark'
+                    colorScheme: 'dark',
+                    fontSize: '14px',
+                    transition: 'all 0.2s',
+                    cursor: 'pointer'
                   }} 
+                  onMouseOver={(e) => e.target.style.borderColor = 'rgba(148, 163, 184, 0.5)'}
+                  onMouseOut={(e) => e.target.style.borderColor = 'rgba(148, 163, 184, 0.2)'}
                 />
               </div>
 
-              {activeMenu === 'atestados' && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <label style={{ color: '#94a3b8', fontSize: '14px', fontWeight: 500 }}>Cliente:</label>
-                  <select 
-                    value={filters.cliente || ''}
-                    onChange={(e) => {
-                      setAllFilters({ 
-                        ...allFilters, 
-                        [activeMenu]: { ...filters, cliente: e.target.value } 
-                      });
-                    }}
-                    style={{ 
-                      background: 'rgba(255,255,255,0.05)', 
-                      border: '1px solid rgba(255,255,255,0.1)', 
-                      color: '#e2e8f0', 
-                      padding: '8px 12px', 
-                      borderRadius: '8px',
-                      outline: 'none',
-                      maxWidth: '200px'
-                    }}
-                  >
-                    <option value="">Todos os Clientes</option>
-                    {uniqueClientesAtestados.map(c => (
-                      <option key={c} value={c}>{c}</option>
-                    ))}
-                  </select>
-                </div>
+              {(activeMenu === 'rh' || activeMenu === 'atestados' || activeMenu === 'disciplina') && (
+                <>
+                  <div style={{ width: '1px', height: '24px', background: 'rgba(255,255,255,0.1)' }}></div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <label style={{ color: '#cbd5e1', fontSize: '13px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                      {activeMenu === 'disciplina' ? 'Área:' : 'Cliente:'}
+                    </label>
+                    <select 
+                      value={filters.cliente || ''}
+                      onChange={(e) => {
+                        setAllFilters({ 
+                          ...allFilters, 
+                          [activeMenu]: { ...filters, cliente: e.target.value } 
+                        });
+                      }}
+                      style={{ 
+                        background: 'rgba(15, 23, 42, 0.6)', 
+                        border: '1px solid rgba(148, 163, 184, 0.2)', 
+                        color: '#f8fafc', 
+                        padding: '6px 12px', 
+                        borderRadius: '8px',
+                        outline: 'none',
+                        maxWidth: '220px',
+                        fontSize: '14px',
+                        transition: 'all 0.2s',
+                        cursor: 'pointer',
+                        appearance: 'auto'
+                      }}
+                      onMouseOver={(e) => e.target.style.borderColor = 'rgba(148, 163, 184, 0.5)'}
+                      onMouseOut={(e) => e.target.style.borderColor = 'rgba(148, 163, 184, 0.2)'}
+                    >
+                      <option value="">Todos os {activeMenu === 'disciplina' ? 'Setores' : 'Clientes'}</option>
+                      {activeMenu === 'rh' && uniqueClientesRH.map(c => <option key={c} value={c}>{c}</option>)}
+                      {activeMenu === 'atestados' && uniqueClientesAtestados.map(c => <option key={c} value={c}>{c}</option>)}
+                      {activeMenu === 'disciplina' && uniqueAreasDisciplina.map(c => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                  </div>
+                </>
               )}
+            </div>
 
+            <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
               <label className="upload-btn">
                 <input type="file" onChange={handleFileUpload} />
                 Importar Planilha
