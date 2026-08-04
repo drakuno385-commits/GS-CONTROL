@@ -614,7 +614,7 @@ const App = () => {
       <div className="charts-grid" style={{ gridTemplateColumns: '1fr 1fr', marginBottom: '24px' }}>
         <div className="card chart-card glass-panel">
           <div className="chart-header"><div className="chart-title">Efetivo por Cliente (Top 10)</div></div>
-          <div className="chart-wrapper">
+          <div className="chart-wrapper" style={{ minHeight: '380px' }}>
             {efetivoPorCliente.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={efetivoPorCliente} layout="vertical" margin={{ top: 5, right: 40, left: 160, bottom: 5 }}>
@@ -626,9 +626,9 @@ const App = () => {
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" horizontal={true} vertical={false}/>
                   <XAxis type="number" stroke="#94a3b8" hide />
-                  <YAxis dataKey="cliente" type="category" stroke="#94a3b8" width={160} tick={{fontSize: 10}} axisLine={false} tickLine={false} />
+                  <YAxis dataKey="cliente" type="category" stroke="#94a3b8" width={160} tick={{fontSize: 11}} axisLine={false} tickLine={false} />
                   <Tooltip content={<CustomEfetivoTooltip />} cursor={{fill: 'rgba(255,255,255,0.03)'}} />
-                  <Bar dataKey="efetivo" fill="url(#colorEfetivo)" radius={[0, 4, 4, 0]} barSize={16}>
+                  <Bar dataKey="efetivo" fill="url(#colorEfetivo)" radius={[0, 4, 4, 0]} barSize={22}>
                     <LabelList dataKey="efetivo" position="right" fill="#e2e8f0" fontSize={11} fontWeight={600} />
                   </Bar>
                 </BarChart>
