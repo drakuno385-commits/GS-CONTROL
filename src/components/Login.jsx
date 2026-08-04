@@ -103,8 +103,45 @@ export default function Login({ onLoginSuccess }) {
     <div style={{ display: 'flex', minHeight: '100vh', width: '100vw', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-main)' }}>
       <div className="card glass-panel" style={{ width: '100%', maxWidth: '400px', padding: '40px' }}>
         <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+          <style>
+            {`
+              @keyframes slowSpin {
+                from { transform: rotate(0deg); }
+                to { transform: rotate(360deg); }
+              }
+              @keyframes pulseGlow {
+                0% { box-shadow: 0 0 10px rgba(96, 165, 250, 0.2); }
+                50% { box-shadow: 0 0 30px rgba(167, 139, 250, 0.6); }
+                100% { box-shadow: 0 0 10px rgba(96, 165, 250, 0.2); }
+              }
+            `}
+          </style>
+          
+          <div style={{ 
+            width: '120px', 
+            height: '120px', 
+            margin: '0 auto 20px', 
+            borderRadius: '50%',
+            padding: '4px',
+            background: 'linear-gradient(135deg, #60a5fa, #a78bfa)',
+            animation: 'slowSpin 20s linear infinite, pulseGlow 4s ease-in-out infinite'
+          }}>
+            <img 
+              src="/logo.jpg" 
+              alt="GSolimpio" 
+              style={{ 
+                width: '100%', 
+                height: '100%', 
+                objectFit: 'cover', 
+                borderRadius: '50%',
+                border: '4px solid #0f172a',
+                animation: 'slowSpin 20s linear infinite reverse' /* Keeps image upright while border spins */
+              }} 
+            />
+          </div>
+
           <h1 style={{ fontSize: '28px', background: 'linear-gradient(135deg, #60a5fa, #a78bfa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', fontWeight: 'bold' }}>GS-Control</h1>
-          <p style={{ color: 'var(--text-muted)', marginTop: '8px' }}>Controle Operacional</p>
+          <p style={{ color: 'var(--text-muted)', marginTop: '8px' }}>Controle Operacional - GSolimpio</p>
         </div>
 
         {error && (
