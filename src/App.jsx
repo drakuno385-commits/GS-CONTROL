@@ -1404,12 +1404,6 @@ const App = () => {
                         <nav className="nav-menu">
           {currentUser.role !== 'SUPERVISOR' && (
             <>
-              {hasAccess(currentUser, 'dashboard') && (
-                <a className={`nav-item ${activeMenu === 'dashboard' ? 'active' : ''}`} onClick={() => setActiveMenu('dashboard')}>
-                  <Activity size={20} />
-                  <span>Visão Executiva</span>
-                </a>
-              )}
               {hasAccess(currentUser, 'rh') && (
                 <a className={`nav-item ${activeMenu === 'rh' ? 'active' : ''}`} onClick={() => setActiveMenu('rh')}>
                   <Users size={20} />
