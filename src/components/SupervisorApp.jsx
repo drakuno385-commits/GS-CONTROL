@@ -8,7 +8,7 @@ const getBRTString = () => {
   const parts = new Intl.DateTimeFormat('en-GB', options).formatToParts(d);
   const p = {};
   parts.forEach(part => p[part.type] = part.value);
-  return `${p.year}-${p.month}-${p.day} ${p.hour}:${p.minute}:${p.second}`;
+  return `${p.year}-${p.month}-${p.day}T${p.hour}:${p.minute}:${p.second}-03:00`;
 };
 
 const SupervisorApp = ({ currentUser }) => {
