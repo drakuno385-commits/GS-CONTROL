@@ -198,10 +198,30 @@ const App = () => {
       for (let i = 0; i < chunks.length; i += 5) {
         const batch = chunks.slice(i, i + 5);
         const batchPromises = batch.map(c => 
-          supabase.from(table).select('*').range(c.from, c.to).then(({ data }) => data || [])
+          supabase.from(table).select('*').range(c.from, c.to)
         );
         const batchResults = await Promise.all(batchPromises);
-        results.push(...batchResults.flat());
+        batchResults.forEach(({ data: chunkData }) => {
+          if (chunkData) {
+            if (table === 'visitas') {
+              chunkData.forEach(v => {
+                if (v.hora_chegada) {
+                  let d = new Date(v.hora_chegada);
+                  const now = new Date();
+                  while (d > now) { d.setHours(d.getHours() - 3); }
+                  v.hora_chegada = d.toISOString();
+                }
+                if (v.hora_saida) {
+                  let d = new Date(v.hora_saida);
+                  const now = new Date();
+                  while (d > now) { d.setHours(d.getHours() - 3); }
+                  v.hora_saida = d.toISOString();
+                }
+              });
+            }
+            results.push(...chunkData);
+          }
+        });
       }
       
       return results;
