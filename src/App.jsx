@@ -1582,7 +1582,7 @@ const App = () => {
           </div>
         </header>
 
-        {activeMenu === 'dashboard' && <Dashboard rawEfetivos={rawEfetivos} rawPresencas={rawPresencas} rawFrota={rawFrota} rawAtestados={rawAtestados} />}
+        
         {activeMenu === 'rh' && renderRH()}
         {activeMenu === 'frota' && renderFrota()}
         {activeMenu === 'disciplina' && renderDisciplina()}
