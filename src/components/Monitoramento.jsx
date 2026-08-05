@@ -47,16 +47,26 @@ const Monitoramento = ({ currentUser }) => {
       const parts = isoString.split(' ')[1].split(':');
       return `${parts[0]}:${parts[1]}`;
     }
-    try {
-      const d = new Date(isoString);
-      let h = d.getUTCHours() - 3;
-      if (h < 0) h += 24;
-      let m = d.getUTCMinutes();
-      const pad = (n) => n.toString().padStart(2, '0');
-      return `${pad(h)}:${pad(m)}`;
-    } catch (e) {
-      return isoString;
+    // Check if ends with Z or has + or - timezone offset AFTER the time part
+    const timePart = isoString.includes('T') ? isoString.split('T')[1] : '';
+    if (isoString.endsWith('Z') || timePart.includes('+') || (timePart.includes('-') && timePart.split('-').length > 1)) {
+      try {
+        const d = new Date(isoString);
+        let h = d.getUTCHours() - 3;
+        if (h < 0) h += 24;
+        let m = d.getUTCMinutes();
+        const pad = (n) => n.toString().padStart(2, '0');
+        return `${pad(h)}:${pad(m)}`;
+      } catch (e) {
+        return isoString;
+      }
+    } else {
+      if (timePart) {
+        const parts = timePart.split(':');
+        return `${parts[0]}:${parts[1]}`;
+      }
     }
+    return isoString;
   };
 
   const formatDate = (isoString) => {
