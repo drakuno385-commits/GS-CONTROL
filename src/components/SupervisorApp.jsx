@@ -68,7 +68,7 @@ const SupervisorApp = ({ currentUser }) => {
     setSelectedPostoId(''); 
   };
 
-  const postosFiltrados = postos.filter(p => p.nomecli === selectedCliente).sort((a, b) => a.nomepos.localeCompare(b.nomepos));
+  const postosFiltrados = postos.filter(p => p.nomecli === selectedCliente).sort((a, b) => (a.nomepos || '').localeCompare(b.nomepos || ''));
 
   const handleIniciarVisita = () => {
     if (!selectedPostoId) {
@@ -391,7 +391,7 @@ const SupervisorApp = ({ currentUser }) => {
               >
                 <option value="" disabled>Selecione o Posto</option>
                 {postosFiltrados.map(p => (
-                  <option key={p.id} value={p.id}>{p.codpos} - {p.nomepos}</option>
+                  <option key={p.id} value={p.id}>{p.nomepos} - Cód: {p.codpos}</option>
                 ))}
               </select>
             </div>
