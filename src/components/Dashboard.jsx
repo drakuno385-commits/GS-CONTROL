@@ -3,8 +3,6 @@ import { Users, AlertCircle, TrendingUp, Activity, Printer, DollarSign, Stethosc
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend, Cell } from 'recharts';
 
 const Dashboard = ({ rawEfetivos, rawPresencas, rawFrota, rawAtestados }) => {
-
-  // Error Boundary HOC style inside component
   try {
     // Processamento Otimizado
     const { 
@@ -117,7 +115,6 @@ const Dashboard = ({ rawEfetivos, rawPresencas, rawFrota, rawAtestados }) => {
           </div>
         </div>
 
-
         {/* HEADER DA TELA (Oculto na Impressão) */}
         <div className="print-hide" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
           <div>
@@ -183,104 +180,102 @@ const Dashboard = ({ rawEfetivos, rawPresencas, rawFrota, rawAtestados }) => {
           </div>
         </div>
 
-      {/* GRÁFICOS */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(500px, 1fr))', gap: '24px', marginBottom: '30px' }}>
-        
-        {/* Gráfico Ocorrências (Barras Duplas) */}
-        <div className="card glass-panel print-card" style={{ padding: '24px' }}>
-          <h3 style={{ color: '#f8fafc', margin: '0 0 20px 0', fontSize: '16px', display: 'flex', alignItems: 'center', gap: '8px' }} className="print-text-dark">
-            <Briefcase size={18} color="#8b5cf6" /> Absenteísmo por Posto (Top 6)
-          </h3>
-          <div style={{ height: '300px' }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={ocorrenciasPorPosto} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                <XAxis dataKey="name" stroke="#94a3b8" fontSize={11} tickFormatter={(val) => val.substring(0,10)+'...'} />
-                <YAxis stroke="#94a3b8" fontSize={11} />
-                <Tooltip 
-                  contentStyle={{ backgroundColor: 'rgba(15, 23, 42, 0.9)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }}
-                  itemStyle={{ color: '#e2e8f0' }}
-                />
-                <Legend iconType="circle" wrapperStyle={{ fontSize: '12px' }} />
-                <Bar dataKey="faltas" name="Faltas (S)" fill="#ef4444" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="atestados" name="Atestados" fill="#f59e0b" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+        {/* GRÁFICOS */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(500px, 1fr))', gap: '24px', marginBottom: '30px' }}>
+          
+          {/* Gráfico Ocorrências (Barras Duplas) */}
+          <div className="card glass-panel print-card" style={{ padding: '24px' }}>
+            <h3 style={{ color: '#f8fafc', margin: '0 0 20px 0', fontSize: '16px', display: 'flex', alignItems: 'center', gap: '8px' }} className="print-text-dark">
+              <Briefcase size={18} color="#8b5cf6" /> Absenteísmo por Posto (Top 6)
+            </h3>
+            <div style={{ height: '300px' }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={ocorrenciasPorPosto} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                  <XAxis dataKey="name" stroke="#94a3b8" fontSize={11} tickFormatter={(val) => val.substring(0,10)+'...'} />
+                  <YAxis stroke="#94a3b8" fontSize={11} />
+                  <Tooltip 
+                    contentStyle={{ backgroundColor: 'rgba(15, 23, 42, 0.9)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }}
+                    itemStyle={{ color: '#e2e8f0' }}
+                  />
+                  <Legend iconType="circle" wrapperStyle={{ fontSize: '12px' }} />
+                  <Bar dataKey="faltas" name="Faltas (S)" fill="#ef4444" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="atestados" name="Atestados" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </div>
+
+          {/* Gráfico Custos Frota */}
+          <div className="card glass-panel print-card" style={{ padding: '24px' }}>
+            <h3 style={{ color: '#f8fafc', margin: '0 0 20px 0', fontSize: '16px', display: 'flex', alignItems: 'center', gap: '8px' }} className="print-text-dark">
+              <TrendingUp size={18} color="#38bdf8" /> Custos de Frota por Centro de Custo
+            </h3>
+            <div style={{ height: '300px' }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={custoPorPosto} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="colorValor" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#38bdf8" stopOpacity={0.8}/>
+                      <stop offset="95%" stopColor="#38bdf8" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                  <XAxis dataKey="name" stroke="#94a3b8" fontSize={11} tickFormatter={(val) => val.substring(0,12)+'...'} />
+                  <YAxis stroke="#94a3b8" fontSize={11} tickFormatter={(val) => `R$ ${val/1000}k`} />
+                  <Tooltip 
+                    formatter={(val) => fmtBRL(val)}
+                    contentStyle={{ backgroundColor: 'rgba(15, 23, 42, 0.9)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }}
+                  />
+                  <Area type="monotone" dataKey="value" name="Gasto Frota" stroke="#38bdf8" strokeWidth={3} fillOpacity={1} fill="url(#colorValor)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
         </div>
 
-        {/* Gráfico Custos Frota */}
-        <div className="card glass-panel print-card" style={{ padding: '24px' }}>
-          <h3 style={{ color: '#f8fafc', margin: '0 0 20px 0', fontSize: '16px', display: 'flex', alignItems: 'center', gap: '8px' }} className="print-text-dark">
-            <TrendingUp size={18} color="#38bdf8" /> Custos de Frota por Centro de Custo
-          </h3>
-          <div style={{ height: '300px' }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={custoPorPosto} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="colorValor" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#38bdf8" stopOpacity={0.8}/>
-                    <stop offset="95%" stopColor="#38bdf8" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                <XAxis dataKey="name" stroke="#94a3b8" fontSize={11} tickFormatter={(val) => val.substring(0,12)+'...'} />
-                <YAxis stroke="#94a3b8" fontSize={11} tickFormatter={(val) => `R$ ${val/1000}k`} />
-                <Tooltip 
-                  formatter={(val) => fmtBRL(val)}
-                  contentStyle={{ backgroundColor: 'rgba(15, 23, 42, 0.9)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }}
-                />
-                <Area type="monotone" dataKey="value" name="Gasto Frota" stroke="#38bdf8" strokeWidth={3} fillOpacity={1} fill="url(#colorValor)" />
-              </AreaChart>
-            </ResponsiveContainer>
+        {/* TOP OFENSORES E STATUS */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
+          
+          {/* Top 5 Faltosos */}
+          <div className="card glass-panel print-card" style={{ padding: '20px' }}>
+            <h3 style={{ margin: '0 0 16px 0', color: '#f8fafc', fontSize: '15px' }} className="print-text-dark">Top 5 Maiores Faltosos</h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {topFaltosos.length === 0 ? <p style={{color:'#94a3b8', fontSize: '13px'}}>Sem registros de faltas.</p> : 
+                topFaltosos.map((f, i) => (
+                  <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px', background: 'rgba(255,255,255,0.02)', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.05)' }} className="print-list-item">
+                    <span style={{ color: '#cbd5e1', fontSize: '13px', fontWeight: 500 }} className="print-text-dark">{i+1}. {f[0]}</span>
+                    <span style={{ color: '#ef4444', fontSize: '13px', fontWeight: 'bold' }}>{f[1]} faltas</span>
+                  </div>
+                ))
+              }
+            </div>
           </div>
+
+          {/* Top 5 Frota */}
+          <div className="card glass-panel print-card" style={{ padding: '20px' }}>
+            <h3 style={{ margin: '0 0 16px 0', color: '#f8fafc', fontSize: '15px' }} className="print-text-dark">Top 5 Veículos (Despesas)</h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {topFrota.length === 0 ? <p style={{color:'#94a3b8', fontSize: '13px'}}>Sem registros de despesas.</p> : 
+                topFrota.map((v, i) => (
+                  <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px', background: 'rgba(255,255,255,0.02)', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.05)' }} className="print-list-item">
+                    <span style={{ color: '#cbd5e1', fontSize: '13px', fontWeight: 500 }} className="print-text-dark">{i+1}. {v[0]}</span>
+                    <span style={{ color: '#38bdf8', fontSize: '13px', fontWeight: 'bold' }}>{fmtBRL(v[1])}</span>
+                  </div>
+                ))
+              }
+            </div>
+          </div>
+
         </div>
 
       </div>
-
-      {/* TOP OFENSORES E STATUS */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
-        
-        {/* Top 5 Faltosos */}
-        <div className="card glass-panel print-card" style={{ padding: '20px' }}>
-          <h3 style={{ margin: '0 0 16px 0', color: '#f8fafc', fontSize: '15px' }} className="print-text-dark">Top 5 Maiores Faltosos</h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {topFaltosos.length === 0 ? <p style={{color:'#94a3b8', fontSize: '13px'}}>Sem registros de faltas.</p> : 
-              topFaltosos.map((f, i) => (
-                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px', background: 'rgba(255,255,255,0.02)', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.05)' }} className="print-list-item">
-                  <span style={{ color: '#cbd5e1', fontSize: '13px', fontWeight: 500 }} className="print-text-dark">{i+1}. {f[0]}</span>
-                  <span style={{ color: '#ef4444', fontSize: '13px', fontWeight: 'bold' }}>{f[1]} faltas</span>
-                </div>
-              ))
-            }
-          </div>
-        </div>
-
-        {/* Top 5 Frota */}
-        <div className="card glass-panel print-card" style={{ padding: '20px' }}>
-          <h3 style={{ margin: '0 0 16px 0', color: '#f8fafc', fontSize: '15px' }} className="print-text-dark">Top 5 Veículos (Despesas)</h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {topFrota.length === 0 ? <p style={{color:'#94a3b8', fontSize: '13px'}}>Sem registros de despesas.</p> : 
-              topFrota.map((v, i) => (
-                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px', background: 'rgba(255,255,255,0.02)', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.05)' }} className="print-list-item">
-                  <span style={{ color: '#cbd5e1', fontSize: '13px', fontWeight: 500 }} className="print-text-dark">{i+1}. {v[0]}</span>
-                  <span style={{ color: '#38bdf8', fontSize: '13px', fontWeight: 'bold' }}>{fmtBRL(v[1])}</span>
-                </div>
-              ))
-            }
-          </div>
-        </div>
-
-      </div>
-
-    </div>
-  );
-};
-
+    );
   } catch (err) {
-    console.error('Dashboard error', err);
+    console.error("Dashboard render error:", err);
     return <div style={{padding: '20px', color: 'white'}}>Falha ao carregar o Dashboard: {String(err.message)}</div>;
   }
-}
+};
 
 export default Dashboard;
