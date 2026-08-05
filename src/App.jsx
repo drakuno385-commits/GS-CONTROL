@@ -26,7 +26,7 @@ const App = () => {
     return saved || (currentUser?.role === 'SUPERVISOR' ? 'app_supervisor' : 'rh');
   });
 
-  const [apresentacaoStep, setApresentacaoStep] = useState(0);
+  const [ApresentaçãoStep, setApresentaçãoStep] = useState(0);
   const [tvInterval, setTvInterval] = useState(() => {
     const saved = localStorage.getItem('acoweb_tv_interval');
     return saved ? parseInt(saved, 10) : 15;
@@ -42,9 +42,9 @@ const App = () => {
 
   useEffect(() => {
     let interval;
-      if (activeMenu === 'apresentacao') {
+      if (activeMenu === 'Apresentação') {
         interval = setInterval(() => {
-          setApresentacaoStep(prev => (prev + 1) % 4);
+          setApresentaçãoStep(prev => (prev + 1) % 4);
         }, tvInterval * 1000); 
       }
     return () => clearInterval(interval);
@@ -77,7 +77,7 @@ const App = () => {
   // Filters State
   const initF = { dataInicio: '', dataFim: '', cliente: '', posto: '' };
   const [allFilters, setAllFilters] = useState({
-    rh: {...initF}, frota: {...initF}, disciplina: {...initF}, atestados: {...initF}, monitoramento: {...initF}, app_supervisor: {...initF}, usuarios: {...initF}, apresentacao: {...initF}
+    rh: {...initF}, frota: {...initF}, disciplina: {...initF}, atestados: {...initF}, monitoramento: {...initF}, app_supervisor: {...initF}, usuarios: {...initF}, Apresentação: {...initF}
   });
   const filters = allFilters[activeMenu] || initF;
 
@@ -276,7 +276,7 @@ const App = () => {
   const checkFilters = (row, dateKey, clientKey) => {
     if (row.posto) {
       const p = row.posto.toString().toUpperCase();
-      if (p.includes('FALTA INJUSTIFICADA') || p.includes('RESERVA JURIDICA') || p.includes('RESERVA JURÍDICA')) return false;
+      if (p.includes('FALTA INJUSTIFICADA') || p.includes('RESERVA JURIDICA') || p.includes('RESERVA JURÃDICA')) return false;
     }
     if (filters.cliente && clientKey && row[clientKey]) {
       if (row[clientKey].toString().toUpperCase().trim() !== filters.cliente.toString().toUpperCase().trim()) return false;
@@ -362,7 +362,7 @@ const App = () => {
       
       const p = row.posto ? row.posto.toUpperCase() : "";
       const c = row.cliente ? row.cliente.toUpperCase() : "";
-      const isReserva = p === "PLANTAO - RESERVA" || p.includes("RESERVA TEC") || p.includes("RESERVA TÉC") || c.includes("RESERVA TEC") || c.includes("RESERVA TÉC");
+      const isReserva = p === "PLANTAO - RESERVA" || p.includes("RESERVA TEC") || p.includes("RESERVA TÃ‰C") || c.includes("RESERVA TEC") || c.includes("RESERVA TÃ‰C");
       
       if (isReserva) {
         const nomeUpper = row.nome ? row.nome.toUpperCase() : (row.re ? row.re.toString() : "DESCONHECIDO");
@@ -378,7 +378,7 @@ const App = () => {
     const checkEfetivoFilters = (row) => {
       if (row.posto) {
         const p = row.posto.toString().toUpperCase();
-        if (p.includes('FALTA INJUSTIFICADA') || p.includes('RESERVA JURIDICA') || p.includes('RESERVA JURÍDICA')) return false;
+        if (p.includes('FALTA INJUSTIFICADA') || p.includes('RESERVA JURIDICA') || p.includes('RESERVA JURÃDICA')) return false;
       }
       if (filters.cliente) {
         if (filters.cliente.toUpperCase().trim() === 'RESERVA TECNICA' && row.re) {
@@ -409,7 +409,7 @@ const App = () => {
       processedEfetivos.add(empId);
       
       totalEfetivo++;
-      const cName = (filters.cliente && filters.cliente.toUpperCase() === 'RESERVA TECNICA') ? 'RESERVA TÉCNICA' : (row.cliente || 'Sem Cliente');
+      const cName = (filters.cliente && filters.cliente.toUpperCase() === 'RESERVA TECNICA') ? 'RESERVA TÃ‰CNICA' : (row.cliente || 'Sem Cliente');
       efetivoCliente[cName] = (efetivoCliente[cName] || 0) + 1;
     });
 
@@ -585,7 +585,7 @@ const App = () => {
       if (!porMotorista[motorista]) porMotorista[motorista] = { motorista, valor: 0 };
       porMotorista[motorista].valor += valor;
       const prodUpper = produto.toUpperCase();
-      if (!prodUpper.includes("FLUIDO") && !prodUpper.includes("LUBRIFICANTE") && !prodUpper.includes("OLEO") && !prodUpper.includes("ÓLEO") && !prodUpper.includes("ARLA") && !prodUpper.includes("ADITIVO")) {
+      if (!prodUpper.includes("FLUIDO") && !prodUpper.includes("LUBRIFICANTE") && !prodUpper.includes("OLEO") && !prodUpper.includes("Ã“LEO") && !prodUpper.includes("ARLA") && !prodUpper.includes("ADITIVO")) {
         if (!porCombustivel[produto]) porCombustivel[produto] = 0;
         porCombustivel[produto] += consumo;
       }
@@ -1009,7 +1009,7 @@ const App = () => {
           <div className="stat-value" style={{ color: '#f59e0b' }}>{totalsAtestados.totalColaboradores}</div>
         </div>
         <div className="card stat-card glass-panel" style={{ borderColor: 'var(--border-color)' }}>
-          <div className="stat-title" style={{ color: '#10b981' }}>Cliente Crítico (1º)</div>
+          <div className="stat-title" style={{ color: '#10b981' }}>Cliente Crítico (1Âº)</div>
           <div className="stat-value" style={{ color: '#10b981', fontSize: '20px' }}>{totalsAtestados.clienteCritico}</div>
         </div>
       </div>
@@ -1031,10 +1031,10 @@ const App = () => {
                 </thead>
                 <tbody>
                   {atestadosRanking.map((row, idx) => {
-                    let badge = <span style={{ color: '#94a3b8' }}>{idx + 1}º</span>;
-                    if (idx === 0) badge = <span style={{ fontSize: '18px' }}>🏆</span>;
-                    if (idx === 1) badge = <span style={{ fontSize: '18px' }}>🥈</span>;
-                    if (idx === 2) badge = <span style={{ fontSize: '18px' }}>🥉</span>;
+                    let badge = <span style={{ color: '#94a3b8' }}>{idx + 1}Âº</span>;
+                    if (idx === 0) badge = <span style={{ fontSize: '18px' }}>ðŸ†</span>;
+                    if (idx === 1) badge = <span style={{ fontSize: '18px' }}>ðŸ¥ˆ</span>;
+                    if (idx === 2) badge = <span style={{ fontSize: '18px' }}>ðŸ¥‰</span>;
 
                     return (
                       <tr 
@@ -1191,7 +1191,7 @@ const App = () => {
         </div>
 
         <div className="card chart-card glass-panel">
-          <div className="chart-header"><div className="chart-title">Concentração por Área</div></div>
+          <div className="chart-header"><div className="chart-title">Concentração por Ãrea</div></div>
           <div className="chart-wrapper">
             {discFaltasPorArea.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
@@ -1223,10 +1223,10 @@ const App = () => {
                 </thead>
                 <tbody>
                   {discRanking.map((row, idx) => {
-                    let badge = <span style={{ color: '#94a3b8' }}>{idx + 1}º</span>;
-                    if (idx === 0) badge = <span style={{ fontSize: '18px' }}>🏆</span>;
-                    if (idx === 1) badge = <span style={{ fontSize: '18px' }}>🥈</span>;
-                    if (idx === 2) badge = <span style={{ fontSize: '18px' }}>🥉</span>;
+                    let badge = <span style={{ color: '#94a3b8' }}>{idx + 1}Âº</span>;
+                    if (idx === 0) badge = <span style={{ fontSize: '18px' }}>ðŸ†</span>;
+                    if (idx === 1) badge = <span style={{ fontSize: '18px' }}>ðŸ¥ˆ</span>;
+                    if (idx === 2) badge = <span style={{ fontSize: '18px' }}>ðŸ¥‰</span>;
                     return (
                       <tr 
                         key={idx} 
@@ -1309,7 +1309,7 @@ const App = () => {
                 <thead style={{ position: 'sticky', top: 0, background: '#1e293b', backdropFilter: 'blur(4px)' }}>
                   <tr>
                     <th style={{ padding: '16px', fontWeight: 600, color: '#94a3b8', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Data</th>
-                    <th style={{ padding: '16px', fontWeight: 600, color: '#94a3b8', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Ocorrência / Área</th>
+                    <th style={{ padding: '16px', fontWeight: 600, color: '#94a3b8', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Ocorrência / Ãrea</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1353,7 +1353,7 @@ const App = () => {
     );
   }
 
-  if (activeMenu === 'apresentacao') {
+  if (activeMenu === 'Apresentação') {
     return (
       <div style={{ background: 'transparent', minHeight: '100vh', padding: '20px' }}>
         <svg style={{ height: 0, position: 'absolute' }}>
@@ -1381,10 +1381,10 @@ const App = () => {
         </button>
         
         {/* Usando animação suave de fade na transição se possível, mas React sozinho re-renderiza brusco. O importante é alternar. */}
-        {apresentacaoStep === 0 && renderRH()}
-        {apresentacaoStep === 1 && renderFrota()}
-        {apresentacaoStep === 2 && renderDisciplina()}
-        {apresentacaoStep === 3 && renderAtestados()}
+        {ApresentaçãoStep === 0 && renderRH()}
+        {ApresentaçãoStep === 1 && renderFrota()}
+        {ApresentaçãoStep === 2 && renderDisciplina()}
+        {ApresentaçãoStep === 3 && renderAtestados()}
       </div>
     );
   }
@@ -1435,7 +1435,7 @@ const App = () => {
                 <MapPin size={20} />
                 <span>Monitoramento</span>
               </a>
-              <a className={`nav-item ${activeMenu === 'apresentacao' ? 'active' : ''}`} onClick={() => setActiveMenu('apresentacao')}>
+              <a className={`nav-item ${activeMenu === 'Apresentação' ? 'active' : ''}`} onClick={() => setActiveMenu('Apresentação')}>
                 <Activity size={20} />
                 <span>Modo Apresentação (TV)</span>
               </a>
@@ -1528,7 +1528,7 @@ const App = () => {
                   <div style={{ width: '1px', height: '24px', background: 'rgba(255,255,255,0.1)' }}></div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                     <label style={{ color: '#cbd5e1', fontSize: '13px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                      {activeMenu === 'disciplina' ? 'Área:' : 'Cliente:'}
+                      {activeMenu === 'disciplina' ? 'Ãrea:' : 'Cliente:'}
                     </label>
                     <select 
                       value={filters.cliente || ''}
