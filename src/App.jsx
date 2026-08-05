@@ -42,11 +42,11 @@ const App = () => {
 
   useEffect(() => {
     let interval;
-    if (activeMenu === 'apresentacao') {
-      interval = setInterval(() => {
-        setApresentacaoStep(prev => (prev + 1) % 3);
-      }, tvInterval * 1000); 
-    }
+      if (activeMenu === 'apresentacao') {
+        interval = setInterval(() => {
+          setApresentacaoStep(prev => (prev + 1) % 4);
+        }, tvInterval * 1000); 
+      }
     return () => clearInterval(interval);
   }, [activeMenu, tvInterval]);
 
@@ -1383,6 +1383,7 @@ const App = () => {
         {apresentacaoStep === 0 && renderRH()}
         {apresentacaoStep === 1 && renderFrota()}
         {apresentacaoStep === 2 && renderDisciplina()}
+        {apresentacaoStep === 3 && renderAtestados()}
       </div>
     );
   }
