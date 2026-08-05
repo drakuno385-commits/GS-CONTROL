@@ -1375,51 +1375,70 @@ const App = () => {
           <img src="/logo.jpg" alt="GSolimpio" style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover', border: '2px solid rgba(59, 130, 246, 0.5)' }} />
           GS-Control
         </div>
-        <nav className="nav-menu">
+                <nav className="nav-menu">
           {currentUser.role !== 'SUPERVISOR' && (
             <>
-              <a className={`nav-item ${activeMenu === 'rh' ? 'active' : ''}`} onClick={() => setActiveMenu('rh')}>
-                <Users size={20} />
-                <span>Gestão de Efetivos</span>
-              </a>
-              <a className={`nav-item ${activeMenu === 'frota' ? 'active' : ''}`} onClick={() => setActiveMenu('frota')}>
-                <Car size={20} />
-                <span>Gestão de Frota</span>
-              </a>
-              <a className={`nav-item ${activeMenu === 'disciplina' ? 'active' : ''}`} onClick={() => setActiveMenu('disciplina')}>
-                <FileText size={20} />
-                <span>Disciplina</span>
-              </a>
-              <a className={`nav-item ${activeMenu === 'atestados' ? 'active' : ''}`} onClick={() => setActiveMenu('atestados')}>
-                <Stethoscope size={20} />
-                <span>Campeões de Atestado</span>
-              </a>
-              <a className={`nav-item ${activeMenu === 'monitoramento' ? 'active' : ''}`} onClick={() => setActiveMenu('monitoramento')}>
-                <MapPin size={20} />
-                <span>Monitoramento</span>
-              </a>
-              <a className={`nav-item ${activeMenu === 'Apresentação' ? 'active' : ''}`} onClick={() => setActiveMenu('Apresentação')}>
-                <Activity size={20} />
-                <span>Modo Apresentação (TV)</span>
-              </a>
+              {hasAccess(currentUser, 'dashboard') && (
+                <a className={`nav-item ${activeMenu === 'dashboard' ? 'active' : ''}`} onClick={() => setActiveMenu('dashboard')}>
+                  <Activity size={20} />
+                  <span>Visão Executiva</span>
+                </a>
+              )}
+              {hasAccess(currentUser, 'rh') && (
+                <a className={`nav-item ${activeMenu === 'rh' ? 'active' : ''}`} onClick={() => setActiveMenu('rh')}>
+                  <Users size={20} />
+                  <span>Gestão de Efetivos</span>
+                </a>
+              )}
+              {hasAccess(currentUser, 'frota') && (
+                <a className={`nav-item ${activeMenu === 'frota' ? 'active' : ''}`} onClick={() => setActiveMenu('frota')}>
+                  <Car size={20} />
+                  <span>Gestão de Frota</span>
+                </a>
+              )}
+              {hasAccess(currentUser, 'disciplina') && (
+                <a className={`nav-item ${activeMenu === 'disciplina' ? 'active' : ''}`} onClick={() => setActiveMenu('disciplina')}>
+                  <FileText size={20} />
+                  <span>Disciplina</span>
+                </a>
+              )}
+              {hasAccess(currentUser, 'atestados') && (
+                <a className={`nav-item ${activeMenu === 'atestados' ? 'active' : ''}`} onClick={() => setActiveMenu('atestados')}>
+                  <Stethoscope size={20} />
+                  <span>Campeões de Atestado</span>
+                </a>
+              )}
+              {hasAccess(currentUser, 'monitoramento') && (
+                <a className={`nav-item ${activeMenu === 'monitoramento' ? 'active' : ''}`} onClick={() => setActiveMenu('monitoramento')}>
+                  <MapPin size={20} />
+                  <span>Monitoramento</span>
+                </a>
+              )}
+              {hasAccess(currentUser, 'Apresentação') && (
+                <a className={`nav-item ${activeMenu === 'Apresentação' ? 'active' : ''}`} onClick={() => setActiveMenu('Apresentação')}>
+                  <Activity size={20} />
+                  <span>Modo Apresentação (TV)</span>
+                </a>
+              )}
               
-              <div style={{ margin: '8px 16px', padding: '12px', background: 'rgba(0,0,0,0.2)', borderRadius: '8px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <label style={{ color: '#94a3b8', fontSize: '12px', fontWeight: 600 }}>Tempo no Modo TV:</label>
-                <select 
-                  value={tvInterval}
-                  onChange={(e) => setTvInterval(Number(e.target.value))}
-                  style={{ background: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(255,255,255,0.1)', color: '#e2e8f0', borderRadius: '6px', padding: '6px', fontSize: '13px', width: '100%', cursor: 'pointer' }}
-                >
-                  <option value={5}>5 segundos</option>
-                  <option value={10}>10 segundos</option>
-                  <option value={15}>15 segundos</option>
-                  <option value={30}>30 segundos</option>
-                  <option value={60}>1 minuto</option>
-                </select>
-              </div>
+              {hasAccess(currentUser, 'Apresentação') && (
+                <div style={{ margin: '8px 16px', padding: '12px', background: 'rgba(0,0,0,0.2)', borderRadius: '8px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <label style={{ color: '#94a3b8', fontSize: '12px', fontWeight: 600 }}>Tempo no Modo TV:</label>
+                  <select 
+                    value={tvInterval}
+                    onChange={(e) => setTvInterval(Number(e.target.value))}
+                    style={{ background: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(255,255,255,0.1)', color: '#e2e8f0', borderRadius: '6px', padding: '6px', fontSize: '13px', width: '100%', cursor: 'pointer' }}
+                  >
+                    <option value={5}>5 segundos</option>
+                    <option value={10}>10 segundos</option>
+                    <option value={15}>15 segundos</option>
+                    <option value={30}>30 segundos</option>
+                    <option value={60}>1 minuto</option>
+                  </select>
+                </div>
+              )}
             </>
           )}
-
 
           {currentUser.role === 'MASTER' && (
             <a className={`nav-item ${activeMenu === 'usuarios' ? 'active' : ''}`} onClick={() => setActiveMenu('usuarios')}>
