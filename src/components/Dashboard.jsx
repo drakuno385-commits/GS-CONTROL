@@ -24,16 +24,18 @@ const Dashboard = ({ rawEfetivos, rawPresencas, rawFrota, rawAtestados }) => {
       return isNaN(parsed) ? 0 : parsed;
     };
 
-    const efetivos = rawEfetivos.length;
-    const faltasS = rawPresencas.filter(r => r.tipo && r.tipo.toUpperCase().includes('S'));
-    const atestados = rawAtestados;
+    const efetivos = (rawEfetivos || []).length;
+    const faltasS = (rawPresencas || []).filter(r => r && r.tipo && String(r.tipo).toUpperCase().includes('S'));
+    const atestados = (rawAtestados || []);
+    const frota = (rawFrota || []);
     
     // Frota
     let gastoFrota = 0;
     const veiculos = {};
     const postosCusto = {};
 
-    rawFrota.forEach(r => {
+    frota.forEach(r => {
+      if (!r) return;
       const valor = parseMoney(r.valor_total);
       gastoFrota += valor;
       
@@ -47,6 +49,7 @@ const Dashboard = ({ rawEfetivos, rawPresencas, rawFrota, rawAtestados }) => {
     // Faltosos
     const faltososDict = {};
     faltasS.forEach(r => {
+      if (!r) return;
       const nome = r.nome || 'Desconhecido';
       faltososDict[nome] = (faltososDict[nome] || 0) + 1;
     });
@@ -54,12 +57,14 @@ const Dashboard = ({ rawEfetivos, rawPresencas, rawFrota, rawAtestados }) => {
     // Ocorrências por Posto
     const occPorPosto = {};
     faltasS.forEach(r => {
+      if (!r) return;
       const posto = r.posto || 'Sede';
       if (!occPorPosto[posto]) occPorPosto[posto] = { name: posto, faltas: 0, atestados: 0 };
       occPorPosto[posto].faltas += 1;
     });
     
     atestados.forEach(r => {
+      if (!r) return;
       const posto = r.posto || 'Sede';
       if (!occPorPosto[posto]) occPorPosto[posto] = { name: posto, faltas: 0, atestados: 0 };
       occPorPosto[posto].atestados += 1;
@@ -76,10 +81,10 @@ const Dashboard = ({ rawEfetivos, rawPresencas, rawFrota, rawAtestados }) => {
       totalFaltas: faltasS.length,
       totalAtestados: atestados.length,
       totalGastoFrota: gastoFrota,
-      topFaltosos: topFalt,
-      topFrota: topVeic,
-      custoPorPosto: topCustosPosto,
-      ocorrenciasPorPosto: occData
+      topFaltosos: topFalt || [],
+      topFrota: topVeic || [],
+      custoPorPosto: topCustosPosto || [],
+      ocorrenciasPorPosto: occData || []
     };
   }, [rawEfetivos, rawPresencas, rawFrota, rawAtestados]);
 
