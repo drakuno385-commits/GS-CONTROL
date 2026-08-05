@@ -79,7 +79,7 @@ const SupervisorApp = ({ currentUser }) => {
       nomecli: posto.nomecli,
       codpos: posto.codpos,
       nomepos: posto.nomepos,
-      horaChegada: new Date().toISOString()
+      horaChegada: new Date().toLocaleString('sv-SE')
     };
 
     setActiveVisit(novaVisita);
@@ -141,7 +141,7 @@ const SupervisorApp = ({ currentUser }) => {
         fotoUrlJoined = urls.join(',');
       }
 
-      const horaSaida = new Date().toISOString();
+      const horaSaida = new Date().toLocaleString('sv-SE');
 
       const { error: insertError } = await supabase
         .from('visitas')
