@@ -18,10 +18,10 @@ export default function Login({ onLoginSuccess }) {
     setLoading(true);
 
     try {
-      const email = `${username}@acoweb.sistema`;
+      const identifier = `${username.replace(/\s+/g, '')}@acoweb.sistema`;
       
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-        email: email,
+        email: identifier,
         password: password
       });
 
