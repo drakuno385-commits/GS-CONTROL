@@ -44,13 +44,13 @@ const Monitoramento = ({ currentUser }) => {
   const formatTime = (isoString) => {
     if (!isoString) return '';
     const d = new Date(isoString);
-    return d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    return d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' });
   };
 
   const formatDate = (isoString) => {
     if (!isoString) return '';
     const d = new Date(isoString);
-    return d.toLocaleDateString('pt-BR');
+    return d.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
   };
 
   const handleDelete = async (id) => {

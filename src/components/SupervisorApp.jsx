@@ -141,7 +141,7 @@ const SupervisorApp = ({ currentUser }) => {
         fotoUrlJoined = urls.join(',');
       }
 
-      const horaSaida = new Date().toLocaleString('sv-SE');
+      const horaSaida = new Date().toISOString();
 
       const { error: insertError } = await supabase
         .from('visitas')
@@ -185,7 +185,7 @@ const SupervisorApp = ({ currentUser }) => {
 
   const formatHora = (isoString) => {
     const d = new Date(isoString);
-    return d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    return d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' });
   };
 
   const calcularDuracao = (chegada) => {
