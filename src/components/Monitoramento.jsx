@@ -297,6 +297,7 @@ const Monitoramento = ({ currentUser }) => {
               })}
             </tbody>
           </table>
+          </div>
         </div>
       )}
     </div>
