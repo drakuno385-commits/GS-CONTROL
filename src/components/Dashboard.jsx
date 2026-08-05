@@ -192,7 +192,7 @@ const Dashboard = ({ rawEfetivos, rawPresencas, rawFrota, rawAtestados }) => {
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={ocorrenciasPorPosto} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                  <XAxis dataKey="name" stroke="#94a3b8" fontSize={11} tickFormatter={(val) => val.substring(0,10)+'...'} />
+                  <XAxis dataKey="name" stroke="#94a3b8" fontSize={11} tickFormatter={(val) => String(val).substring(0,10)+'...'} />
                   <YAxis stroke="#94a3b8" fontSize={11} />
                   <Tooltip 
                     contentStyle={{ backgroundColor: 'rgba(15, 23, 42, 0.9)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }}
@@ -221,7 +221,7 @@ const Dashboard = ({ rawEfetivos, rawPresencas, rawFrota, rawAtestados }) => {
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                  <XAxis dataKey="name" stroke="#94a3b8" fontSize={11} tickFormatter={(val) => val.substring(0,12)+'...'} />
+                  <XAxis dataKey="name" stroke="#94a3b8" fontSize={11} tickFormatter={(val) => String(val).substring(0,12)+'...'} />
                   <YAxis stroke="#94a3b8" fontSize={11} tickFormatter={(val) => `R$ ${val/1000}k`} />
                   <Tooltip 
                     formatter={(val) => fmtBRL(val)}
