@@ -113,7 +113,7 @@ const Usuarios = ({ currentUser }) => {
     }
   };
 
-  const handleDeleteUser = async (id, username) => {
+  const handleDelete = async (id, username) => {
     if (id === currentUser.id) {
       alert("Você não pode excluir o próprio usuário logado!");
       return;
