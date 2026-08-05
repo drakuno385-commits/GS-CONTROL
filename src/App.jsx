@@ -276,7 +276,7 @@ const App = () => {
   const checkFilters = (row, dateKey, clientKey) => {
     if (row.posto) {
       const p = row.posto.toString().toUpperCase();
-      if (p.includes('FALTA INJUSTIFICADA') || p.includes('RESERVA JURIDICA') || p.includes('RESERVA JURÃDICA')) return false;
+      if (p.includes('FALTA INJUSTIFICADA') || p.includes('RESERVA JURIDICA') || p.includes('RESERVA JURÍDICA')) return false;
     }
     if (filters.cliente && clientKey && row[clientKey]) {
       if (row[clientKey].toString().toUpperCase().trim() !== filters.cliente.toString().toUpperCase().trim()) return false;
@@ -362,7 +362,7 @@ const App = () => {
       
       const p = row.posto ? row.posto.toUpperCase() : "";
       const c = row.cliente ? row.cliente.toUpperCase() : "";
-      const isReserva = p === "PLANTAO - RESERVA" || p.includes("RESERVA TEC") || p.includes("RESERVA TÃ‰C") || c.includes("RESERVA TEC") || c.includes("RESERVA TÃ‰C");
+      const isReserva = p === "PLANTAO - RESERVA" || p.includes("RESERVA TEC") || p.includes("RESERVA TÉC") || c.includes("RESERVA TEC") || c.includes("RESERVA TÉC");
       
       if (isReserva) {
         const nomeUpper = row.nome ? row.nome.toUpperCase() : (row.re ? row.re.toString() : "DESCONHECIDO");
@@ -378,7 +378,7 @@ const App = () => {
     const checkEfetivoFilters = (row) => {
       if (row.posto) {
         const p = row.posto.toString().toUpperCase();
-        if (p.includes('FALTA INJUSTIFICADA') || p.includes('RESERVA JURIDICA') || p.includes('RESERVA JURÃDICA')) return false;
+        if (p.includes('FALTA INJUSTIFICADA') || p.includes('RESERVA JURIDICA') || p.includes('RESERVA JURÍDICA')) return false;
       }
       if (filters.cliente) {
         if (filters.cliente.toUpperCase().trim() === 'RESERVA TECNICA' && row.re) {
@@ -409,7 +409,7 @@ const App = () => {
       processedEfetivos.add(empId);
       
       totalEfetivo++;
-      const cName = (filters.cliente && filters.cliente.toUpperCase() === 'RESERVA TECNICA') ? 'RESERVA TÃ‰CNICA' : (row.cliente || 'Sem Cliente');
+      const cName = (filters.cliente && filters.cliente.toUpperCase() === 'RESERVA TECNICA') ? 'RESERVA TÉCNICA' : (row.cliente || 'Sem Cliente');
       efetivoCliente[cName] = (efetivoCliente[cName] || 0) + 1;
     });
 
@@ -585,7 +585,7 @@ const App = () => {
       if (!porMotorista[motorista]) porMotorista[motorista] = { motorista, valor: 0 };
       porMotorista[motorista].valor += valor;
       const prodUpper = produto.toUpperCase();
-      if (!prodUpper.includes("FLUIDO") && !prodUpper.includes("LUBRIFICANTE") && !prodUpper.includes("OLEO") && !prodUpper.includes("Ã“LEO") && !prodUpper.includes("ARLA") && !prodUpper.includes("ADITIVO")) {
+      if (!prodUpper.includes("FLUIDO") && !prodUpper.includes("LUBRIFICANTE") && !prodUpper.includes("OLEO") && !prodUpper.includes("ÓLEO") && !prodUpper.includes("ARLA") && !prodUpper.includes("ADITIVO")) {
         if (!porCombustivel[produto]) porCombustivel[produto] = 0;
         porCombustivel[produto] += consumo;
       }
@@ -1009,7 +1009,7 @@ const App = () => {
           <div className="stat-value" style={{ color: '#f59e0b' }}>{totalsAtestados.totalColaboradores}</div>
         </div>
         <div className="card stat-card glass-panel" style={{ borderColor: 'var(--border-color)' }}>
-          <div className="stat-title" style={{ color: '#10b981' }}>Cliente Crítico (1Âº)</div>
+          <div className="stat-title" style={{ color: '#10b981' }}>Cliente Crítico (1º)</div>
           <div className="stat-value" style={{ color: '#10b981', fontSize: '20px' }}>{totalsAtestados.clienteCritico}</div>
         </div>
       </div>
@@ -1031,10 +1031,10 @@ const App = () => {
                 </thead>
                 <tbody>
                   {atestadosRanking.map((row, idx) => {
-                    let badge = <span style={{ color: '#94a3b8' }}>{idx + 1}Âº</span>;
+                    let badge = <span style={{ color: '#94a3b8' }}>{idx + 1}º</span>;
                     if (idx === 0) badge = <span style={{ fontSize: '18px' }}>ðŸ†</span>;
-                    if (idx === 1) badge = <span style={{ fontSize: '18px' }}>ðŸ¥ˆ</span>;
-                    if (idx === 2) badge = <span style={{ fontSize: '18px' }}>ðŸ¥‰</span>;
+                    if (idx === 1) badge = <span style={{ fontSize: '18px' }}>🥈</span>;
+                    if (idx === 2) badge = <span style={{ fontSize: '18px' }}>🥉</span>;
 
                     return (
                       <tr 
@@ -1223,10 +1223,10 @@ const App = () => {
                 </thead>
                 <tbody>
                   {discRanking.map((row, idx) => {
-                    let badge = <span style={{ color: '#94a3b8' }}>{idx + 1}Âº</span>;
+                    let badge = <span style={{ color: '#94a3b8' }}>{idx + 1}º</span>;
                     if (idx === 0) badge = <span style={{ fontSize: '18px' }}>ðŸ†</span>;
-                    if (idx === 1) badge = <span style={{ fontSize: '18px' }}>ðŸ¥ˆ</span>;
-                    if (idx === 2) badge = <span style={{ fontSize: '18px' }}>ðŸ¥‰</span>;
+                    if (idx === 1) badge = <span style={{ fontSize: '18px' }}>🥈</span>;
+                    if (idx === 2) badge = <span style={{ fontSize: '18px' }}>🥉</span>;
                     return (
                       <tr 
                         key={idx} 
