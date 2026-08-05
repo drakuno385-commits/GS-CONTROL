@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { Settings, Users, UserPlus, Trash2, Key, Edit, AlertTriangle } from 'lucide-react';
 
@@ -9,10 +9,10 @@ const Usuarios = ({ currentUser }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
   
-  const [formData, setFormData] = useState({
     username: '',
     password: '',
-    role: 'SUPERVISOR'
+    role: 'SUPERVISOR',
+    allowed_screens: []
   });
 
   useEffect(() => {
@@ -38,14 +38,16 @@ const Usuarios = ({ currentUser }) => {
       setFormData({
         username: user.username,
         password: '', // Não exibe a senha por segurança
-        role: user.role
+        role: user.role,
+        allowed_screens: user.allowed_screens || []
       });
     } else {
       setEditingId(null);
       setFormData({
         username: '',
         password: '',
-        role: 'SUPERVISOR'
+        role: 'SUPERVISOR',
+        allowed_screens: []
       });
     }
     setIsModalOpen(true);
@@ -74,10 +76,12 @@ const Usuarios = ({ currentUser }) => {
         }
       }
       
-      const { error: updateError } = await supabase
-        .from('app_usuarios')
-        .update({ role: formData.role, username: formData.username })
-        .eq('id', editingId);
+      const { error: updateError } = await supabase.rpc('update_user_admin', {
+        p_user_id: editingId,
+        p_username: formData.username,
+        p_role: formData.role,
+        p_allowed_screens: formData.allowed_screens.length > 0 ? formData.allowed_screens : null
+      });
         
       if (!updateError) {
         fetchUsuarios();
@@ -95,7 +99,8 @@ const Usuarios = ({ currentUser }) => {
       const { error } = await supabase.rpc('create_user_admin', {
         p_username: formData.username,
         p_password: formData.password,
-        p_role: formData.role
+        p_role: formData.role,
+        p_allowed_screens: formData.allowed_screens.length > 0 ? formData.allowed_screens : null
       });
 
       if (!error) {
@@ -264,6 +269,28 @@ const Usuarios = ({ currentUser }) => {
                 </select>
               </div>
               
+              <div>
+                <label style={{ display: 'block', marginBottom: '6px', color: '#cbd5e1', fontSize: '13px' }}>Permissões de Telas (Deixe vazio para padrão)</label>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', background: 'rgba(15, 23, 42, 0.6)', padding: '12px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.1)' }}>
+                  {['dashboard', 'rh', 'frota', 'disciplina', 'atestados', 'monitoramento', 'Apresentação', 'app_supervisor'].map(screen => (
+                    <label key={screen} style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#cbd5e1', fontSize: '13px', cursor: 'pointer' }}>
+                      <input 
+                        type="checkbox" 
+                        checked={formData.allowed_screens.includes(screen)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setFormData({...formData, allowed_screens: [...formData.allowed_screens, screen]});
+                          } else {
+                            setFormData({...formData, allowed_screens: formData.allowed_screens.filter(s => s !== screen)});
+                          }
+                        }}
+                        style={{ accentColor: '#8b5cf6', width: '16px', height: '16px' }}
+                      />
+                      {screen === 'Apresentação' ? 'Modo TV' : screen === 'app_supervisor' ? 'App Supervisor' : screen === 'rh' ? 'RH' : screen.charAt(0).toUpperCase() + screen.slice(1)}
+                    </label>
+                  ))}
+                </div>
+              </div>
               <div style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>
                 <button type="button" onClick={() => setIsModalOpen(false)} style={{ flex: 1, padding: '10px', background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: '#cbd5e1', borderRadius: '6px', cursor: 'pointer' }}>
                   Cancelar
