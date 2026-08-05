@@ -159,8 +159,8 @@ export default function Login({ onLoginSuccess }) {
                 <input 
                   type="text" 
                   value={username} 
-                  onChange={(e) => setUsername(e.target.value)}
-                  style={{ width: '100%', padding: '12px 12px 12px 40px', background: 'rgba(15, 23, 42, 0.5)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: 'white', outline: 'none' }}
+                  onChange={(e) => setUsername(e.target.value.toUpperCase())}
+                  style={{ width: '100%', padding: '12px 12px 12px 40px', background: 'rgba(15, 23, 42, 0.5)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: 'white', outline: 'none', textTransform: 'uppercase' }}
                   required
                 />
               </div>

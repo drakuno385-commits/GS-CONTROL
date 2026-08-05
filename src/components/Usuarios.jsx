@@ -232,9 +232,9 @@ const Usuarios = ({ currentUser }) => {
                 <input 
                   type="text" 
                   value={formData.username}
-                  onChange={e => setFormData({...formData, username: e.target.value})}
+                  onChange={e => setFormData({...formData, username: e.target.value.toUpperCase()})}
                   required
-                  style={{ width: '100%', padding: '10px', background: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', borderRadius: '6px' }}
+                  style={{ width: '100%', padding: '10px', background: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', borderRadius: '6px', textTransform: 'uppercase' }}
                 />
               </div>
               
