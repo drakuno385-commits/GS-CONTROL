@@ -78,13 +78,8 @@ export default function Login({ onLoginSuccess }) {
         return;
       }
 
-      // Atualiza o status de primeiro_acesso na tabela
-      const { data, error } = await supabase
-        .from('app_usuarios')
-        .update({ primeiro_acesso: false })
-        .eq('id', userDoc.id)
-        .select()
-        .single();
+      // Atualiza o status de primeiro_acesso na tabela através de RPC para contornar RLS
+      const { data, error } = await supabase.rpc('confirm_first_access');
 
       if (error) {
         setError('Erro ao atualizar status do usuário.');
@@ -92,7 +87,7 @@ export default function Login({ onLoginSuccess }) {
         return;
       }
 
-      onLoginSuccess(data);
+      onLoginSuccess({...userDoc, primeiro_acesso: false});
     } catch (err) {
       setError('Erro ao conectar.');
       setLoading(false);
