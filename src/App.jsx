@@ -9,7 +9,6 @@ import {
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area, PieChart, Pie, Cell, ComposedChart, LabelList } from 'recharts';
 import Login from './components/Login';
 import SupervisorApp from './components/SupervisorApp';
-import Dashboard from './components/Dashboard';
 import Monitoramento from './components/Monitoramento';
 import Usuarios from './components/Usuarios';
 
