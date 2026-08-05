@@ -205,18 +205,17 @@ const App = () => {
           if (chunkData) {
             if (table === 'visitas') {
               chunkData.forEach(v => {
-                if (v.hora_chegada) {
-                  let d = new Date(v.hora_chegada);
+                const fixTime = (ds) => {
+                  if (!ds) return null;
+                  let d = new Date(ds);
+                  if (isNaN(d)) return ds;
                   const now = new Date();
+                  now.setMinutes(now.getMinutes() + 5);
                   while (d > now) { d.setHours(d.getHours() - 3); }
-                  v.hora_chegada = d.toISOString();
-                }
-                if (v.hora_saida) {
-                  let d = new Date(v.hora_saida);
-                  const now = new Date();
-                  while (d > now) { d.setHours(d.getHours() - 3); }
-                  v.hora_saida = d.toISOString();
-                }
+                  return d.toISOString();
+                };
+                v.hora_chegada = fixTime(v.hora_chegada);
+                v.hora_saida = fixTime(v.hora_saida);
               });
             }
             results.push(...chunkData);

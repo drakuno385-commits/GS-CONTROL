@@ -43,8 +43,20 @@ const Monitoramento = ({ currentUser }) => {
 
   const formatTime = (isoString) => {
     if (!isoString) return '';
-    const d = new Date(isoString);
-    return d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' });
+    if (isoString.includes(' ')) {
+      const parts = isoString.split(' ')[1].split(':');
+      return `${parts[0]}:${parts[1]}`;
+    }
+    try {
+      const d = new Date(isoString);
+      let h = d.getUTCHours() - 3;
+      if (h < 0) h += 24;
+      let m = d.getUTCMinutes();
+      const pad = (n) => n.toString().padStart(2, '0');
+      return `${pad(h)}:${pad(m)}`;
+    } catch (e) {
+      return isoString;
+    }
   };
 
   const formatDate = (isoString) => {
