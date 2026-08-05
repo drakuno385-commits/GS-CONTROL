@@ -1166,7 +1166,7 @@ const App = () => {
         </div>
       </div>
 
-      <div className="charts-grid" style={{ gridTemplateColumns: '1fr 1fr 1fr', marginBottom: '24px' }}>
+      <div className="charts-grid" style={{ gridTemplateColumns: '1fr 1fr', marginBottom: '24px' }}>
         <div className="card chart-card glass-panel" style={{ gridColumn: '1 / -1' }}>
           <div className="chart-header"><div className="chart-title">Ocorrências por Dia (Tipo S)</div></div>
           <div className="chart-wrapper">
@@ -1209,50 +1209,6 @@ const App = () => {
 
         <div className="card chart-card glass-panel" style={{ overflowY: 'auto', maxHeight: '450px' }}>
           <div className="chart-header" style={{ marginBottom: '16px' }}>
-            <div className="chart-title" style={{ color: '#ef4444' }}>Ranking de Faltosos (Top 10)</div>
-          </div>
-          <div className="reserva-table">
-            {discRanking && discRanking.length > 0 ? (
-              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-                <thead>
-                  <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', color: '#94a3b8' }}>
-                    <th style={{ padding: '12px 8px', fontWeight: 500 }}>Posição</th>
-                    <th style={{ padding: '12px 8px', fontWeight: 500 }}>Nome</th>
-                    <th style={{ padding: '12px 8px', fontWeight: 500 }}>Faltas</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {discRanking.map((row, idx) => {
-                    let badge = <span style={{ color: '#94a3b8' }}>{idx + 1}º</span>;
-                    if (idx === 0) badge = <span style={{ fontSize: '18px' }}>ðŸ†</span>;
-                    if (idx === 1) badge = <span style={{ fontSize: '18px' }}>🥈</span>;
-                    if (idx === 2) badge = <span style={{ fontSize: '18px' }}>🥉</span>;
-                    return (
-                      <tr 
-                        key={idx} 
-                        onClick={() => setSelectedDisciplinaPerson(row)}
-                        style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', cursor: 'pointer', transition: 'background 0.2s', background: 'transparent' }}
-                        onMouseOver={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.02)'}
-                        onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
-                      >
-                        <td style={{ padding: '12px 8px', width: '50px', textAlign: 'center' }}>{badge}</td>
-                        <td style={{ padding: '12px 8px' }}>{row.nome}</td>
-                        <td style={{ padding: '12px 8px', color: '#ef4444', fontWeight: 700 }}>{row.faltas}</td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            ) : (
-              <div style={{color: '#94a3b8', padding: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100px'}}>
-                Importe a planilha de Disciplina
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div className="card chart-card glass-panel" style={{ overflowY: 'auto', maxHeight: '450px' }}>
-          <div className="chart-header" style={{ marginBottom: '16px' }}>
             <div className="chart-title" style={{ color: '#ef4444' }}>Ação de RH: Emissão de Telegramas</div>
           </div>
           <div className="reserva-table">
@@ -1267,7 +1223,13 @@ const App = () => {
                 </thead>
                 <tbody>
                   {discAlertas.map((row, idx) => (
-                    <tr key={idx} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', background: `rgba(${row.cor === '#ef4444' ? '239, 68, 68' : row.cor === '#f59e0b' ? '245, 158, 11' : '59, 130, 246'}, 0.1)` }}>
+                    <tr 
+                      key={idx} 
+                      onClick={() => setSelectedDisciplinaPerson(row)}
+                      style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', background: `rgba(${row.cor === '#ef4444' ? '239, 68, 68' : row.cor === '#f59e0b' ? '245, 158, 11' : '59, 130, 246'}, 0.1)`, cursor: 'pointer', transition: 'filter 0.2s' }}
+                      onMouseOver={(e) => e.currentTarget.style.filter = 'brightness(1.2)'}
+                      onMouseOut={(e) => e.currentTarget.style.filter = 'brightness(1)'}
+                    >
                       <td style={{ padding: '12px 8px' }}>{row.nome}</td>
                       <td style={{ padding: '12px 8px', color: row.cor, fontWeight: 700 }}>{row.faltas}</td>
                       <td style={{ padding: '12px 8px' }}><span style={{ backgroundColor: row.cor, color: '#fff', padding: '4px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: 'bold' }}>{row.alerta}</span></td>
