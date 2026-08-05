@@ -189,7 +189,7 @@ const Dashboard = ({ rawEfetivos, rawPresencas, rawFrota, rawAtestados }) => {
               <Briefcase size={18} color="#8b5cf6" /> Absenteísmo por Posto (Top 6)
             </h3>
             <div style={{ height: '300px' }}>
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="99%" height="100%">
                 <BarChart data={ocorrenciasPorPosto} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
                   <XAxis dataKey="name" stroke="#94a3b8" fontSize={11} tickFormatter={(val) => String(val).substring(0,10)+'...'} />
@@ -212,7 +212,7 @@ const Dashboard = ({ rawEfetivos, rawPresencas, rawFrota, rawAtestados }) => {
               <TrendingUp size={18} color="#38bdf8" /> Custos de Frota por Centro de Custo
             </h3>
             <div style={{ height: '300px' }}>
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="99%" height="100%">
                 <AreaChart data={custoPorPosto} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
                   <defs>
                     <linearGradient id="colorValor" x1="0" y1="0" x2="0" y2="1">
