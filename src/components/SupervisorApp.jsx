@@ -1,6 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Camera, UploadCloud, MapPin, Building, CheckCircle, Loader2, X, Plus, Clock, Play, Activity } from 'lucide-react';
+import { Camera, UploadCloud, MapPin, Building, CheckCircle, Loader2, X, Plus, Clock, Play, Activity, Search } from 'lucide-react';
 import { supabase } from '../supabaseClient';
+
+const getBRTString = () => {
+  const d = new Date();
+  const options = { timeZone: 'America/Sao_Paulo', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
+  const parts = new Intl.DateTimeFormat('en-GB', options).formatToParts(d);
+  const p = {};
+  parts.forEach(part => p[part.type] = part.value);
+  return `${p.year}-${p.month}-${p.day} ${p.hour}:${p.minute}:${p.second}`;
+};
 
 const SupervisorApp = ({ currentUser }) => {
   const [clientes, setClientes] = useState([]);
@@ -79,7 +88,7 @@ const SupervisorApp = ({ currentUser }) => {
       nomecli: posto.nomecli,
       codpos: posto.codpos,
       nomepos: posto.nomepos,
-      horaChegada: new Date().toISOString()
+      horaChegada: getBRTString()
     };
 
     setActiveVisit(novaVisita);
@@ -141,7 +150,7 @@ const SupervisorApp = ({ currentUser }) => {
         fotoUrlJoined = urls.join(',');
       }
 
-      const horaSaida = new Date().toISOString();
+      const horaSaida = getBRTString();
 
       const { error: insertError } = await supabase
         .from('visitas')
