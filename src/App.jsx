@@ -1166,7 +1166,7 @@ const App = () => {
         </div>
       </div>
 
-      <div className="charts-grid" style={{ gridTemplateColumns: '1fr 1fr 1fr', marginBottom: '24px' }}>
+      <div className="charts-grid" style={{ gridTemplateColumns: '1fr 1fr', marginBottom: '24px' }}>
         <div className="card chart-card glass-panel" style={{ gridColumn: '1 / -1' }}>
           <div className="chart-header"><div className="chart-title">Ocorrências por Dia (Tipo S)</div></div>
           <div className="chart-wrapper">
@@ -1187,23 +1187,6 @@ const App = () => {
                 </AreaChart>
               </ResponsiveContainer>
             ) : (<div style={{color: '#94a3b8', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%'}}>Importe a planilha de Disciplina</div>)}
-          </div>
-        </div>
-
-        <div className="card chart-card glass-panel">
-          <div className="chart-header"><div className="chart-title">Concentração por Ãrea</div></div>
-          <div className="chart-wrapper">
-            {discFaltasPorArea.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={discFaltasPorArea} layout="vertical" margin={{ top: 5, right: 30, left: 60, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" horizontal={true} vertical={false}/>
-                  <XAxis type="number" stroke="#94a3b8" />
-                  <YAxis dataKey="name" type="category" stroke="#94a3b8" width={80} tick={{fontSize: 11}} />
-                  <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }} />
-                  <Bar dataKey="value" name="Faltas (S)" fill="#0ea5e9" radius={[0, 4, 4, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            ) : (<div style={{color: '#94a3b8', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%'}}>Sem dados</div>)}
           </div>
         </div>
 
