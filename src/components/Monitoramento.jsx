@@ -162,7 +162,40 @@ const Monitoramento = ({ currentUser }) => {
         </div>
       ) : (
         <div className="card glass-panel" style={{ padding: 0, overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '900px' }}>
+          <div style={{ padding: '0 20px 20px 20px' }}>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '10px' }}>
+              <button 
+                onClick={async () => {
+                  if (window.confirm('Isto irá subtrair 3 horas de todas as visitas que estão com horário adiantado. Continuar?')) {
+                    let fixed = 0;
+                    for (const v of visitasFiltradas) {
+                      const chegada = new Date(v.hora_chegada);
+                      const now = new Date();
+                      // Se a visita está no futuro (adiantada por conta do SQL rodado múltiplas vezes)
+                      if (chegada > now) {
+                        const updates = {};
+                        chegada.setHours(chegada.getHours() - 3);
+                        updates.hora_chegada = chegada.toISOString();
+                        
+                        if (v.hora_saida) {
+                          const saida = new Date(v.hora_saida);
+                          saida.setHours(saida.getHours() - 3);
+                          updates.hora_saida = saida.toISOString();
+                        }
+                        
+                        await supabase.from('visitas').update(updates).eq('id', v.id);
+                        fixed++;
+                      }
+                    }
+                    alert(`Corrigidas ${fixed} visitas! Atualize a página.`);
+                  }
+                }}
+                style={{ background: '#ef4444', color: 'white', padding: '8px 16px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}
+              >
+                Corrigir Horários Adiantados (-3h)
+              </button>
+            </div>
+            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '14px' }}>
             <thead style={{ background: 'rgba(255,255,255,0.05)' }}>
               <tr>
                 <th style={{ padding: '16px', color: '#cbd5e1', fontWeight: 600, width: '180px' }}>Data/Hora</th>
