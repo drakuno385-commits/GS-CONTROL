@@ -1337,7 +1337,7 @@ const App = () => {
 
   if (currentUser.role === 'SUPERVISOR') {
     return (
-      <div style={{ background: '#0f172a', minHeight: '100vh' }}>
+      <div style={{ background: 'transparent', minHeight: '100vh' }}>
         <div style={{ padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#fff', fontWeight: 'bold', fontSize: '18px' }}>
             <Activity size={24} color="#3b82f6" />
@@ -1354,7 +1354,7 @@ const App = () => {
 
   if (activeMenu === 'apresentacao') {
     return (
-      <div style={{ background: '#0f172a', minHeight: '100vh', padding: '20px' }}>
+      <div style={{ background: 'transparent', minHeight: '100vh', padding: '20px' }}>
         <svg style={{ height: 0, position: 'absolute' }}>
           <defs>
             <linearGradient id="colorCusto" x1="0" y1="0" x2="0" y2="1">
