@@ -26,7 +26,7 @@ const App = () => {
     return saved || (currentUser?.role === 'SUPERVISOR' ? 'app_supervisor' : 'rh');
   });
 
-  const [ApresentaçãoStep, setApresentaçãoStep] = useState(0);
+  const [ApresentacaoStep, setApresentacaoStep] = useState(0);
   const [tvInterval, setTvInterval] = useState(() => {
     const saved = localStorage.getItem('acoweb_tv_interval');
     return saved ? parseInt(saved, 10) : 15;
@@ -44,7 +44,7 @@ const App = () => {
     let interval;
       if (activeMenu === 'Apresentação') {
         interval = setInterval(() => {
-          setApresentaçãoStep(prev => (prev + 1) % 4);
+          setApresentacaoStep(prev => (prev + 1) % 4);
         }, tvInterval * 1000); 
       }
     return () => clearInterval(interval);
@@ -1166,7 +1166,7 @@ const App = () => {
         </div>
       </div>
 
-      <div className="charts-grid" style={{ gridTemplateColumns: '1fr 1fr', marginBottom: '24px' }}>
+      <div className="charts-grid" style={{ gridTemplateColumns: '1fr 1fr 1fr', marginBottom: '24px' }}>
         <div className="card chart-card glass-panel" style={{ gridColumn: '1 / -1' }}>
           <div className="chart-header"><div className="chart-title">Ocorrências por Dia (Tipo S)</div></div>
           <div className="chart-wrapper">
@@ -1187,6 +1187,23 @@ const App = () => {
                 </AreaChart>
               </ResponsiveContainer>
             ) : (<div style={{color: '#94a3b8', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%'}}>Importe a planilha de Disciplina</div>)}
+          </div>
+        </div>
+
+        <div className="card chart-card glass-panel">
+          <div className="chart-header"><div className="chart-title">Concentração por Área</div></div>
+          <div className="chart-wrapper">
+            {discFaltasPorArea.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={discFaltasPorArea} layout="vertical" margin={{ top: 5, right: 30, left: 60, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" horizontal={true} vertical={false}/>
+                  <XAxis type="number" stroke="#94a3b8" />
+                  <YAxis dataKey="name" type="category" stroke="#94a3b8" width={80} tick={{fontSize: 11}} />
+                  <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }} />
+                  <Bar dataKey="value" name="Faltas (S)" fill="#0ea5e9" radius={[0, 4, 4, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (<div style={{color: '#94a3b8', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%'}}>Sem dados</div>)}
           </div>
         </div>
 
@@ -1292,7 +1309,7 @@ const App = () => {
                 <thead style={{ position: 'sticky', top: 0, background: '#1e293b', backdropFilter: 'blur(4px)' }}>
                   <tr>
                     <th style={{ padding: '16px', fontWeight: 600, color: '#94a3b8', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Data</th>
-                    <th style={{ padding: '16px', fontWeight: 600, color: '#94a3b8', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Ocorrência / Ãrea</th>
+                    <th style={{ padding: '16px', fontWeight: 600, color: '#94a3b8', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Ocorrência / Área</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1364,10 +1381,10 @@ const App = () => {
         </button>
         
         {/* Usando animação suave de fade na transição se possível, mas React sozinho re-renderiza brusco. O importante é alternar. */}
-        {ApresentaçãoStep === 0 && renderRH()}
-        {ApresentaçãoStep === 1 && renderFrota()}
-        {ApresentaçãoStep === 2 && renderDisciplina()}
-        {ApresentaçãoStep === 3 && renderAtestados()}
+        {ApresentacaoStep === 0 && renderRH()}
+        {ApresentacaoStep === 1 && renderFrota()}
+        {ApresentacaoStep === 2 && renderDisciplina()}
+        {ApresentacaoStep === 3 && renderAtestados()}
       </div>
     );
   }
@@ -1511,7 +1528,7 @@ const App = () => {
                   <div style={{ width: '1px', height: '24px', background: 'rgba(255,255,255,0.1)' }}></div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                     <label style={{ color: '#cbd5e1', fontSize: '13px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                      {activeMenu === 'disciplina' ? 'Ãrea:' : 'Cliente:'}
+                      {activeMenu === 'disciplina' ? 'Área:' : 'Cliente:'}
                     </label>
                     <select 
                       value={filters.cliente || ''}
