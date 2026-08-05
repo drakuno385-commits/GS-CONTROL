@@ -209,19 +209,19 @@ const App = () => {
 
     try {
       const eData = await fetchAll('efetivos');
-      if (eData.length > 0) setRawEfetivos(eData);
+      if (eData.length > 0) setRawEfetivos(eData.filter(r => r != null && typeof r === 'object'));
 
       const pData = await fetchAll('presencas');
-      if (pData.length > 0) setRawPresencas(pData);
+      if (pData.length > 0) setRawPresencas(pData.filter(r => r != null && typeof r === 'object'));
 
       const fData = await fetchAll('frota');
-      if (fData.length > 0) setRawFrota(fData);
+      if (fData.length > 0) setRawFrota(fData.filter(r => r != null && typeof r === 'object'));
 
       const dData = await fetchAll('disciplina');
-      if (dData.length > 0) setRawDisciplina(dData);
+      if (dData.length > 0) setRawDisciplina(dData.filter(r => r != null && typeof r === 'object'));
       
       const aData = await fetchAll('atestados');
-      if (aData.length > 0) setRawAtestados(aData);
+      if (aData.length > 0) setRawAtestados(aData.filter(r => r != null && typeof r === 'object'));
       
       setLastSync(new Date().toLocaleTimeString());
     } catch (error) {
