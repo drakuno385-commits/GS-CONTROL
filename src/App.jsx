@@ -16,6 +16,14 @@ import Usuarios from './components/Usuarios';
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
 const FALTAS_COLORS = ['#ef4444', '#f97316', '#f43f5e', '#d946ef', '#8b5cf6', '#f59e0b'];
 
+
+const hasAccess = (user, screen) => {
+  if (!user) return false;
+  if (user.role === 'SUPERVISOR' && screen !== 'app_supervisor') return false;
+  if (!user.allowed_screens || user.allowed_screens.length === 0) return true;
+  return user.allowed_screens.includes(screen);
+};
+
 const App = () => {
   const [currentUser, setCurrentUser] = useState(() => {
     const saved = sessionStorage.getItem('acoweb_user');
@@ -1375,7 +1383,7 @@ const App = () => {
           <img src="/logo.jpg" alt="GSolimpio" style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover', border: '2px solid rgba(59, 130, 246, 0.5)' }} />
           GS-Control
         </div>
-                <nav className="nav-menu">
+                        <nav className="nav-menu">
           {currentUser.role !== 'SUPERVISOR' && (
             <>
               {hasAccess(currentUser, 'dashboard') && (
