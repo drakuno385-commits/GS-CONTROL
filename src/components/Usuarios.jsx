@@ -9,6 +9,7 @@ const Usuarios = ({ currentUser }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
   
+  const [formData, setFormData] = useState({
     username: '',
     password: '',
     role: 'SUPERVISOR',
