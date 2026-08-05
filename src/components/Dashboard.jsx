@@ -278,4 +278,39 @@ const Dashboard = ({ rawEfetivos, rawPresencas, rawFrota, rawAtestados }) => {
   }
 };
 
-export default Dashboard;
+
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error('Dashboard ErrorBoundary caught error:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ padding: '20px', color: 'white', background: '#ef4444', borderRadius: '8px', margin: '20px' }}>
+          <h2>Falha Crítica no Dashboard (ErrorBoundary)</h2>
+          <p>{this.state.error && this.state.error.toString()}</p>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+const DashboardWithErrorBoundary = (props) => (
+  <ErrorBoundary>
+    <Dashboard {...props} />
+  </ErrorBoundary>
+);
+
+export default DashboardWithErrorBoundary;
+

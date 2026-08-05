@@ -79,7 +79,7 @@ const SupervisorApp = ({ currentUser }) => {
       nomecli: posto.nomecli,
       codpos: posto.codpos,
       nomepos: posto.nomepos,
-      horaChegada: new Date().toLocaleString('sv-SE')
+      horaChegada: new Date().toISOString()
     };
 
     setActiveVisit(novaVisita);
