@@ -17,7 +17,7 @@ const FALTAS_COLORS = ['#ef4444', '#f97316', '#f43f5e', '#d946ef', '#8b5cf6', '#
 
 const App = () => {
   const [currentUser, setCurrentUser] = useState(() => {
-    const saved = localStorage.getItem('acoweb_user');
+    const saved = sessionStorage.getItem('acoweb_user');
     return saved ? JSON.parse(saved) : null;
   });
 
@@ -51,14 +51,15 @@ const App = () => {
   }, [activeMenu, tvInterval]);
 
   const handleLoginSuccess = (user) => {
-    localStorage.setItem('acoweb_user', JSON.stringify(user));
+    sessionStorage.setItem('acoweb_user', JSON.stringify(user));
     setCurrentUser(user);
     setActiveMenu(user.role === 'SUPERVISOR' ? 'app_supervisor' : 'rh');
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('acoweb_user');
+  const handleLogout = async () => {
+    sessionStorage.removeItem('acoweb_user');
     setCurrentUser(null);
+    await supabase.auth.signOut();
   };
 
   const [isSyncing, setIsSyncing] = useState(false);
