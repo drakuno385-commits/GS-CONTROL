@@ -35,6 +35,15 @@ const App = () => {
   });
 
   const [ApresentacaoStep, setApresentacaoStep] = useState(0);
+  const [tvScreens, setTvScreens] = useState(() => {
+    const saved = localStorage.getItem('acoweb_tv_screens');
+    return saved ? JSON.parse(saved) : ['rh', 'frota', 'disciplina', 'atestados'];
+  });
+  
+  useEffect(() => {
+    localStorage.setItem('acoweb_tv_screens', JSON.stringify(tvScreens));
+  }, [tvScreens]);
+
   const [tvInterval, setTvInterval] = useState(() => {
     const saved = localStorage.getItem('acoweb_tv_interval');
     return saved ? parseInt(saved, 10) : 15;
@@ -52,11 +61,11 @@ const App = () => {
     let interval;
       if (activeMenu === 'Apresentação') {
         interval = setInterval(() => {
-          setApresentacaoStep(prev => (prev + 1) % 4);
+          setApresentacaoStep(prev => tvScreens.length > 0 ? (prev + 1) % tvScreens.length : 0);
         }, tvInterval * 1000); 
       }
     return () => clearInterval(interval);
-  }, [activeMenu, tvInterval]);
+  }, [activeMenu, tvInterval, tvScreens.length]);
 
   const handleLoginSuccess = (user) => {
     sessionStorage.setItem('acoweb_user', JSON.stringify(user));
