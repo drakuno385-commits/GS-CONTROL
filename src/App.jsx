@@ -804,29 +804,6 @@ const App = () => {
             ) : (<div style={{color: '#94a3b8', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%'}}>Sem dados</div>)}
           </div>
         </div>
-
-        <div className="card chart-card glass-panel">
-          <div className="chart-header"><div className="chart-title">Presença Diária</div></div>
-          <div className="chart-wrapper">
-            {presencaDiaria.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={presencaDiaria} margin={{ bottom: 20 }}>
-                  <defs>
-                    <linearGradient id="colorPresenca" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#0ea5e9" stopOpacity={0.8}/>
-                      <stop offset="95%" stopColor="#38bdf8" stopOpacity={0.05}/>
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                  <XAxis dataKey="dia" stroke="#94a3b8" tick={{fontSize: 12}} angle={-45} textAnchor="end" height={40}/>
-                  <YAxis stroke="#94a3b8" domain={['dataMin - 20', 'dataMax + 20']} />
-                  <Tooltip contentStyle={{ backgroundColor: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }} />
-                  <Area type="monotone" dataKey="presencas" stroke="#0ea5e9" strokeWidth={3} fillOpacity={1} fill="url(#colorPresenca)" />
-                </AreaChart>
-              </ResponsiveContainer>
-            ) : (<div style={{color: '#94a3b8', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%'}}>Sem dados</div>)}
-          </div>
-        </div>
       </div>
 
       <div className="charts-grid" style={{ gridTemplateColumns: '1fr 1fr 1fr' }}>
