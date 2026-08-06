@@ -1328,9 +1328,10 @@ const App = () => {
     );
   }
 
-  if (activeMenu === 'Apresentação') {
+  if (activeMenu === 'Apresentação' || activeMenu === 'Apresentação' || activeMenu === 'Apresentação') {
     return (
-      <div style={{ background: 'transparent', minHeight: '100vh', padding: '20px' }}>
+      <div className="tv-mode" style={{ background: 'transparent', minHeight: '100vh', padding: '20px' }}>
+        <style>{`body { overflow: hidden !important; margin: 0; padding: 0; }`}</style>
         <svg style={{ height: 0, position: 'absolute' }}>
           <defs>
             <linearGradient id="colorCusto" x1="0" y1="0" x2="0" y2="1">
