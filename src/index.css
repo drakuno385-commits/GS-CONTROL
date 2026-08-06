@@ -221,7 +221,7 @@ body {
   min-height: 0;
   position: relative;
 }
-.chart-wrapper > .recharts-responsive-container {
+.chart-wrapper > div {
   position: absolute !important;
   top: 0;
   left: 0;
