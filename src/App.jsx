@@ -1179,8 +1179,8 @@ const App = () => {
         </div>
       </div>
 
-      <div className="charts-grid" style={{ gridTemplateColumns: '1fr 1fr', marginBottom: '24px' }}>
-        <div className="card chart-card glass-panel" style={{ gridColumn: '1 / -1' }}>
+      <div className="charts-grid" style={{ gridTemplateColumns: '1fr', marginBottom: '24px' }}>
+        <div className="card chart-card glass-panel">
           <div className="chart-header"><div className="chart-title">Ocorrências por Dia (Tipo S)</div></div>
           <div className="chart-wrapper">
             {discFaltasPorDia.length > 0 ? (
@@ -1202,7 +1202,9 @@ const App = () => {
             ) : (<div style={{color: '#94a3b8', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%'}}>Importe a planilha de Disciplina</div>)}
           </div>
         </div>
+      </div>
 
+      <div className="charts-grid" style={{ gridTemplateColumns: '1fr 1fr', marginBottom: '24px' }}>
         <div className="card chart-card glass-panel">
           <div className="chart-header"><div className="chart-title">Concentração por Área</div></div>
           <div className="chart-wrapper">
