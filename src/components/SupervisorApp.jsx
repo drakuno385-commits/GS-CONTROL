@@ -390,6 +390,18 @@ const SupervisorApp = ({ currentUser }) => {
                 <MapPin size={16} style={{ display: 'inline', marginRight: '6px', verticalAlign: 'text-bottom' }}/> 
                 Posto de Serviço
               </label>
+              {selectedCliente && (
+                <div style={{ position: 'relative', marginBottom: '8px' }}>
+                  <Search size={16} color="#94a3b8" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
+                  <input 
+                    type="text"
+                    placeholder="Pesquisar posto por nome ou código..."
+                    value={searchPosto}
+                    onChange={(e) => setSearchPosto(e.target.value)}
+                    style={{ width: '100%', padding: '12px 12px 12px 36px', background: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', borderRadius: '8px' }}
+                  />
+                </div>
+              )}
               <select 
                 className="custom-input" 
                 value={selectedPostoId} 
