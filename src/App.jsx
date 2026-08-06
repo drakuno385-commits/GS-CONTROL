@@ -784,23 +784,23 @@ const App = () => {
           <div className="chart-header"><div className="chart-title">Efetivo por Cliente (Top 10)</div></div>
           <div className="chart-wrapper">
             {efetivoPorCliente.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={efetivoPorCliente} layout="vertical" margin={{ top: 5, right: 40, left: 120, bottom: 5 }}>
-                  <defs>
-                    <linearGradient id="colorEfetivo" x1="0" y1="0" x2="1" y2="0">
-                      <stop offset="5%" stopColor="#6366f1" stopOpacity={1}/>
-                      <stop offset="95%" stopColor="#a855f7" stopOpacity={1}/>
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" horizontal={true} vertical={false}/>
-                  <XAxis type="number" stroke="#94a3b8" hide />
-                  <YAxis dataKey="cliente" type="category" stroke="#94a3b8" width={130} tick={{fontSize: 11}} axisLine={false} tickLine={false} />
-                  <Tooltip content={<CustomEfetivoTooltip />} cursor={{fill: 'rgba(255,255,255,0.03)'}} />
-                  <Bar dataKey="efetivo" fill="url(#colorEfetivo)" radius={[0, 4, 4, 0]} barSize={20}>
-                    <LabelList dataKey="efetivo" position="right" fill="#e2e8f0" fontSize={11} fontWeight={600} />
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={efetivoPorCliente} margin={{ top: 25, right: 20, left: 0, bottom: 30 }}>
+                    <defs>
+                      <linearGradient id="colorEfetivo" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#6366f1" stopOpacity={1}/>
+                        <stop offset="95%" stopColor="#a855f7" stopOpacity={1}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" horizontal={true} vertical={false}/>
+                    <XAxis dataKey="cliente" type="category" stroke="#94a3b8" tick={{fontSize: 11}} angle={-25} textAnchor="end" height={60} axisLine={false} tickLine={false} />
+                    <YAxis type="number" stroke="#94a3b8" hide />
+                    <Tooltip content={<CustomEfetivoTooltip />} cursor={{fill: 'rgba(255,255,255,0.03)'}} />
+                    <Bar dataKey="efetivo" fill="url(#colorEfetivo)" radius={[4, 4, 0, 0]} barSize={40}>
+                      <LabelList dataKey="efetivo" position="top" fill="#e2e8f0" fontSize={12} fontWeight={600} />
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
             ) : (<div style={{color: '#94a3b8', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%'}}>Sem dados</div>)}
           </div>
         </div>
