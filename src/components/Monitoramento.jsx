@@ -6,9 +6,15 @@ const Monitoramento = ({ currentUser }) => {
   const [visitas, setVisitas] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const [filterData, setFilterData] = useState('');
-  const [filterSupervisor, setFilterSupervisor] = useState('');
-  const [filterCliente, setFilterCliente] = useState('');
+  const [filterData, setFilterData] = useState(() => localStorage.getItem('mon_filter_data') || '');
+  const [filterSupervisor, setFilterSupervisor] = useState(() => localStorage.getItem('mon_filter_sup') || '');
+  const [filterCliente, setFilterCliente] = useState(() => localStorage.getItem('mon_filter_cli') || '');
+
+  useEffect(() => {
+    localStorage.setItem('mon_filter_data', filterData);
+    localStorage.setItem('mon_filter_sup', filterSupervisor);
+    localStorage.setItem('mon_filter_cli', filterCliente);
+  }, [filterData, filterSupervisor, filterCliente]);
 
   useEffect(() => {
     fetchVisitas();
