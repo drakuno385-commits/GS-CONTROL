@@ -281,3 +281,8 @@ body {
 .tv-mode .chart-header { margin-bottom: 12px; }
 
 .tv-mode .chart-wrapper { min-height: 0; height: 100%; }
+
+.tv-mode .charts-grid { max-height: calc(50vh - 100px); overflow: hidden; }
+
+.tv-mode .chart-card { position: relative; }
+.tv-mode .chart-wrapper { position: absolute !important; top: 60px; left: 24px; right: 24px; bottom: 24px; height: auto !important; width: auto !important; flex: none !important; }
