@@ -279,3 +279,5 @@ body {
 .tv-mode .chart-card { min-height: 0; height: 100%; }
 .tv-mode .stats-grid { margin-bottom: 16px; }
 .tv-mode .chart-header { margin-bottom: 12px; }
+
+.tv-mode .chart-wrapper { min-height: 0; height: 100%; }
