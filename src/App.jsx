@@ -779,7 +779,7 @@ const App = () => {
         </div>
       </div>
 
-      <div className="charts-grid" style={{ gridTemplateColumns: '1fr 1fr', marginBottom: '24px' }}>
+      <div className="charts-grid" style={{ gridTemplateColumns: '1fr', marginBottom: '24px' }}>
         <div className="card chart-card glass-panel">
           <div className="chart-header"><div className="chart-title">Efetivo por Cliente (Top 10)</div></div>
           <div className="chart-wrapper">
