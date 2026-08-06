@@ -385,36 +385,100 @@ const SupervisorApp = ({ currentUser }) => {
               </select>
             </div>
 
-            <div className="form-group">
+            <div className="form-group" style={{ position: 'relative' }}>
               <label style={{ display: 'block', marginBottom: '8px', color: '#cbd5e1' }}>
                 <MapPin size={16} style={{ display: 'inline', marginRight: '6px', verticalAlign: 'text-bottom' }}/> 
                 Posto de Serviço
               </label>
-              {selectedCliente && (
-                <div style={{ position: 'relative', marginBottom: '8px' }}>
-                  <Search size={16} color="#94a3b8" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
-                  <input 
-                    type="text"
-                    placeholder="Pesquisar posto por nome ou código..."
-                    value={searchPosto}
-                    onChange={(e) => setSearchPosto(e.target.value)}
-                    style={{ width: '100%', padding: '12px 12px 12px 36px', background: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', borderRadius: '8px' }}
-                  />
+              
+              <div 
+                style={{ 
+                  position: 'relative', 
+                  width: '100%', 
+                  background: 'rgba(15, 23, 42, 0.6)', 
+                  border: '1px solid rgba(255,255,255,0.1)', 
+                  borderRadius: '8px',
+                  opacity: !selectedCliente ? 0.5 : 1,
+                  pointerEvents: !selectedCliente ? 'none' : 'auto'
+                }}
+              >
+                <div style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', display: 'flex', alignItems: 'center' }}>
+                  <Search size={16} color="#94a3b8" />
+                </div>
+                <input 
+                  type="text"
+                  placeholder={!selectedCliente ? "Selecione o Cliente primeiro..." : "Digite para pesquisar o posto..."}
+                  value={searchPosto}
+                  onChange={(e) => {
+                    setSearchPosto(e.target.value);
+                    if (selectedPostoId) setSelectedPostoId(''); // clear selection if they type something new
+                  }}
+                  style={{ 
+                    width: '100%', 
+                    padding: '12px 12px 12px 36px', 
+                    background: 'transparent', 
+                    border: 'none', 
+                    color: '#fff',
+                    outline: 'none'
+                  }}
+                />
+              </div>
+
+              {selectedCliente && searchPosto && !selectedPostoId && postosFiltrados.length > 0 && (
+                <div style={{
+                  position: 'absolute',
+                  top: '100%',
+                  left: 0,
+                  right: 0,
+                  marginTop: '4px',
+                  background: '#1e293b',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  borderRadius: '8px',
+                  maxHeight: '200px',
+                  overflowY: 'auto',
+                  zIndex: 10
+                }}>
+                  {postosFiltrados.map(p => (
+                    <div 
+                      key={p.id}
+                      onClick={() => {
+                        setSelectedPostoId(p.id);
+                        setSearchPosto(`${p.nomepos} - Cód: ${p.codpos}`);
+                      }}
+                      style={{
+                        padding: '12px',
+                        borderBottom: '1px solid rgba(255,255,255,0.05)',
+                        cursor: 'pointer',
+                        color: '#f1f5f9',
+                        fontSize: '14px'
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                      onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                    >
+                      {p.nomepos} - Cód: {p.codpos}
+                    </div>
+                  ))}
                 </div>
               )}
-              <select 
-                className="custom-input" 
-                value={selectedPostoId} 
-                onChange={(e) => setSelectedPostoId(e.target.value)}
-                required
-                disabled={!selectedCliente}
-                style={{ width: '100%', padding: '12px', background: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', borderRadius: '8px', opacity: !selectedCliente ? 0.5 : 1 }}
-              >
-                <option value="" disabled>Selecione o Posto</option>
-                {postosFiltrados.map(p => (
-                  <option key={p.id} value={p.id}>{p.nomepos} - Cód: {p.codpos}</option>
-                ))}
-              </select>
+              
+              {selectedCliente && searchPosto && !selectedPostoId && postosFiltrados.length === 0 && (
+                <div style={{
+                  position: 'absolute',
+                  top: '100%',
+                  left: 0,
+                  right: 0,
+                  marginTop: '4px',
+                  padding: '12px',
+                  background: '#1e293b',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  borderRadius: '8px',
+                  color: '#94a3b8',
+                  fontSize: '14px',
+                  zIndex: 10
+                }}>
+                  Nenhum posto encontrado.
+                </div>
+              )}
             </div>
 
             <button 
