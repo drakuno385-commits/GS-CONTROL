@@ -729,7 +729,7 @@ const App = () => {
         } else if (sheetType === 'presencas') {
           uploadToSupabase('presencas', data, row => ({ 
             data: getField(row, 'data'), cliente: getField(row, 'cliente'), sithoje: getField(row, 'sithoje'), posto: getField(row, 'posto'), re: getField(row, 're'), nome: getField(row, 'nome'), tipo: getField(row, 'tipo') 
-          }), false);
+          }), true);
         } else if (sheetType === 'atestados') {
           uploadToSupabase('atestados', data, row => ({
             codvigil: getField(row, 'codvigil'), nomevigil: getField(row, 'nomevigil'), nomeocor: getField(row, 'nomeocor'), dtadmissao: getField(row, 'dtadmissao'),
