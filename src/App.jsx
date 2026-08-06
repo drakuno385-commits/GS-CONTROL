@@ -846,9 +846,10 @@ const App = () => {
           </div>
         </div>
 
-        <div className="card chart-card glass-panel" style={{ overflowY: 'auto', maxHeight: '400px' }}>
+        <div className="card chart-card glass-panel">
           <div className="chart-header" style={{ marginBottom: '16px' }}><div className="chart-title">Reserva Técnica</div></div>
-          <div className="reserva-table">
+          <div className="chart-wrapper" style={{ overflowY: 'auto' }}>
+            <div className="reserva-table">
             {reservaTecnica && reservaTecnica.length > 0 ? (
               <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                 <thead>
@@ -867,6 +868,7 @@ const App = () => {
                 </tbody>
               </table>
             ) : (<div style={{color: '#94a3b8', padding: '12px'}}>Sem registros.</div>)}
+            </div>
           </div>
         </div>
       </div>
