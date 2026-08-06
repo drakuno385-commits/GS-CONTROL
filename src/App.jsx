@@ -846,10 +846,9 @@ const App = () => {
           </div>
         </div>
 
-        <div className="card chart-card glass-panel">
+        <div className="card chart-card glass-panel" style={{ overflowY: 'auto', maxHeight: '400px' }}>
           <div className="chart-header" style={{ marginBottom: '16px' }}><div className="chart-title">Reserva Técnica</div></div>
-          <div className="chart-wrapper" style={{ overflowY: 'auto' }}>
-            <div className="reserva-table">
+          <div className="reserva-table">
             {reservaTecnica && reservaTecnica.length > 0 ? (
               <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                 <thead>
@@ -868,7 +867,6 @@ const App = () => {
                 </tbody>
               </table>
             ) : (<div style={{color: '#94a3b8', padding: '12px'}}>Sem registros.</div>)}
-            </div>
           </div>
         </div>
       </div>
@@ -893,7 +891,7 @@ const App = () => {
       </div>
 
       <div className="charts-grid" style={{ gridTemplateColumns: '1fr 1fr 1fr', marginBottom: '24px' }}>
-        <div className="card chart-card glass-panel" style={{ gridColumn: '1 / -1', minHeight: 0 }}>
+        <div className="card chart-card glass-panel" style={{ gridColumn: '1 / -1' }}>
           <div className="chart-header"><div className="chart-title">Custo e KM por Placa (Top 15)</div></div>
           <div className="chart-wrapper">
             {frotaDesempenho.length > 0 ? (
@@ -1181,8 +1179,8 @@ const App = () => {
         </div>
       </div>
 
-      <div className="charts-grid" style={{ gridTemplateColumns: '1fr 1fr 1fr', gridTemplateRows: '1fr 1fr', height: 'calc(100vh - 230px)', minHeight: '400px', marginBottom: '24px' }}>
-        <div className="card chart-card glass-panel" style={{ gridColumn: '1 / span 2', minHeight: 0 }}>
+      <div className="charts-grid" style={{ gridTemplateColumns: '1fr 1fr', marginBottom: '24px' }}>
+        <div className="card chart-card glass-panel" style={{ gridColumn: '1 / -1' }}>
           <div className="chart-header"><div className="chart-title">Ocorrências por Dia (Tipo S)</div></div>
           <div className="chart-wrapper">
             {discFaltasPorDia.length > 0 ? (
@@ -1205,7 +1203,7 @@ const App = () => {
           </div>
         </div>
 
-        <div className="card chart-card glass-panel" style={{ minHeight: 0 }}>
+        <div className="card chart-card glass-panel">
           <div className="chart-header"><div className="chart-title">Concentração por Área</div></div>
           <div className="chart-wrapper">
             {discFaltasPorArea.length > 0 ? (
@@ -1222,12 +1220,11 @@ const App = () => {
           </div>
         </div>
 
-        <div className="card chart-card glass-panel" style={{ gridColumn: '1 / -1' }}>
+        <div className="card chart-card glass-panel" style={{ overflowY: 'auto', maxHeight: '450px' }}>
           <div className="chart-header" style={{ marginBottom: '16px' }}>
             <div className="chart-title" style={{ color: '#ef4444' }}>Ação de RH: Emissão de Telegramas</div>
           </div>
-          <div className="chart-wrapper" style={{ overflowY: 'auto' }}>
-            <div className="reserva-table">
+          <div className="reserva-table">
             {discAlertas && discAlertas.length > 0 ? (
               <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                 <thead>
@@ -1258,7 +1255,6 @@ const App = () => {
                 Nenhum colaborador precisando de telegrama.
               </div>
             )}
-            </div>
           </div>
         </div>
       </div>
