@@ -1220,11 +1220,12 @@ const App = () => {
           </div>
         </div>
 
-        <div className="card chart-card glass-panel" style={{ overflowY: 'auto', maxHeight: '450px' }}>
+        <div className="card chart-card glass-panel">
           <div className="chart-header" style={{ marginBottom: '16px' }}>
             <div className="chart-title" style={{ color: '#ef4444' }}>Ação de RH: Emissão de Telegramas</div>
           </div>
-          <div className="reserva-table">
+          <div className="chart-wrapper" style={{ overflowY: 'auto' }}>
+            <div className="reserva-table">
             {discAlertas && discAlertas.length > 0 ? (
               <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                 <thead>
@@ -1255,6 +1256,7 @@ const App = () => {
                 Nenhum colaborador precisando de telegrama.
               </div>
             )}
+            </div>
           </div>
         </div>
       </div>
