@@ -893,7 +893,7 @@ const App = () => {
       </div>
 
       <div className="charts-grid" style={{ gridTemplateColumns: '1fr 1fr 1fr', marginBottom: '24px' }}>
-        <div className="card chart-card glass-panel" style={{ gridColumn: '1 / -1' }}>
+        <div className="card chart-card glass-panel" style={{ gridColumn: '1 / -1', minHeight: 0 }}>
           <div className="chart-header"><div className="chart-title">Custo e KM por Placa (Top 15)</div></div>
           <div className="chart-wrapper">
             {frotaDesempenho.length > 0 ? (
@@ -1181,8 +1181,8 @@ const App = () => {
         </div>
       </div>
 
-      <div className="charts-grid" style={{ gridTemplateColumns: '1fr 1fr 1fr', gridAutoRows: 'minmax(280px, 1fr)', marginBottom: '24px' }}>
-        <div className="card chart-card glass-panel" style={{ gridColumn: '1 / span 2' }}>
+      <div className="charts-grid" style={{ gridTemplateColumns: '1fr 1fr 1fr', gridTemplateRows: '1fr 1fr', height: 'calc(100vh - 230px)', minHeight: '400px', marginBottom: '24px' }}>
+        <div className="card chart-card glass-panel" style={{ gridColumn: '1 / span 2', minHeight: 0 }}>
           <div className="chart-header"><div className="chart-title">Ocorrências por Dia (Tipo S)</div></div>
           <div className="chart-wrapper">
             {discFaltasPorDia.length > 0 ? (
@@ -1205,7 +1205,7 @@ const App = () => {
           </div>
         </div>
 
-        <div className="card chart-card glass-panel">
+        <div className="card chart-card glass-panel" style={{ minHeight: 0 }}>
           <div className="chart-header"><div className="chart-title">Concentração por Área</div></div>
           <div className="chart-wrapper">
             {discFaltasPorArea.length > 0 ? (
