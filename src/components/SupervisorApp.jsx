@@ -15,7 +15,8 @@ const SupervisorApp = ({ currentUser }) => {
   
   // States for creating a new visit
   const [selectedCliente, setSelectedCliente] = useState(''); 
-  const [selectedPostoId, setSelectedPostoId] = useState(''); 
+  const [selectedPostoId, setSelectedPostoId] = useState('');
+  const [searchPosto, setSearchPosto] = useState(''); 
 
   // Active Visit State (loaded from localStorage)
   const [activeVisit, setActiveVisit] = useState(null);
@@ -63,10 +64,20 @@ const SupervisorApp = ({ currentUser }) => {
 
   const handleClienteChange = (e) => {
     setSelectedCliente(e.target.value);
-    setSelectedPostoId(''); 
+    setSelectedPostoId('');
+    setSearchPosto('');
   };
 
-  const postosFiltrados = postos.filter(p => p.nomecli === selectedCliente).sort((a, b) => (a.nomepos || '').localeCompare(b.nomepos || ''));
+  const postosFiltrados = postos.filter(p => {
+    if (p.nomecli !== selectedCliente) return false;
+    if (searchPosto) {
+      const termo = searchPosto.toLowerCase();
+      const nome = (p.nomepos || '').toLowerCase();
+      const cod = (p.codpos || '').toString().toLowerCase();
+      return nome.includes(termo) || cod.includes(termo);
+    }
+    return true;
+  }).sort((a, b) => (a.nomepos || '').localeCompare(b.nomepos || ''));
 
   const handleIniciarVisita = () => {
     if (!selectedPostoId) {
