@@ -205,12 +205,18 @@ const Monitoramento = ({ currentUser }) => {
                     <td style={{ padding: '16px', color: '#94a3b8', fontSize: '14px' }}>
                       <div style={{ color: '#e2e8f0', fontWeight: 500 }}>{formatDate(visita.hora_chegada || visita.created_at)}</div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '12px', marginTop: '6px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                          <Clock size={12} color="#10b981" /> Chegada: {formatTime(visita.hora_chegada || visita.created_at)}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <Clock size={12} color="#10b981" /> Chegada: {formatTime(visita.hora_chegada || visita.created_at)}
+                          </div>
+                          <div style={{ fontSize: '8px', color: '#475569', paddingLeft: '16px' }}>raw: {visita.hora_chegada || visita.created_at}</div>
                         </div>
                         {visita.hora_saida && (
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                            <Clock size={12} color="#ef4444" /> Saída: {formatTime(visita.hora_saida)}
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginTop: '4px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <Clock size={12} color="#ef4444" /> Saída: {formatTime(visita.hora_saida)}
+                            </div>
+                            <div style={{ fontSize: '8px', color: '#475569', paddingLeft: '16px' }}>raw: {visita.hora_saida}</div>
                           </div>
                         )}
                       </div>
