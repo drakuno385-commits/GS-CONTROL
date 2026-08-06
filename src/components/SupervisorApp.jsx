@@ -4,11 +4,9 @@ import { supabase } from '../supabaseClient';
 
 const getBRTString = () => {
   const d = new Date();
-  const options = { timeZone: 'America/Sao_Paulo', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
-  const parts = new Intl.DateTimeFormat('en-GB', options).formatToParts(d);
-  const p = {};
-  parts.forEach(part => p[part.type] = part.value);
-  return `${p.year}-${p.month}-${p.day}T${p.hour}:${p.minute}:${p.second}-03:00`;
+  const brt = new Date(d.getTime() - 3 * 3600 * 1000);
+  const pad = (n) => n.toString().padStart(2, '0');
+  return `${brt.getUTCFullYear()}-${pad(brt.getUTCMonth()+1)}-${pad(brt.getUTCDate())}T${pad(brt.getUTCHours())}:${pad(brt.getUTCMinutes())}:${pad(brt.getUTCSeconds())}-03:00`;
 };
 
 const SupervisorApp = ({ currentUser }) => {
