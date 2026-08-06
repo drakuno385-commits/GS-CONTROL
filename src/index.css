@@ -274,15 +274,16 @@ body {
   }
 }
 
-.tv-mode { display: flex; flex-direction: column; }
-.tv-mode .charts-grid { flex: 1; min-height: 0; margin-bottom: 12px !important; }
-.tv-mode .chart-card { min-height: 0; height: 100%; }
-.tv-mode .stats-grid { margin-bottom: 16px; }
-.tv-mode .chart-header { margin-bottom: 12px; }
 
-.tv-mode .chart-wrapper { min-height: 0; height: 100%; }
 
-.tv-mode .charts-grid { max-height: calc(50vh - 100px); overflow: hidden; }
 
-.tv-mode .chart-card { position: relative; }
-.tv-mode .chart-wrapper { position: absolute !important; top: 60px; left: 24px; right: 24px; bottom: 24px; height: auto !important; width: auto !important; flex: none !important; }
+
+
+/* TV MODE FIXES */
+.tv-mode { display: flex !important; flex-direction: column !important; height: 100vh !important; width: 100vw !important; box-sizing: border-box !important; overflow: hidden !important; padding: 24px !important; }
+.tv-mode .stats-grid { margin-bottom: 12px !important; flex-shrink: 0; }
+.tv-mode .charts-grid { flex: 1 1 0 !important; min-height: 0 !important; margin-bottom: 12px !important; }
+.tv-mode .chart-card { height: 100% !important; min-height: 0 !important; position: relative !important; }
+.tv-mode .chart-wrapper { position: absolute !important; top: 50px !important; left: 16px !important; right: 16px !important; bottom: 16px !important; height: auto !important; width: auto !important; flex: none !important; min-height: 0 !important; }
+.tv-mode .chart-header { margin-bottom: 0 !important; }
+body { overflow: hidden; } /* Ensure body never scrolls in TV mode */

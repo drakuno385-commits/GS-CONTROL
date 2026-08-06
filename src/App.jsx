@@ -1135,8 +1135,9 @@ const App = () => {
                       <td style={{ padding: '16px' }}>
                         <div style={{ color: '#e2e8f0', fontSize: '14px', fontWeight: 600 }}>{d.doenca}</div>
                         <div style={{ color: '#94a3b8', fontSize: '13px', marginTop: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981' }}></div>
-                          Hospital: {d.hosp}
+                          <div className="tv-mode" style={{ padding: '24px', height: '100vh', overflow: 'hidden', backgroundColor: '#0f172a' }}>
+                            <style>{`body { overflow: hidden !important; margin: 0; padding: 0; }`}</style>
+                            Hospital: {d.hosp}
                         </div>
                         <div style={{ color: '#94a3b8', fontSize: '13px', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                           <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#3b82f6' }}></div>
