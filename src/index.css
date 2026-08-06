@@ -273,3 +273,9 @@ body {
     background: #fff !important;
   }
 }
+
+.tv-mode { display: flex; flex-direction: column; }
+.tv-mode .charts-grid { flex: 1; min-height: 0; margin-bottom: 12px !important; }
+.tv-mode .chart-card { min-height: 0; height: 100%; }
+.tv-mode .stats-grid { margin-bottom: 16px; }
+.tv-mode .chart-header { margin-bottom: 12px; }
