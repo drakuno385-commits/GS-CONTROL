@@ -1356,10 +1356,10 @@ const App = () => {
         </button>
         
         {/* Usando animação suave de fade na transição se possível, mas React sozinho re-renderiza brusco. O importante é alternar. */}
-        {ApresentacaoStep === 0 && renderRH()}
-        {ApresentacaoStep === 1 && renderFrota()}
-        {ApresentacaoStep === 2 && renderDisciplina()}
-        {ApresentacaoStep === 3 && renderAtestados()}
+        {tvScreens[ApresentacaoStep] === 'rh' && renderRH()}
+        {tvScreens[ApresentacaoStep] === 'frota' && renderFrota()}
+        {tvScreens[ApresentacaoStep] === 'disciplina' && renderDisciplina()}
+        {tvScreens[ApresentacaoStep] === 'atestados' && renderAtestados()}
       </div>
     );
   }
@@ -1441,6 +1441,32 @@ const App = () => {
                     <option value={30}>30 segundos</option>
                     <option value={60}>1 minuto</option>
                   </select>
+                  
+                  <label style={{ color: '#94a3b8', fontSize: '12px', fontWeight: 600, marginTop: '12px' }}>Telas do Modo TV:</label>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '4px' }}>
+                    {[
+                      { id: 'rh', label: 'Efetivo (RH)' },
+                      { id: 'frota', label: 'Frota' },
+                      { id: 'disciplina', label: 'Disciplina' },
+                      { id: 'atestados', label: 'Atestados' }
+                    ].map(tela => (
+                      <label key={tela.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#e2e8f0', fontSize: '12px', cursor: 'pointer' }}>
+                        <input 
+                          type="checkbox" 
+                          checked={tvScreens.includes(tela.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setTvScreens(prev => [...prev, tela.id]);
+                            } else {
+                              setTvScreens(prev => prev.length > 1 ? prev.filter(id => id !== tela.id) : prev);
+                            }
+                          }}
+                          style={{ cursor: 'pointer' }}
+                        />
+                        {tela.label}
+                      </label>
+                    ))}
+                  </div>
                 </div>
               )}
             </>
