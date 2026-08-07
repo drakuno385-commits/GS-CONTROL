@@ -127,6 +127,25 @@ const SupervisorApp = ({ currentUser }) => {
     }
   };
 
+  const handleChecklistChange = (key, value) => {
+    const updated = { ...checklist, [key]: { status: value } };
+    setChecklist(updated);
+    localStorage.setItem('activeChecklist_' + currentUser.id, JSON.stringify(updated));
+  };
+
+  const handleChecklistFotoChange = (key, e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setChecklistFotos(prev => ({ ...prev, [key]: file }));
+      setChecklistPreviews(prev => ({ ...prev, [key]: URL.createObjectURL(file) }));
+    }
+  };
+
+  const removeChecklistFoto = (key) => {
+    setChecklistFotos(prev => { const n = {...prev}; delete n[key]; return n; });
+    setChecklistPreviews(prev => { const n = {...prev}; delete n[key]; return n; });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!activeVisit) return;
