@@ -1045,7 +1045,7 @@ const App = () => {
                 <tbody>
                   {atestadosRanking.map((row, idx) => {
                     let badge = <span style={{ color: '#94a3b8' }}>{idx + 1}º</span>;
-                    if (idx === 0) badge = <span style={{ fontSize: '18px' }}>ðŸ†</span>;
+                    if (idx === 0) badge = <span style={{ fontSize: '18px' }}>🥇</span>;
                     if (idx === 1) badge = <span style={{ fontSize: '18px' }}>🥈</span>;
                     if (idx === 2) badge = <span style={{ fontSize: '18px' }}>🥉</span>;
 
