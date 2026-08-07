@@ -21,7 +21,19 @@ const SupervisorApp = ({ currentUser }) => {
   // Active Visit State (loaded from localStorage)
   const [activeVisit, setActiveVisit] = useState(null);
   
-  // Photos for the active visit
+  // Checklist States
+  const defaultChecklist = {
+    cnv: { status: '' },
+    cracha: { status: '' },
+    livro: { status: '' },
+    equipamentos: { status: '' },
+    apresentacao: { status: '' }
+  };
+  const [checklist, setChecklist] = useState(defaultChecklist);
+  const [checklistFotos, setChecklistFotos] = useState({});
+  const [checklistPreviews, setChecklistPreviews] = useState({});
+
+  // Photos for the active visit (Extra)
   const [fotos, setFotos] = useState([]);
   const [previews, setPreviews] = useState([]);
   
@@ -37,6 +49,10 @@ const SupervisorApp = ({ currentUser }) => {
     const savedVisit = localStorage.getItem('activeVisit_' + currentUser.id);
     if (savedVisit) {
       setActiveVisit(JSON.parse(savedVisit));
+      const savedChecklist = localStorage.getItem('activeChecklist_' + currentUser.id);
+      if (savedChecklist) {
+        setChecklist(JSON.parse(savedChecklist));
+      }
     }
 
     const timer = setInterval(() => setCurrentTime(new Date()), 60000); // update clock every minute
@@ -123,7 +139,11 @@ const SupervisorApp = ({ currentUser }) => {
       setActiveVisit(null);
       setFotos([]);
       setPreviews([]);
+      setChecklist(defaultChecklist);
+      setChecklistFotos({});
+      setChecklistPreviews({});
       localStorage.removeItem('activeVisit_' + currentUser.id);
+      localStorage.removeItem('activeChecklist_' + currentUser.id);
     }
   };
 
@@ -150,8 +170,32 @@ const SupervisorApp = ({ currentUser }) => {
     e.preventDefault();
     if (!activeVisit) return;
     
-    // Opt-in check for photos
-    if (fotos.length === 0) {
+    // Validate checklist
+    const labels = {
+      cnv: "CNV",
+      cracha: "Crachá",
+      livro: "Livro de Ocorrência",
+      equipamentos: "Equipamentos",
+      apresentacao: "Apresentação Pessoal"
+    };
+
+    for (const [key, item] of Object.entries(checklist)) {
+      if (!item.status) {
+        alert(`Você precisa avaliar o item: ${labels[key]}`);
+        return;
+      }
+      if (key === 'livro' && !checklistFotos[key]) {
+        alert("A foto do Livro de Ocorrência é obrigatória.");
+        return;
+      }
+      if (item.status === 'Divergente' && !checklistFotos[key]) {
+        alert(`A foto é obrigatória para o item divergente: ${labels[key]}`);
+        return;
+      }
+    }
+
+    // Opt-in check for photos (extra)
+    if (fotos.length === 0 && Object.keys(checklistFotos).length === 0) {
       if (!window.confirm("Você não anexou nenhuma foto nesta visita. Deseja finalizar mesmo assim?")) {
         return;
       }
@@ -180,6 +224,28 @@ const SupervisorApp = ({ currentUser }) => {
 
       const horaSaida = getBRTString();
 
+      // Upload checklist photos
+      let finalChecklistData = {};
+      const uploadChecklistPhoto = async (file) => {
+          const fileExt = file.name.split('.').pop();
+          const fileName = `chk_${currentUser.id}_${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+          const { error: uploadError } = await supabase.storage.from('fotos_visitas').upload(fileName, file);
+          if (uploadError) throw uploadError;
+          const { data: publicUrlData } = supabase.storage.from('fotos_visitas').getPublicUrl(fileName);
+          return publicUrlData.publicUrl;
+      };
+
+      for (const [key, item] of Object.entries(checklist)) {
+          let cFotoUrl = null;
+          if (checklistFotos[key]) {
+              cFotoUrl = await uploadChecklistPhoto(checklistFotos[key]);
+          }
+          finalChecklistData[key] = {
+              status: item.status,
+              foto: cFotoUrl
+          };
+      }
+
       const { error: insertError } = await supabase
         .from('visitas')
         .insert([
@@ -192,7 +258,8 @@ const SupervisorApp = ({ currentUser }) => {
             nomepos: activeVisit.nomepos,
             hora_chegada: activeVisit.horaChegada,
             hora_saida: horaSaida,
-            foto_url: fotoUrlJoined 
+            foto_url: fotoUrlJoined,
+            checklist: finalChecklistData
           }
         ]);
 
@@ -204,7 +271,11 @@ const SupervisorApp = ({ currentUser }) => {
       setActiveVisit(null);
       setFotos([]);
       setPreviews([]);
+      setChecklist(defaultChecklist);
+      setChecklistFotos({});
+      setChecklistPreviews({});
       localStorage.removeItem('activeVisit_' + currentUser.id);
+      localStorage.removeItem('activeChecklist_' + currentUser.id);
       setSelectedCliente('');
       setSelectedPostoId('');
 
@@ -281,10 +352,69 @@ const SupervisorApp = ({ currentUser }) => {
 
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             
+            <div className="form-group" style={{ background: 'rgba(15, 23, 42, 0.4)', padding: '16px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+              <label style={{ display: 'block', marginBottom: '16px', color: '#e2e8f0', fontWeight: 600, fontSize: '16px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '8px' }}>
+                <Activity size={18} style={{ display: 'inline', marginRight: '6px', verticalAlign: 'text-bottom' }}/> 
+                Checklist Obrigatório
+              </label>
+
+              {[
+                { key: 'cnv', label: 'CNV' },
+                { key: 'cracha', label: 'Crachá' },
+                { key: 'livro', label: 'Livro de Ocorrência' },
+                { key: 'equipamentos', label: 'Equipamentos' },
+                { key: 'apresentacao', label: 'Apresentação Pessoal' }
+              ].map(item => {
+                const isLivro = item.key === 'livro';
+                const isDivergente = checklist[item.key].status === 'Divergente';
+                const needsPhoto = isLivro || isDivergente;
+
+                return (
+                  <div key={item.key} style={{ marginBottom: '20px', paddingBottom: '16px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                      <span style={{ color: '#cbd5e1', fontSize: '15px' }}>{item.label} {isLivro && <span style={{color: '#ef4444', fontSize: '12px'}}>* Foto Obr.</span>}</span>
+                      <div style={{ display: 'flex', gap: '12px' }}>
+                        <label style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', color: checklist[item.key].status === 'Conforme' ? '#10b981' : '#94a3b8' }}>
+                          <input type="radio" name={item.key} value="Conforme" checked={checklist[item.key].status === 'Conforme'} onChange={() => handleChecklistChange(item.key, 'Conforme')} style={{ accentColor: '#10b981' }} />
+                          Conforme
+                        </label>
+                        <label style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', color: checklist[item.key].status === 'Divergente' ? '#ef4444' : '#94a3b8' }}>
+                          <input type="radio" name={item.key} value="Divergente" checked={checklist[item.key].status === 'Divergente'} onChange={() => handleChecklistChange(item.key, 'Divergente')} style={{ accentColor: '#ef4444' }} />
+                          Divergente
+                        </label>
+                      </div>
+                    </div>
+                    
+                    {needsPhoto && (
+                      <div style={{ marginTop: '8px' }}>
+                        {!checklistPreviews[item.key] ? (
+                          <label style={{ 
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                            background: 'rgba(59, 130, 246, 0.1)', border: '1px dashed #3b82f6', borderRadius: '6px',
+                            padding: '12px', cursor: 'pointer', color: '#3b82f6', fontSize: '14px'
+                          }}>
+                            <Camera size={16} /> Tirar Foto {isLivro ? 'do Livro' : 'da Divergência'}
+                            <input type="file" accept="image/*" capture="environment" onChange={(e) => handleChecklistFotoChange(item.key, e)} style={{ display: 'none' }} />
+                          </label>
+                        ) : (
+                          <div style={{ position: 'relative', width: '120px', aspectRatio: '1', borderRadius: '6px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.2)' }}>
+                            <img src={checklistPreviews[item.key]} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            <button type="button" onClick={() => removeChecklistFoto(item.key)} style={{ position: 'absolute', top: '4px', right: '4px', background: 'rgba(239, 68, 68, 0.9)', border: 'none', borderRadius: '50%', width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#fff' }}>
+                              <X size={14} />
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
             <div className="form-group">
               <label style={{ display: 'block', marginBottom: '8px', color: '#cbd5e1' }}>
                 <Camera size={16} style={{ display: 'inline', marginRight: '6px', verticalAlign: 'text-bottom' }}/> 
-                Capturar Fotos ({fotos.length})
+                Capturar Fotos Extras ({fotos.length})
               </label>
               
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: '12px', marginBottom: '12px' }}>
