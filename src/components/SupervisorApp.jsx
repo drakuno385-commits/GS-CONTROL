@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Camera, UploadCloud, MapPin, Building, CheckCircle, Loader2, X, Plus, Clock, Play, Activity, Search } from 'lucide-react';
 import { supabase } from '../supabaseClient';
+import { saveVisitOffline, getPendingVisits, syncAll, fileToBase64 } from '../utils/syncManager';
+import { CloudOff, RefreshCw } from 'lucide-react';
 
 const getBRTString = () => {
   const d = new Date();
@@ -41,6 +43,44 @@ const SupervisorApp = ({ currentUser }) => {
   const [fetchingData, setFetchingData] = useState(true);
   const [success, setSuccess] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [isOffline, setIsOffline] = useState(!navigator.onLine);
+  const [pendingSync, setPendingSync] = useState(0);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncMessage, setSyncMessage] = useState('');
+
+  useEffect(() => {
+    const handleOnline = () => setIsOffline(false);
+    const handleOffline = () => setIsOffline(true);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    
+    // Verifica fila inicial
+    getPendingVisits().then(queue => setPendingSync(queue.length));
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  const handleSync = async () => {
+    if (isOffline) {
+      alert('Você está offline. Aguarde ter internet.');
+      return;
+    }
+    setIsSyncing(true);
+    try {
+      const count = await syncAll((msg) => setSyncMessage(msg));
+      alert(`Sincronização concluída! ${count} visitas enviadas com sucesso.`);
+    } catch (e) {
+      alert('Falha na sincronização: ' + e.message);
+    } finally {
+      setIsSyncing(false);
+      setSyncMessage('');
+      const q = await getPendingVisits();
+      setPendingSync(q.length);
+    }
+  };
 
   useEffect(() => {
     fetchClientes();
@@ -61,19 +101,34 @@ const SupervisorApp = ({ currentUser }) => {
 
   const fetchClientes = async () => {
     setFetchingData(true);
-    const { data, error } = await supabase.from('postos').select('*');
-    if (error) {
-      console.error(error);
-    } else {
+    try {
+      const { data, error } = await supabase.from('postos').select('*');
+      if (error) throw error;
+      
       const clientesMap = new Map();
       data.forEach(item => {
-        if (!clientesMap.has(item.nomecli)) {
-           clientesMap.set(item.nomecli, item);
-        }
+        if (!clientesMap.has(item.nomecli)) clientesMap.set(item.nomecli, item);
       });
       const uniqueClientes = Array.from(clientesMap.values()).sort((a, b) => a.nomecli.localeCompare(b.nomecli));
+      
       setClientes(uniqueClientes);
       setPostos(data);
+      
+      // Save offline cache
+      localStorage.setItem('offline_postos', JSON.stringify(data));
+    } catch (e) {
+      console.warn("Falha ao buscar postos da nuvem, tentando offline:", e);
+      const cached = localStorage.getItem('offline_postos');
+      if (cached) {
+        const data = JSON.parse(cached);
+        const clientesMap = new Map();
+        data.forEach(item => {
+          if (!clientesMap.has(item.nomecli)) clientesMap.set(item.nomecli, item);
+        });
+        const uniqueClientes = Array.from(clientesMap.values()).sort((a, b) => a.nomecli.localeCompare(b.nomecli));
+        setClientes(uniqueClientes);
+        setPostos(data);
+      }
     }
     setFetchingData(false);
   };
