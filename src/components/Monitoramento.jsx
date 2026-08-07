@@ -425,6 +425,7 @@ const Monitoramento = ({ currentUser }) => {
                 </tbody>
             </table>
          </div>
+         )
       ) : visitasFiltradas.length === 0 ? (
         <div className="card glass-panel" style={{ textAlign: 'center', padding: '40px', color: '#94a3b8' }}>
           <Search size={48} style={{ margin: '0 auto 16px', opacity: 0.5 }} />
