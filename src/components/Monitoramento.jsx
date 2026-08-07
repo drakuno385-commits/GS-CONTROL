@@ -113,6 +113,17 @@ const Monitoramento = ({ currentUser }) => {
     }
   };
 
+  const handleDeleteOcorrencia = async (id) => {
+    if (window.confirm("Tem certeza que deseja excluir esta ocorrência?")) {
+      const { error } = await supabase.from('ocorrencias_visitas').delete().eq('id', id);
+      if (error) {
+        alert("Erro ao excluir: " + error.message);
+      } else {
+        fetchData();
+      }
+    }
+  };
+
   const handleResolver = async (e) => {
       e.preventDefault();
       if (!tratativaTexto.trim()) return alert("Descreva a tratativa.");
@@ -337,63 +348,83 @@ const Monitoramento = ({ currentUser }) => {
               <p>Nenhuma ocorrência encontrada com os filtros atuais.</p>
             </div>
          ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '20px' }}>
+            <div className="card glass-panel" style={{ padding: 0, overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '1000px' }}>
+                <thead style={{ background: 'rgba(255,255,255,0.05)' }}>
+                    <tr>
+                        <th style={{ padding: '16px', color: '#cbd5e1', fontWeight: 600 }}>SLA / Data</th>
+                        <th style={{ padding: '16px', color: '#cbd5e1', fontWeight: 600 }}>Supervisor</th>
+                        <th style={{ padding: '16px', color: '#cbd5e1', fontWeight: 600 }}>Cliente / Posto</th>
+                        <th style={{ padding: '16px', color: '#cbd5e1', fontWeight: 600 }}>Inconformidade</th>
+                        <th style={{ padding: '16px', color: '#cbd5e1', fontWeight: 600, textAlign: 'center' }}>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
                 {ocorrenciasFiltradas.map(oc => {
                     const sla = calcularSLA(oc.created_at, oc.closed_at);
                     const isFechado = oc.status === 'Fechado';
                     
                     return (
-                        <div key={oc.id} className="card glass-panel" style={{ borderTop: `4px solid ${isFechado ? '#10b981' : '#ef4444'}` }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
-                                <div>
-                                    <h3 style={{ margin: '0 0 4px 0', fontSize: '16px', color: '#e2e8f0' }}>{oc.cliente}</h3>
-                                    <div style={{ color: '#94a3b8', fontSize: '13px' }}>{oc.posto}</div>
-                                </div>
-                                <div style={{ background: isFechado ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)', color: isFechado ? '#10b981' : '#ef4444', padding: '4px 8px', borderRadius: '12px', fontSize: '12px', fontWeight: 600 }}>
-                                    {oc.status}
-                                </div>
-                            </div>
-                            
-                            <div style={{ background: 'rgba(255,255,255,0.02)', padding: '12px', borderRadius: '8px', marginBottom: '12px' }}>
-                                <div style={{ color: '#ef4444', fontWeight: 600, fontSize: '14px', marginBottom: '4px' }}>Inconformidade: {oc.item_checklist}</div>
-                                <div style={{ color: '#cbd5e1', fontSize: '13px', fontStyle: 'italic' }}>"{oc.observacao}"</div>
-                            </div>
-                            
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', color: '#64748b', marginBottom: '16px' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><User size={14}/> Sup: {oc.supervisor}</div>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: isFechado ? '#64748b' : sla.cor, fontWeight: isFechado ? 400 : 600 }}>
+                        <tr key={oc.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', transition: 'background 0.2s', borderLeft: `4px solid ${isFechado ? '#10b981' : '#ef4444'}` }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.02)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                            <td style={{ padding: '16px' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: isFechado ? '#64748b' : sla.cor, fontWeight: isFechado ? 400 : 600, fontSize: '14px', marginBottom: '4px' }}>
                                     <Clock size={14}/> SLA: {sla.texto}
                                 </div>
-                            </div>
-                            
-                            {isFechado && oc.tratativa && (
-                                <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '12px', marginTop: '12px', fontSize: '13px' }}>
-                                    <div style={{ color: '#10b981', fontWeight: 600, marginBottom: '4px' }}>Tratativa:</div>
-                                    <div style={{ color: '#cbd5e1' }}>{oc.tratativa}</div>
-                                    <div style={{ color: '#64748b', fontSize: '11px', marginTop: '4px' }}>Fechado em: {formatDate(oc.closed_at)} {formatTime(oc.closed_at)}</div>
+                                <div style={{ fontSize: '12px', color: '#64748b' }}>{formatDate(oc.created_at)} {formatTime(oc.created_at)}</div>
+                                <div style={{ display: 'inline-block', marginTop: '6px', background: isFechado ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)', color: isFechado ? '#10b981' : '#ef4444', padding: '2px 8px', borderRadius: '12px', fontSize: '11px', fontWeight: 600 }}>
+                                    {oc.status}
                                 </div>
-                            )}
-
-                            <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
-                                {oc.foto_url && (
-                                    <a href={oc.foto_url} target="_blank" rel="noreferrer" style={{ flex: 1, textAlign: 'center', padding: '8px', background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', borderRadius: '6px', textDecoration: 'none', fontSize: '13px', fontWeight: 600 }}>
-                                        <ImageIcon size={14} style={{ verticalAlign: 'text-bottom', marginRight: '4px' }}/> Foto
-                                    </a>
+                            </td>
+                            <td style={{ padding: '16px', color: '#e2e8f0', fontWeight: 500, fontSize: '14px' }}>
+                                {oc.supervisor}
+                            </td>
+                            <td style={{ padding: '16px', color: '#cbd5e1', fontSize: '14px' }}>
+                                <div style={{ color: '#e2e8f0', fontWeight: 500, marginBottom: '4px' }}>{oc.cliente}</div>
+                                <div style={{ color: '#94a3b8', fontSize: '12px' }}>{oc.posto}</div>
+                            </td>
+                            <td style={{ padding: '16px', fontSize: '13px' }}>
+                                <div style={{ color: '#ef4444', fontWeight: 600, marginBottom: '4px' }}>{oc.item_checklist}</div>
+                                <div style={{ color: '#cbd5e1', fontStyle: 'italic', marginBottom: '8px' }}>"{oc.observacao}"</div>
+                                {isFechado && oc.tratativa && (
+                                    <div style={{ background: 'rgba(16, 185, 129, 0.05)', padding: '8px', borderRadius: '6px', borderLeft: '2px solid #10b981' }}>
+                                        <div style={{ color: '#10b981', fontWeight: 600, fontSize: '11px', marginBottom: '2px' }}>Tratativa:</div>
+                                        <div style={{ color: '#cbd5e1' }}>{oc.tratativa}</div>
+                                        <div style={{ color: '#64748b', fontSize: '10px', marginTop: '4px' }}>Fechado em: {formatDate(oc.closed_at)} {formatTime(oc.closed_at)}</div>
+                                    </div>
                                 )}
-                                {!isFechado && (
-                                    <button 
-                                        onClick={() => setResolvendoOcorrencia(oc)}
-                                        style={{ flex: 2, padding: '8px', background: '#10b981', color: '#fff', border: 'none', borderRadius: '6px', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}
-                                    >
-                                        Resolver
-                                    </button>
-                                )}
-                            </div>
-                        </div>
+                            </td>
+                            <td style={{ padding: '16px', textAlign: 'center' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                                    {oc.foto_url && (
+                                        <a href={oc.foto_url} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '6px 10px', background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', borderRadius: '20px', textDecoration: 'none', fontSize: '12px', fontWeight: 600, transition: 'all 0.2s' }}>
+                                            <ImageIcon size={14} /> Foto
+                                        </a>
+                                    )}
+                                    {!isFechado && (
+                                        <button 
+                                            onClick={() => setResolvendoOcorrencia(oc)}
+                                            style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '6px 10px', background: '#10b981', color: '#fff', border: 'none', borderRadius: '20px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}
+                                        >
+                                            Resolver
+                                        </button>
+                                    )}
+                                    {currentUser?.role === 'MASTER' && (
+                                        <button 
+                                            onClick={() => handleDeleteOcorrencia(oc.id)}
+                                            title="Excluir Ocorrência"
+                                            style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: 'none', padding: '8px', borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s', marginLeft: '4px' }}
+                                        >
+                                            <Trash2 size={16} />
+                                        </button>
+                                    )}
+                                </div>
+                            </td>
+                        </tr>
                     );
                 })}
-            </div>
-         )
+                </tbody>
+            </table>
+         </div>
       ) : visitasFiltradas.length === 0 ? (
         <div className="card glass-panel" style={{ textAlign: 'center', padding: '40px', color: '#94a3b8' }}>
           <Search size={48} style={{ margin: '0 auto 16px', opacity: 0.5 }} />
