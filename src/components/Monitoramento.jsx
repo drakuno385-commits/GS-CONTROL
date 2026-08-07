@@ -1,14 +1,20 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '../supabaseClient';
-import { Camera, MapPin, Building, Clock, Activity, Search, Calendar, User, ExternalLink, Image as ImageIcon, Trash2 } from 'lucide-react';
+import { Camera, MapPin, Building, Clock, Activity, Search, Calendar, User, ExternalLink, Image as ImageIcon, Trash2, AlertCircle, CheckCircle, X } from 'lucide-react';
 
 const Monitoramento = ({ currentUser }) => {
   const [visitas, setVisitas] = useState([]);
+  const [ocorrencias, setOcorrencias] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('visitas'); // 'visitas' | 'ocorrencias'
 
   const [filterData, setFilterData] = useState(() => localStorage.getItem('mon_filter_data') || '');
   const [filterSupervisor, setFilterSupervisor] = useState(() => localStorage.getItem('mon_filter_sup') || '');
   const [filterCliente, setFilterCliente] = useState(() => localStorage.getItem('mon_filter_cli') || '');
+  const [filterStatusOcorrencia, setFilterStatusOcorrencia] = useState('Aberto');
+
+  const [resolvendoOcorrencia, setResolvendoOcorrencia] = useState(null);
+  const [tratativaTexto, setTratativaTexto] = useState('');
 
   useEffect(() => {
     localStorage.setItem('mon_filter_data', filterData);
@@ -17,7 +23,7 @@ const Monitoramento = ({ currentUser }) => {
   }, [filterData, filterSupervisor, filterCliente]);
 
   useEffect(() => {
-    fetchVisitas();
+    fetchData();
 
     const subscription = supabase
       .channel('public:visitas')
@@ -29,21 +35,39 @@ const Monitoramento = ({ currentUser }) => {
       })
       .subscribe();
 
+    const subOcorrencias = supabase
+      .channel('public:ocorrencias')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'ocorrencias_visitas' }, payload => {
+         fetchData(); // refresh to keep it simple
+      })
+      .subscribe();
+
     return () => {
       supabase.removeChannel(subscription);
+      supabase.removeChannel(subOcorrencias);
     };
   }, []);
 
-  const fetchVisitas = async () => {
+  const fetchData = async () => {
     setLoading(true);
-    const { data, error } = await supabase
+    const { data: vData, error: vError } = await supabase
       .from('visitas')
       .select('*')
       .order('created_at', { ascending: false });
 
-    if (!error && data) {
-      setVisitas(data);
+    if (!vError && vData) {
+      setVisitas(vData);
     }
+
+    const { data: oData, error: oError } = await supabase
+      .from('ocorrencias_visitas')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (!oError && oData) {
+      setOcorrencias(oData);
+    }
+    
     setLoading(false);
   };
 
@@ -53,7 +77,6 @@ const Monitoramento = ({ currentUser }) => {
       const parts = isoString.split(' ')[1].split(':');
       return `${parts[0]}:${parts[1]}`;
     }
-    // Check if ends with Z or has + or - timezone offset AFTER the time part
     const timePart = isoString.includes('T') ? isoString.split('T')[1] : '';
     if (isoString.endsWith('Z') || timePart.includes('+') || (timePart.includes('-') && timePart.split('-').length > 1)) {
       try {
@@ -82,12 +105,34 @@ const Monitoramento = ({ currentUser }) => {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm("Tem certeza que deseja excluir este registro de visita?")) {
+    if (window.confirm("Tem certeza que deseja excluir este registro de visita? Isso também excluirá as ocorrências ligadas a ela.")) {
       const { error } = await supabase.from('visitas').delete().eq('id', id);
       if (error) {
         alert("Erro ao excluir: " + error.message);
       }
     }
+  };
+
+  const handleResolver = async (e) => {
+      e.preventDefault();
+      if (!tratativaTexto.trim()) return alert("Descreva a tratativa.");
+      
+      const { error } = await supabase
+        .from('ocorrencias_visitas')
+        .update({
+            status: 'Fechado',
+            tratativa: tratativaTexto,
+            closed_at: new Date().toISOString()
+        })
+        .eq('id', resolvendoOcorrencia.id);
+        
+      if (error) {
+          alert("Erro ao resolver: " + error.message);
+      } else {
+          setResolvendoOcorrencia(null);
+          setTratativaTexto('');
+          fetchData();
+      }
   };
 
   const visitasFiltradas = useMemo(() => {
@@ -99,15 +144,38 @@ const Monitoramento = ({ currentUser }) => {
     });
   }, [visitas, filterData, filterSupervisor, filterCliente]);
 
+  const ocorrenciasFiltradas = useMemo(() => {
+    return ocorrencias.filter(o => {
+      const matchStatus = filterStatusOcorrencia ? o.status === filterStatusOcorrencia : true;
+      const matchSup = filterSupervisor ? (o.supervisor || '').toLowerCase().includes(filterSupervisor.toLowerCase()) : true;
+      const matchCli = filterCliente ? (o.cliente || '').toLowerCase().includes(filterCliente.toLowerCase()) : true;
+      return matchStatus && matchSup && matchCli;
+    });
+  }, [ocorrencias, filterStatusOcorrencia, filterSupervisor, filterCliente]);
+
   const calcularDuracao = (chegada, saida) => {
     if (!chegada || !saida) return null;
     const start = new Date(chegada);
     const end = new Date(saida);
-    const diff = Math.floor((end - start) / 60000); // minutes
+    const diff = Math.floor((end - start) / 60000); 
     if (diff < 60) return `${diff} min`;
     const h = Math.floor(diff / 60);
     const m = diff % 60;
     return `${h}h ${m}m`;
+  };
+
+  const calcularSLA = (created_at, closed_at) => {
+      const start = new Date(created_at);
+      const end = closed_at ? new Date(closed_at) : new Date();
+      const diffHrs = (end - start) / (1000 * 60 * 60);
+      
+      let cor = '#10b981'; // Verde (< 12h)
+      if (diffHrs >= 24) cor = '#ef4444'; // Vermelho
+      else if (diffHrs >= 12) cor = '#f59e0b'; // Amarelo
+      
+      const format = diffHrs < 24 ? `${Math.floor(diffHrs)}h ${Math.floor((diffHrs % 1) * 60)}m` : `${Math.floor(diffHrs / 24)}d ${Math.floor(diffHrs % 24)}h`;
+      
+      return { texto: format, cor, hrs: diffHrs };
   };
 
   return (
@@ -116,28 +184,79 @@ const Monitoramento = ({ currentUser }) => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
         <h2 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <Activity size={24} color="#10b981" />
-          Monitoramento de Visitas
+          Central de Monitoramento
         </h2>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#10b981', background: 'rgba(16, 185, 129, 0.1)', padding: '6px 12px', borderRadius: '20px', fontSize: '13px', fontWeight: 600 }}>
           <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981', animation: 'pulse 2s infinite' }} />
           Online
         </div>
       </div>
+      
+      {/* Abas */}
+      <div style={{ display: 'flex', gap: '16px', marginBottom: '24px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '16px' }}>
+          <button
+              onClick={() => setActiveTab('visitas')}
+              style={{
+                  background: activeTab === 'visitas' ? 'rgba(59, 130, 246, 0.2)' : 'transparent',
+                  color: activeTab === 'visitas' ? '#3b82f6' : '#cbd5e1',
+                  border: 'none', padding: '12px 24px', borderRadius: '8px', cursor: 'pointer',
+                  fontSize: '15px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px',
+                  borderBottom: activeTab === 'visitas' ? '2px solid #3b82f6' : '2px solid transparent'
+              }}
+          >
+              <Building size={18} /> Histórico de Visitas
+          </button>
+          
+          <button
+              onClick={() => setActiveTab('ocorrencias')}
+              style={{
+                  background: activeTab === 'ocorrencias' ? 'rgba(239, 68, 68, 0.2)' : 'transparent',
+                  color: activeTab === 'ocorrencias' ? '#ef4444' : '#cbd5e1',
+                  border: 'none', padding: '12px 24px', borderRadius: '8px', cursor: 'pointer',
+                  fontSize: '15px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px',
+                  borderBottom: activeTab === 'ocorrencias' ? '2px solid #ef4444' : '2px solid transparent'
+              }}
+          >
+              <AlertCircle size={18} /> Ocorrências (SLA)
+              {ocorrencias.filter(o => o.status === 'Aberto').length > 0 && (
+                  <span style={{ background: '#ef4444', color: '#fff', padding: '2px 8px', borderRadius: '12px', fontSize: '12px' }}>
+                      {ocorrencias.filter(o => o.status === 'Aberto').length}
+                  </span>
+              )}
+          </button>
+      </div>
 
       {/* Filtros */}
       <div className="card glass-panel" style={{ padding: '20px', marginBottom: '24px', display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
         
-        <div style={{ flex: '1 1 200px' }}>
-          <label style={{ display: 'block', marginBottom: '8px', color: '#cbd5e1', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <Calendar size={14}/> Data
-          </label>
-          <input 
-            type="date" 
-            value={filterData}
-            onChange={(e) => setFilterData(e.target.value)}
-            style={{ width: '100%', padding: '10px', background: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', borderRadius: '6px' }}
-          />
-        </div>
+        {activeTab === 'visitas' ? (
+          <div style={{ flex: '1 1 200px' }}>
+            <label style={{ display: 'block', marginBottom: '8px', color: '#cbd5e1', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <Calendar size={14}/> Data
+            </label>
+            <input 
+              type="date" 
+              value={filterData}
+              onChange={(e) => setFilterData(e.target.value)}
+              style={{ width: '100%', padding: '10px', background: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', borderRadius: '6px' }}
+            />
+          </div>
+        ) : (
+           <div style={{ flex: '1 1 200px' }}>
+            <label style={{ display: 'block', marginBottom: '8px', color: '#cbd5e1', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <Activity size={14}/> Status
+            </label>
+            <select 
+              value={filterStatusOcorrencia}
+              onChange={(e) => setFilterStatusOcorrencia(e.target.value)}
+              style={{ width: '100%', padding: '10px', background: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', borderRadius: '6px' }}
+            >
+                <option value="">Todos</option>
+                <option value="Aberto">Em Aberto</option>
+                <option value="Fechado">Resolvidos</option>
+            </select>
+          </div> 
+        )}
 
         <div style={{ flex: '1 1 200px' }}>
           <label style={{ display: 'block', marginBottom: '8px', color: '#cbd5e1', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -173,16 +292,108 @@ const Monitoramento = ({ currentUser }) => {
 
         <div style={{ display: 'flex', alignItems: 'center' }}>
           <button 
-            onClick={() => { setFilterData(''); setFilterSupervisor(''); setFilterCliente(''); }}
+            onClick={() => { setFilterData(''); setFilterSupervisor(''); setFilterCliente(''); setFilterStatusOcorrencia('Aberto'); }}
             style={{ padding: '10px 16px', background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: '#cbd5e1', borderRadius: '6px', cursor: 'pointer', height: '40px' }}
           >
             Limpar Filtros
           </button>
         </div>
       </div>
+      
+      {/* Modal Fechamento */}
+      {resolvendoOcorrencia && (
+          <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+             <div className="card glass-panel" style={{ width: '100%', maxWidth: '500px', padding: '30px', position: 'relative' }}>
+                 <button onClick={() => setResolvendoOcorrencia(null)} style={{ position: 'absolute', top: '16px', right: '16px', background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer' }}><X /></button>
+                 <h2 style={{ color: '#fff', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}><CheckCircle color="#10b981" /> Resolver Ocorrência</h2>
+                 <div style={{ marginBottom: '16px', color: '#cbd5e1', fontSize: '14px', background: 'rgba(255,255,255,0.05)', padding: '12px', borderRadius: '8px' }}>
+                     <strong>Divergência:</strong> {resolvendoOcorrencia.item_checklist}<br/>
+                     <strong>Obs:</strong> {resolvendoOcorrencia.observacao}
+                 </div>
+                 <form onSubmit={handleResolver}>
+                    <label style={{ color: '#cbd5e1', display: 'block', marginBottom: '8px' }}>Descreva a tratativa / resolução:</label>
+                    <textarea 
+                       value={tratativaTexto}
+                       onChange={e => setTratativaTexto(e.target.value)}
+                       required
+                       style={{ width: '100%', padding: '12px', borderRadius: '8px', background: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(255,255,255,0.2)', color: '#fff', minHeight: '100px', marginBottom: '20px' }}
+                    />
+                    <div style={{ display: 'flex', gap: '12px' }}>
+                        <button type="button" onClick={() => setResolvendoOcorrencia(null)} style={{ flex: 1, padding: '12px', background: 'transparent', color: '#cbd5e1', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '8px', cursor: 'pointer' }}>Cancelar</button>
+                        <button type="submit" style={{ flex: 2, padding: '12px', background: '#10b981', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 600 }}>Salvar e Fechar</button>
+                    </div>
+                 </form>
+             </div>
+          </div>
+      )}
 
       {loading ? (
-        <div style={{ color: '#94a3b8', padding: '40px', textAlign: 'center' }}>Carregando visitas...</div>
+        <div style={{ color: '#94a3b8', padding: '40px', textAlign: 'center' }}>Carregando dados...</div>
+      ) : activeTab === 'ocorrencias' ? (
+         // TELA DE OCORRENCIAS
+         ocorrenciasFiltradas.length === 0 ? (
+            <div className="card glass-panel" style={{ textAlign: 'center', padding: '40px', color: '#94a3b8' }}>
+              <CheckCircle size={48} color="#10b981" style={{ margin: '0 auto 16px', opacity: 0.8 }} />
+              <p>Nenhuma ocorrência encontrada com os filtros atuais.</p>
+            </div>
+         ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '20px' }}>
+                {ocorrenciasFiltradas.map(oc => {
+                    const sla = calcularSLA(oc.created_at, oc.closed_at);
+                    const isFechado = oc.status === 'Fechado';
+                    
+                    return (
+                        <div key={oc.id} className="card glass-panel" style={{ borderTop: `4px solid ${isFechado ? '#10b981' : '#ef4444'}` }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+                                <div>
+                                    <h3 style={{ margin: '0 0 4px 0', fontSize: '16px', color: '#e2e8f0' }}>{oc.cliente}</h3>
+                                    <div style={{ color: '#94a3b8', fontSize: '13px' }}>{oc.posto}</div>
+                                </div>
+                                <div style={{ background: isFechado ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)', color: isFechado ? '#10b981' : '#ef4444', padding: '4px 8px', borderRadius: '12px', fontSize: '12px', fontWeight: 600 }}>
+                                    {oc.status}
+                                </div>
+                            </div>
+                            
+                            <div style={{ background: 'rgba(255,255,255,0.02)', padding: '12px', borderRadius: '8px', marginBottom: '12px' }}>
+                                <div style={{ color: '#ef4444', fontWeight: 600, fontSize: '14px', marginBottom: '4px' }}>Divergência: {oc.item_checklist}</div>
+                                <div style={{ color: '#cbd5e1', fontSize: '13px', fontStyle: 'italic' }}>"{oc.observacao}"</div>
+                            </div>
+                            
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', color: '#64748b', marginBottom: '16px' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><User size={14}/> Sup: {oc.supervisor}</div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: isFechado ? '#64748b' : sla.cor, fontWeight: isFechado ? 400 : 600 }}>
+                                    <Clock size={14}/> SLA: {sla.texto}
+                                </div>
+                            </div>
+                            
+                            {isFechado && oc.tratativa && (
+                                <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '12px', marginTop: '12px', fontSize: '13px' }}>
+                                    <div style={{ color: '#10b981', fontWeight: 600, marginBottom: '4px' }}>Tratativa:</div>
+                                    <div style={{ color: '#cbd5e1' }}>{oc.tratativa}</div>
+                                    <div style={{ color: '#64748b', fontSize: '11px', marginTop: '4px' }}>Fechado em: {formatDate(oc.closed_at)} {formatTime(oc.closed_at)}</div>
+                                </div>
+                            )}
+
+                            <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
+                                {oc.foto_url && (
+                                    <a href={oc.foto_url} target="_blank" rel="noreferrer" style={{ flex: 1, textAlign: 'center', padding: '8px', background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', borderRadius: '6px', textDecoration: 'none', fontSize: '13px', fontWeight: 600 }}>
+                                        <ImageIcon size={14} style={{ verticalAlign: 'text-bottom', marginRight: '4px' }}/> Foto
+                                    </a>
+                                )}
+                                {!isFechado && (
+                                    <button 
+                                        onClick={() => setResolvendoOcorrencia(oc)}
+                                        style={{ flex: 2, padding: '8px', background: '#10b981', color: '#fff', border: 'none', borderRadius: '6px', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}
+                                    >
+                                        Resolver
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                    );
+                })}
+            </div>
+         )
       ) : visitasFiltradas.length === 0 ? (
         <div className="card glass-panel" style={{ textAlign: 'center', padding: '40px', color: '#94a3b8' }}>
           <Search size={48} style={{ margin: '0 auto 16px', opacity: 0.5 }} />
@@ -203,8 +414,16 @@ const Monitoramento = ({ currentUser }) => {
             <tbody>
               {visitasFiltradas.map((visita) => {
                 const duracao = calcularDuracao(visita.hora_chegada, visita.hora_saida);
-                const hasFotos = visita.foto_url && visita.foto_url.trim().length > 0;
-                const fotosList = hasFotos ? visita.foto_url.split(',').filter(u => u.trim()) : [];
+                
+                // Extração combinada de fotos (Extras e do Checklist)
+                const fotosExtras = visita.foto_url && visita.foto_url.trim().length > 0 ? visita.foto_url.split(',').filter(u => u.trim()) : [];
+                const fotosChecklist = [];
+                if (visita.checklist && typeof visita.checklist === 'object') {
+                    Object.values(visita.checklist).forEach(item => {
+                        if (item.foto) fotosChecklist.push(item.foto);
+                    });
+                }
+                const fotosList = [...fotosExtras, ...fotosChecklist];
                 
                 return (
                   <tr key={visita.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', transition: 'background 0.2s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.02)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
@@ -215,14 +434,12 @@ const Monitoramento = ({ currentUser }) => {
                           <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                             <Clock size={12} color="#10b981" /> Chegada: {formatTime(visita.hora_chegada || visita.created_at)}
                           </div>
-                          <div style={{ fontSize: '8px', color: '#475569', paddingLeft: '16px' }}>raw: {visita.hora_chegada || visita.created_at}</div>
                         </div>
                         {visita.hora_saida && (
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginTop: '4px' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                               <Clock size={12} color="#ef4444" /> Saída: {formatTime(visita.hora_saida)}
                             </div>
-                            <div style={{ fontSize: '8px', color: '#475569', paddingLeft: '16px' }}>raw: {visita.hora_saida}</div>
                           </div>
                         )}
                       </div>

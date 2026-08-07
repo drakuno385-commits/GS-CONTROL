@@ -23,11 +23,11 @@ const SupervisorApp = ({ currentUser }) => {
   
   // Checklist States
   const defaultChecklist = {
-    cnv: { status: '' },
-    cracha: { status: '' },
-    livro: { status: '' },
-    equipamentos: { status: '' },
-    apresentacao: { status: '' }
+    cnv: { status: '', observacao: '' },
+    cracha: { status: '', observacao: '' },
+    livro: { status: '', observacao: '' },
+    equipamentos: { status: '', observacao: '' },
+    apresentacao: { status: '', observacao: '' }
   };
   const [checklist, setChecklist] = useState(defaultChecklist);
   const [checklistFotos, setChecklistFotos] = useState({});
@@ -147,8 +147,8 @@ const SupervisorApp = ({ currentUser }) => {
     }
   };
 
-  const handleChecklistChange = (key, value) => {
-    const updated = { ...checklist, [key]: { status: value } };
+  const handleChecklistChange = (key, field, value) => {
+    const updated = { ...checklist, [key]: { ...checklist[key], [field]: value } };
     setChecklist(updated);
     localStorage.setItem('activeChecklist_' + currentUser.id, JSON.stringify(updated));
   };
@@ -190,6 +190,10 @@ const SupervisorApp = ({ currentUser }) => {
       }
       if (item.status === 'Divergente' && !checklistFotos[key]) {
         alert(`A foto é obrigatória para o item divergente: ${labels[key]}`);
+        return;
+      }
+      if (item.status === 'Divergente' && (!item.observacao || item.observacao.trim() === '')) {
+        alert(`A observação é obrigatória para o item divergente: ${labels[key]}`);
         return;
       }
     }
@@ -242,11 +246,12 @@ const SupervisorApp = ({ currentUser }) => {
           }
           finalChecklistData[key] = {
               status: item.status,
+              observacao: item.observacao || '',
               foto: cFotoUrl
           };
       }
 
-      const { error: insertError } = await supabase
+      const { data: insertedVisita, error: insertError } = await supabase
         .from('visitas')
         .insert([
           { 
@@ -261,9 +266,34 @@ const SupervisorApp = ({ currentUser }) => {
             foto_url: fotoUrlJoined,
             checklist: finalChecklistData
           }
-        ]);
+        ])
+        .select();
 
       if (insertError) throw insertError;
+      
+      const novaVisitaId = insertedVisita[0].id;
+
+      // Inserir ocorrencias na nova tabela se houver divergências
+      const ocorrenciasInsertData = [];
+      for (const [key, data] of Object.entries(finalChecklistData)) {
+          if (data.status === 'Divergente') {
+              ocorrenciasInsertData.push({
+                  visita_id: novaVisitaId,
+                  supervisor: currentUser.username,
+                  cliente: activeVisit.nomecli,
+                  posto: activeVisit.nomepos,
+                  item_checklist: labels[key],
+                  observacao: data.observacao,
+                  foto_url: data.foto,
+                  status: 'Aberto'
+              });
+          }
+      }
+      
+      if (ocorrenciasInsertData.length > 0) {
+          const { error: errorOcorrencias } = await supabase.from('ocorrencias_visitas').insert(ocorrenciasInsertData);
+          if (errorOcorrencias) console.error("Erro ao registrar ocorrências:", errorOcorrencias);
+      }
 
       setSuccess(true);
       
@@ -371,19 +401,31 @@ const SupervisorApp = ({ currentUser }) => {
 
                 return (
                   <div key={item.key} style={{ marginBottom: '20px', paddingBottom: '16px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: '10px' }}>
                       <span style={{ color: '#cbd5e1', fontSize: '15px' }}>{item.label} {isLivro && <span style={{color: '#ef4444', fontSize: '12px'}}>* Foto Obr.</span>}</span>
                       <div style={{ display: 'flex', gap: '12px' }}>
                         <label style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', color: checklist[item.key].status === 'Conforme' ? '#10b981' : '#94a3b8' }}>
-                          <input type="radio" name={item.key} value="Conforme" checked={checklist[item.key].status === 'Conforme'} onChange={() => handleChecklistChange(item.key, 'Conforme')} style={{ accentColor: '#10b981' }} />
+                          <input type="radio" name={item.key} value="Conforme" checked={checklist[item.key].status === 'Conforme'} onChange={() => handleChecklistChange(item.key, 'status', 'Conforme')} style={{ accentColor: '#10b981' }} />
                           Conforme
                         </label>
                         <label style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', color: checklist[item.key].status === 'Divergente' ? '#ef4444' : '#94a3b8' }}>
-                          <input type="radio" name={item.key} value="Divergente" checked={checklist[item.key].status === 'Divergente'} onChange={() => handleChecklistChange(item.key, 'Divergente')} style={{ accentColor: '#ef4444' }} />
+                          <input type="radio" name={item.key} value="Divergente" checked={checklist[item.key].status === 'Divergente'} onChange={() => handleChecklistChange(item.key, 'status', 'Divergente')} style={{ accentColor: '#ef4444' }} />
                           Divergente
                         </label>
                       </div>
                     </div>
+                    
+                    {isDivergente && (
+                       <div style={{ marginTop: '8px', marginBottom: '12px' }}>
+                           <textarea
+                               value={checklist[item.key].observacao || ''}
+                               onChange={(e) => handleChecklistChange(item.key, 'observacao', e.target.value)}
+                               placeholder="Descreva a divergência observada..."
+                               style={{ width: '100%', padding: '10px', background: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#fff', borderRadius: '6px', fontSize: '13px', resize: 'vertical', minHeight: '60px' }}
+                               required
+                           />
+                       </div>
+                    )}
                     
                     {needsPhoto && (
                       <div style={{ marginTop: '8px' }}>
