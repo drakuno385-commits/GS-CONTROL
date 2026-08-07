@@ -6,7 +6,7 @@ const Monitoramento = ({ currentUser }) => {
   const [visitas, setVisitas] = useState([]);
   const [ocorrencias, setOcorrencias] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('visitas'); // 'visitas' | 'ocorrencias'
+  const [activeTab, setActiveTab] = useState('visitas');
 
   const [filterData, setFilterData] = useState(() => localStorage.getItem('mon_filter_data') || '');
   const [filterSupervisor, setFilterSupervisor] = useState(() => localStorage.getItem('mon_filter_sup') || '');
@@ -99,9 +99,14 @@ const Monitoramento = ({ currentUser }) => {
   };
 
   const formatDate = (isoString) => {
-    if (!isoString) return '';
-    const d = new Date(isoString);
-    return d.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+    if (!isoString || typeof isoString !== 'string' || isoString.trim() === '') return '';
+    try {
+      const d = new Date(isoString);
+      if (isNaN(d.getTime())) return '';
+      return d.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+    } catch (e) {
+      return '';
+    }
   };
 
   const handleDelete = async (id) => {
@@ -176,7 +181,9 @@ const Monitoramento = ({ currentUser }) => {
   };
 
   const calcularSLA = (created_at, closed_at) => {
+      if (!created_at) return { texto: 'N/A', cor: '#94a3b8', hrs: 0 };
       const start = new Date(created_at);
+      if (isNaN(start.getTime())) return { texto: 'N/A', cor: '#94a3b8', hrs: 0 };
       const end = closed_at ? new Date(closed_at) : new Date();
       const diffHrs = (end - start) / (1000 * 60 * 60);
       
