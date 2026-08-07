@@ -307,7 +307,7 @@ const Monitoramento = ({ currentUser }) => {
                  <button onClick={() => setResolvendoOcorrencia(null)} style={{ position: 'absolute', top: '16px', right: '16px', background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer' }}><X /></button>
                  <h2 style={{ color: '#fff', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}><CheckCircle color="#10b981" /> Resolver Ocorrência</h2>
                  <div style={{ marginBottom: '16px', color: '#cbd5e1', fontSize: '14px', background: 'rgba(255,255,255,0.05)', padding: '12px', borderRadius: '8px' }}>
-                     <strong>Divergência:</strong> {resolvendoOcorrencia.item_checklist}<br/>
+                     <strong>Inconformidade:</strong> {resolvendoOcorrencia.item_checklist}<br/>
                      <strong>Obs:</strong> {resolvendoOcorrencia.observacao}
                  </div>
                  <form onSubmit={handleResolver}>
@@ -355,7 +355,7 @@ const Monitoramento = ({ currentUser }) => {
                             </div>
                             
                             <div style={{ background: 'rgba(255,255,255,0.02)', padding: '12px', borderRadius: '8px', marginBottom: '12px' }}>
-                                <div style={{ color: '#ef4444', fontWeight: 600, fontSize: '14px', marginBottom: '4px' }}>Divergência: {oc.item_checklist}</div>
+                                <div style={{ color: '#ef4444', fontWeight: 600, fontSize: '14px', marginBottom: '4px' }}>Inconformidade: {oc.item_checklist}</div>
                                 <div style={{ color: '#cbd5e1', fontSize: '13px', fontStyle: 'italic' }}>"{oc.observacao}"</div>
                             </div>
                             

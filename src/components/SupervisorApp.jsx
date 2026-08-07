@@ -188,12 +188,12 @@ const SupervisorApp = ({ currentUser }) => {
         alert("A foto do Livro de Ocorrência é obrigatória.");
         return;
       }
-      if (item.status === 'Divergente' && !checklistFotos[key]) {
-        alert(`A foto é obrigatória para o item divergente: ${labels[key]}`);
+      if (item.status === 'Inconforme' && !checklistFotos[key]) {
+        alert(`A foto é obrigatória para o item inconforme: ${labels[key]}`);
         return;
       }
-      if (item.status === 'Divergente' && (!item.observacao || item.observacao.trim() === '')) {
-        alert(`A observação é obrigatória para o item divergente: ${labels[key]}`);
+      if (item.status === 'Inconforme' && (!item.observacao || item.observacao.trim() === '')) {
+        alert(`A observação é obrigatória para o item inconforme: ${labels[key]}`);
         return;
       }
     }
@@ -273,10 +273,10 @@ const SupervisorApp = ({ currentUser }) => {
       
       const novaVisitaId = insertedVisita[0].id;
 
-      // Inserir ocorrencias na nova tabela se houver divergências
+      // Inserir ocorrencias na nova tabela se houver inconformidades
       const ocorrenciasInsertData = [];
       for (const [key, data] of Object.entries(finalChecklistData)) {
-          if (data.status === 'Divergente') {
+          if (data.status === 'Inconforme') {
               ocorrenciasInsertData.push({
                   visita_id: novaVisitaId,
                   supervisor: currentUser.username,
@@ -396,8 +396,8 @@ const SupervisorApp = ({ currentUser }) => {
                 { key: 'apresentacao', label: 'Apresentação Pessoal' }
               ].map(item => {
                 const isLivro = item.key === 'livro';
-                const isDivergente = checklist[item.key].status === 'Divergente';
-                const needsPhoto = isLivro || isDivergente;
+                const isInconforme = checklist[item.key].status === 'Inconforme';
+                const needsPhoto = isLivro || isInconforme;
 
                 return (
                   <div key={item.key} style={{ marginBottom: '20px', paddingBottom: '16px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
@@ -408,19 +408,19 @@ const SupervisorApp = ({ currentUser }) => {
                           <input type="radio" name={item.key} value="Conforme" checked={checklist[item.key].status === 'Conforme'} onChange={() => handleChecklistChange(item.key, 'status', 'Conforme')} style={{ accentColor: '#10b981' }} />
                           Conforme
                         </label>
-                        <label style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', color: checklist[item.key].status === 'Divergente' ? '#ef4444' : '#94a3b8' }}>
-                          <input type="radio" name={item.key} value="Divergente" checked={checklist[item.key].status === 'Divergente'} onChange={() => handleChecklistChange(item.key, 'status', 'Divergente')} style={{ accentColor: '#ef4444' }} />
-                          Divergente
+                        <label style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', color: checklist[item.key].status === 'Inconforme' ? '#ef4444' : '#94a3b8' }}>
+                          <input type="radio" name={item.key} value="Inconforme" checked={checklist[item.key].status === 'Inconforme'} onChange={() => handleChecklistChange(item.key, 'status', 'Inconforme')} style={{ accentColor: '#ef4444' }} />
+                          Inconforme
                         </label>
                       </div>
                     </div>
                     
-                    {isDivergente && (
+                    {isInconforme && (
                        <div style={{ marginTop: '8px', marginBottom: '12px' }}>
                            <textarea
                                value={checklist[item.key].observacao || ''}
                                onChange={(e) => handleChecklistChange(item.key, 'observacao', e.target.value)}
-                               placeholder="Descreva a divergência observada..."
+                               placeholder="Descreva a inconformidade observada..."
                                style={{ width: '100%', padding: '10px', background: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#fff', borderRadius: '6px', fontSize: '13px', resize: 'vertical', minHeight: '60px' }}
                                required
                            />
@@ -435,7 +435,7 @@ const SupervisorApp = ({ currentUser }) => {
                             background: 'rgba(59, 130, 246, 0.1)', border: '1px dashed #3b82f6', borderRadius: '6px',
                             padding: '12px', cursor: 'pointer', color: '#3b82f6', fontSize: '14px'
                           }}>
-                            <Camera size={16} /> Tirar Foto {isLivro ? 'do Livro' : 'da Divergência'}
+                            <Camera size={16} /> Tirar Foto {isLivro ? 'do Livro' : 'da Inconformidade'}
                             <input type="file" accept="image/*" capture="environment" onChange={(e) => handleChecklistFotoChange(item.key, e)} style={{ display: 'none' }} />
                           </label>
                         ) : (
