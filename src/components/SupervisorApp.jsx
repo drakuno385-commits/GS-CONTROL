@@ -113,10 +113,10 @@ const SupervisorApp = ({ currentUser }) => {
       const uniqueClientes = Array.from(clientesMap.values()).sort((a, b) => a.nomecli.localeCompare(b.nomecli));
       
       setClientes(uniqueClientes);
-      setPostosdata;
+      setPostos(data);
       
       // Save offline cache
-      localStorage.setItem('offline_postos', JSON.stringifydata);
+      localStorage.setItem('offline_postos', JSON.stringify(data));
     } catch (e) {
       console.warn("Falha ao buscar postos da nuvem, tentando offline:", e);
       const cached = localStorage.getItem('offline_postos');
@@ -128,7 +128,7 @@ const SupervisorApp = ({ currentUser }) => {
         });
         const uniqueClientes = Array.from(clientesMap.values()).sort((a, b) => a.nomecli.localeCompare(b.nomecli));
         setClientes(uniqueClientes);
-        setPostosdata;
+        setPostos(data);
       }
     }
     setFetchingData(false);
