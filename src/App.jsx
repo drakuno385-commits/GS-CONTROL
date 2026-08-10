@@ -1422,6 +1422,12 @@ const App = () => {
                   <span>Monitoramento</span>
                 </a>
               )}
+              {(currentUser?.role === 'MASTER' || currentUser?.role === 'RH') && (
+                <a className={`nav-item ${activeMenu === 'relatorio_visitas' ? 'active' : ''}`} onClick={() => setActiveMenu('relatorio_visitas')}>
+                  <FileText size={20} />
+                  <span>Relatório Visitas</span>
+                </a>
+              )}
               {hasAccess(currentUser, 'Apresentação') && (
                 <a className={`nav-item ${activeMenu === 'Apresentação' ? 'active' : ''}`} onClick={() => setActiveMenu('Apresentação')}>
                   <Activity size={20} />
