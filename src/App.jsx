@@ -10,6 +10,7 @@ import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, L
 import Login from './components/Login';
 import SupervisorApp from './components/SupervisorApp';
 import Monitoramento from './components/Monitoramento';
+import RelatorioVisitas from './components/RelatorioVisitas';
 import Usuarios from './components/Usuarios';
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
@@ -94,7 +95,7 @@ const App = () => {
   // Filters State
   const initF = { dataInicio: '', dataFim: '', cliente: '', posto: '' };
   const [allFilters, setAllFilters] = useState({
-    rh: {...initF}, frota: {...initF}, disciplina: {...initF}, atestados: {...initF}, monitoramento: {...initF}, app_supervisor: {...initF}, usuarios: {...initF}, Apresentação: {...initF}
+    rh: {...initF}, frota: {...initF}, disciplina: {...initF}, atestados: {...initF}, monitoramento: {...initF}, app_supervisor: {...initF}, usuarios: {...initF}, Apresentação: {...initF}, relatorio_visitas: {...initF}
   });
   const filters = allFilters[activeMenu] || initF;
 
@@ -1594,6 +1595,7 @@ const App = () => {
         {activeMenu === 'disciplina' && renderDisciplina()}
         {activeMenu === 'atestados' && renderAtestados()}
         {activeMenu === 'monitoramento' && <Monitoramento currentUser={currentUser} />}
+        {activeMenu === 'relatorio_visitas' && <RelatorioVisitas currentUser={currentUser} />}
         {activeMenu === 'app_supervisor' && <SupervisorApp currentUser={currentUser} />}
         {activeMenu === 'usuarios' && <Usuarios currentUser={currentUser} />}
       </main>
