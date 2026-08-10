@@ -54,7 +54,7 @@ export default function Login({ onLoginSuccess }) {
       // Buscar os dados do usuário (role, primeiro_acesso) na tabela
       const { data, error } = await supabase
         .from('app_usuarios')
-        .select('*')
+        .select('*').limit(10000)
         .eq('id', authData.user.id)
         .single();
 

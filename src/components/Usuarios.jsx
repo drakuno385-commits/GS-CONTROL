@@ -24,7 +24,7 @@ const Usuarios = ({ currentUser }) => {
     setLoading(true);
     const { data, error } = await supabase
       .from('app_usuarios')
-      .select('*')
+      .select('*').limit(10000)
       .order('username');
       
     if (!error && data) {

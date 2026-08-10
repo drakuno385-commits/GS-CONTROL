@@ -102,7 +102,7 @@ const SupervisorApp = ({ currentUser }) => {
   const fetchClientes = async () => {
     setFetchingData(true);
     try {
-      const { data, error } = await supabase.from('postos').select('*');
+      const { data, error } = await supabase.from('postos').select('*').limit(10000).limit(10000);
       if (error) throw error;
       
       

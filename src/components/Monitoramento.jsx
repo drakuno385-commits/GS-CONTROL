@@ -52,7 +52,7 @@ const Monitoramento = ({ currentUser }) => {
     setLoading(true);
     const { data: vData, error: vError } = await supabase
       .from('visitas')
-      .select('*')
+      .select('*').limit(10000)
       .order('created_at', { ascending: false });
 
     if (!vError && vData) {
@@ -61,7 +61,7 @@ const Monitoramento = ({ currentUser }) => {
 
     const { data: oData, error: oError } = await supabase
       .from('ocorrencias_visitas')
-      .select('*')
+      .select('*').limit(10000)
       .order('created_at', { ascending: false });
 
     if (!oError && oData) {

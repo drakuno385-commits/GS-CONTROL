@@ -78,7 +78,7 @@ const RelatorioVisitas = ({ rawEfetivos = [], rawPresencas = [] }) => {
 
   const fetchVisitas = async () => {
     setLoading(true);
-    let query = supabase.from('visitas').select('*');
+    let query = supabase.from('visitas').select('*').limit(10000);
     
     if (dataInicio) {
       query = query.gte('created_at', `${dataInicio}T00:00:00.000Z`);
