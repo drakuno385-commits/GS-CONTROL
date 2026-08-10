@@ -1601,7 +1601,7 @@ const App = () => {
         {activeMenu === 'disciplina' && renderDisciplina()}
         {activeMenu === 'atestados' && renderAtestados()}
         {activeMenu === 'monitoramento' && <Monitoramento currentUser={currentUser} />}
-        {activeMenu === 'relatorio_visitas' && <RelatorioVisitas currentUser={currentUser} />}
+        {activeMenu === 'relatorio_visitas' && <RelatorioVisitas currentUser={currentUser} rawEfetivos={rawEfetivos} rawPresencas={rawPresencas} />}
         {activeMenu === 'app_supervisor' && <SupervisorApp currentUser={currentUser} />}
         {activeMenu === 'usuarios' && <Usuarios currentUser={currentUser} />}
       </main>

@@ -4,17 +4,21 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, 
   PieChart, Pie, Cell 
 } from 'recharts';
-import { Calendar, Search, Loader2, FileText, CheckCircle, Clock } from 'lucide-react';
+import { Calendar, Search, Loader2, FileText, CheckCircle, Clock, AlertTriangle } from 'lucide-react';
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#ec4899', '#14b8a6'];
 
-const RelatorioVisitas = () => {
+const RelatorioVisitas = ({ rawEfetivos = [], rawPresencas = [] }) => {
   const [visitas, setVisitas] = useState([]);
   const [loading, setLoading] = useState(true);
   
-  // Filtros
-  const [dataInicio, setDataInicio] = useState('');
-  const [dataFim, setDataFim] = useState('');
+  // By default, current month
+  const today = new Date();
+  const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
+  const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).toISOString().split('T')[0];
+
+  const [dataInicio, setDataInicio] = useState(startOfMonth);
+  const [dataFim, setDataFim] = useState(endOfMonth);
   const [buscaSupervisor, setBuscaSupervisor] = useState('');
 
   useEffect(() => {
@@ -42,7 +46,6 @@ const RelatorioVisitas = () => {
     setLoading(false);
   };
 
-  // Filtragem local extra (Supervisor)
   const visitasFiltradas = useMemo(() => {
     if (!buscaSupervisor) return visitas;
     return visitas.filter(v => 
@@ -50,7 +53,74 @@ const RelatorioVisitas = () => {
     );
   }, [visitas, buscaSupervisor]);
 
-  // Agrupamentos
+  // Tempo Médio por Cliente
+  const dataTempoMedio = useMemo(() => {
+    const mapa = {};
+    visitasFiltradas.forEach(v => {
+      const cli = v.nomecli || 'Sem Cliente';
+      if (!v.hora_chegada || !v.hora_saida) return;
+
+      try {
+        const start = new Date(v.hora_chegada);
+        const end = new Date(v.hora_saida);
+        const diffMinutes = (end - start) / 60000;
+        
+        if (diffMinutes > 0 && diffMinutes < 1440) { // filter out absurd durations
+          if (!mapa[cli]) mapa[cli] = { name: cli, totalMinutos: 0, contagem: 0 };
+          mapa[cli].totalMinutos += diffMinutes;
+          mapa[cli].contagem += 1;
+        }
+      } catch (e) {
+        // ignore invalid dates
+      }
+    });
+
+    return Object.values(mapa).map(c => ({
+      name: c.name,
+      minutosMedios: Math.round(c.totalMinutos / c.contagem),
+      visitas: c.contagem
+    })).sort((a, b) => b.minutosMedios - a.minutosMedios).slice(0, 15);
+  }, [visitasFiltradas]);
+
+  // Postos Não Visitados
+  const postosNaoVisitados = useMemo(() => {
+    // 1. Gather all unique postos from Efetivos and Presencas
+    const todosPostos = new Map();
+    
+    const isValid = p => p && !p.toString().toUpperCase().includes('FALTA INJUSTIFICADA') && p.toString().trim() !== '';
+
+    rawEfetivos.forEach(r => {
+      if (isValid(r.posto)) {
+        todosPostos.set(r.posto.trim().toUpperCase(), { posto: r.posto.trim(), cliente: (r.cliente || '').trim() });
+      }
+    });
+    rawPresencas.forEach(r => {
+      if (isValid(r.posto)) {
+        todosPostos.set(r.posto.trim().toUpperCase(), { posto: r.posto.trim(), cliente: (r.cliente || '').trim() });
+      }
+    });
+
+    // 2. Gather visited postos in the filtered period
+    const postosVisitados = new Set();
+    visitasFiltradas.forEach(v => {
+      if (v.nomepos) {
+        postosVisitados.add(v.nomepos.trim().toUpperCase());
+      }
+    });
+
+    // 3. Filter out the ones that were visited
+    const naoVisitados = [];
+    todosPostos.forEach((data, postoUpper) => {
+      if (!postosVisitados.has(postoUpper)) {
+        naoVisitados.push(data);
+      }
+    });
+
+    // Sort by client, then posto
+    return naoVisitados.sort((a, b) => a.cliente.localeCompare(b.cliente) || a.posto.localeCompare(b.posto));
+  }, [rawEfetivos, rawPresencas, visitasFiltradas]);
+
+  // Visitas por Supervisor
   const dataSupervisor = useMemo(() => {
     const mapa = {};
     visitasFiltradas.forEach(v => {
@@ -61,41 +131,21 @@ const RelatorioVisitas = () => {
     return Object.values(mapa).sort((a, b) => b.value - a.value);
   }, [visitasFiltradas]);
 
-  const dataCliente = useMemo(() => {
-    const mapa = {};
-    visitasFiltradas.forEach(v => {
-      const cli = v.nomecli || 'Sem Cliente';
-      if (!mapa[cli]) mapa[cli] = { name: cli, value: 0 };
-      mapa[cli].value += 1;
-    });
-    // Pega os top 10 para não poluir o gráfico
-    return Object.values(mapa).sort((a, b) => b.value - a.value).slice(0, 15);
-  }, [visitasFiltradas]);
-
-  const formatDate = (isoStr) => {
-    if (!isoStr) return '';
-    try {
-      const d = new Date(isoStr);
-      if (isNaN(d.getTime())) return '';
-      return d.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
-    } catch {
-      return '';
+  const CustomTooltipTempo = ({ active, payload, label }) => {
+    if (active && payload && payload.length) {
+      const minutos = payload[0].value;
+      const horas = Math.floor(minutos / 60);
+      const min = minutos % 60;
+      const text = horas > 0 ? `${horas}h ${min}m` : `${min} min`;
+      return (
+        <div style={{ background: 'rgba(15, 23, 42, 0.95)', border: '1px solid rgba(255,255,255,0.1)', padding: '10px', borderRadius: '8px', color: '#fff' }}>
+          <p style={{ margin: '0 0 5px 0', fontWeight: 'bold' }}>{label}</p>
+          <p style={{ margin: 0, color: '#f59e0b' }}>Tempo Médio: {text}</p>
+          <p style={{ margin: 0, color: '#94a3b8', fontSize: '12px' }}>Total de Visitas: {payload[0].payload.visitas}</p>
+        </div>
+      );
     }
-  };
-
-  const calcularDuracao = (chegada, saida) => {
-    if (!chegada || !saida) return '-';
-    try {
-      const start = new Date(chegada);
-      const end = new Date(saida);
-      const diff = Math.floor((end - start) / 60000); 
-      if (diff < 60) return `${diff} min`;
-      const h = Math.floor(diff / 60);
-      const m = diff % 60;
-      return `${h}h ${m}m`;
-    } catch {
-      return '-';
-    }
+    return null;
   };
 
   return (
@@ -163,7 +213,7 @@ const RelatorioVisitas = () => {
             <div className="card glass-panel" style={{ padding: '24px' }}>
               <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#e2e8f0', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <div style={{ width: '4px', height: '16px', background: '#3b82f6', borderRadius: '2px' }} />
-                Visitas por Supervisor
+                Volume de Visitas por Supervisor
               </h3>
               {dataSupervisor.length === 0 ? (
                  <div style={{ height: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b' }}>Sem dados</div>
@@ -193,27 +243,24 @@ const RelatorioVisitas = () => {
               )}
             </div>
 
-            {/* Gráfico Cliente */}
+            {/* Gráfico Tempo Médio Cliente */}
             <div className="card glass-panel" style={{ padding: '24px' }}>
               <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#e2e8f0', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <div style={{ width: '4px', height: '16px', background: '#10b981', borderRadius: '2px' }} />
-                Visitas por Cliente (Top 15)
+                <div style={{ width: '4px', height: '16px', background: '#f59e0b', borderRadius: '2px' }} />
+                Tempo Médio de Visita por Cliente (Top 15)
               </h3>
-              {dataCliente.length === 0 ? (
-                 <div style={{ height: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b' }}>Sem dados</div>
+              {dataTempoMedio.length === 0 ? (
+                 <div style={{ height: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b' }}>Sem dados de tempo</div>
               ) : (
                 <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={dataCliente} layout="vertical" margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                  <BarChart data={dataTempoMedio} layout="vertical" margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" horizontal={false} />
                     <XAxis type="number" stroke="#64748b" tick={{fill: '#64748b', fontSize: 12}} />
                     <YAxis dataKey="name" type="category" width={120} stroke="#64748b" tick={{fill: '#94a3b8', fontSize: 12}} />
-                    <Tooltip 
-                      cursor={{fill: 'rgba(255,255,255,0.05)'}}
-                      contentStyle={{ background: 'rgba(15, 23, 42, 0.9)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff' }}
-                    />
-                    <Bar dataKey="value" name="Total de Visitas" fill="#10b981" radius={[0, 4, 4, 0]}>
-                      {dataCliente.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    <Tooltip content={<CustomTooltipTempo />} />
+                    <Bar dataKey="minutosMedios" name="Minutos" fill="#f59e0b" radius={[0, 4, 4, 0]}>
+                      {dataTempoMedio.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[(index+2) % COLORS.length]} />
                       ))}
                     </Bar>
                   </BarChart>
@@ -222,47 +269,48 @@ const RelatorioVisitas = () => {
             </div>
           </div>
 
-          {/* Tabela Analítica */}
+          {/* Postos Não Visitados */}
           <div className="card glass-panel" style={{ padding: '24px' }}>
-            <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#e2e8f0', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <div style={{ width: '4px', height: '16px', background: '#8b5cf6', borderRadius: '2px' }} />
-              Detalhes das Visitas ({visitasFiltradas.length} encontradas)
+            <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#e2e8f0', marginBottom: '20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div style={{ width: '4px', height: '16px', background: '#ef4444', borderRadius: '2px' }} />
+                Postos Não Visitados no Período
+              </div>
+              <span style={{ fontSize: '13px', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', padding: '4px 10px', borderRadius: '20px' }}>
+                {postosNaoVisitados.length} postos pendentes
+              </span>
             </h3>
             
-            {visitasFiltradas.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>
-                <CheckCircle size={40} style={{ margin: '0 auto 12px', opacity: 0.5 }} />
-                Nenhum registro para exibir
+            {postosNaoVisitados.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '40px', color: '#10b981' }}>
+                <CheckCircle size={40} style={{ margin: '0 auto 12px', opacity: 0.8 }} />
+                <p style={{ margin: 0, fontWeight: 600 }}>Excelente!</p>
+                <p style={{ fontSize: '14px', marginTop: '4px' }}>Todos os postos ativos receberam visita no período selecionado.</p>
               </div>
             ) : (
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '800px' }}>
-                  <thead style={{ background: 'rgba(255,255,255,0.05)' }}>
+              <div style={{ overflowX: 'auto', maxHeight: '400px' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '600px' }}>
+                  <thead style={{ background: 'rgba(255,255,255,0.05)', position: 'sticky', top: 0 }}>
                     <tr>
-                      <th style={{ padding: '12px 16px', color: '#cbd5e1', fontWeight: 600, fontSize: '13px' }}>Data</th>
-                      <th style={{ padding: '12px 16px', color: '#cbd5e1', fontWeight: 600, fontSize: '13px' }}>Supervisor</th>
-                      <th style={{ padding: '12px 16px', color: '#cbd5e1', fontWeight: 600, fontSize: '13px' }}>Cliente / Posto</th>
-                      <th style={{ padding: '12px 16px', color: '#cbd5e1', fontWeight: 600, fontSize: '13px' }}>Duração</th>
+                      <th style={{ padding: '12px 16px', color: '#cbd5e1', fontWeight: 600, fontSize: '13px' }}>Cliente</th>
+                      <th style={{ padding: '12px 16px', color: '#cbd5e1', fontWeight: 600, fontSize: '13px' }}>Nome do Posto</th>
+                      <th style={{ padding: '12px 16px', color: '#cbd5e1', fontWeight: 600, fontSize: '13px', textAlign: 'center' }}>Status</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {visitasFiltradas.map((v) => (
-                      <tr key={v.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', transition: 'background 0.2s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.02)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                        <td style={{ padding: '12px 16px', color: '#94a3b8', fontSize: '13px' }}>
-                          {formatDate(v.created_at)}
+                    {postosNaoVisitados.map((p, idx) => (
+                      <tr key={idx} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', transition: 'background 0.2s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.02)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                        <td style={{ padding: '12px 16px', color: '#94a3b8', fontSize: '13px', fontWeight: 500 }}>
+                          {p.cliente || 'Sem Cliente'}
                         </td>
-                        <td style={{ padding: '12px 16px', color: '#e2e8f0', fontSize: '14px', fontWeight: 500 }}>
-                          {v.nome_supervisor || '-'}
+                        <td style={{ padding: '12px 16px', color: '#e2e8f0', fontSize: '14px' }}>
+                          {p.posto}
                         </td>
-                        <td style={{ padding: '12px 16px' }}>
-                          <div style={{ color: '#e2e8f0', fontSize: '14px', fontWeight: 500 }}>{v.nomecli || '-'}</div>
-                          <div style={{ color: '#64748b', fontSize: '12px' }}>{v.nomepos || '-'}</div>
-                        </td>
-                        <td style={{ padding: '12px 16px', color: '#3b82f6', fontSize: '13px', fontWeight: 600 }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                            <Clock size={14} />
-                            {calcularDuracao(v.hora_chegada, v.hora_saida)}
-                          </div>
+                        <td style={{ padding: '12px 16px', textAlign: 'center' }}>
+                           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '11px', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', padding: '4px 8px', borderRadius: '12px', fontWeight: 600 }}>
+                              <AlertTriangle size={12} />
+                              Sem Visita
+                           </span>
                         </td>
                       </tr>
                     ))}
