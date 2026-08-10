@@ -1057,7 +1057,14 @@ const App = () => {
                         onClick={() => setSelectedAtestadoPerson(row)}
                         style={{ 
                           borderBottom: '1px solid rgba(255,255,255,0.05)', 
-                      <td style={{ padding: '12px 8px', width: '50px', textAlign: 'center' }}>{badge}</td>
+                          background: `rgba(${row.cor === '#ef4444' ? '239, 68, 68' : row.cor === '#f59e0b' ? '245, 158, 11' : '16, 185, 129'}, 0.1)`,
+                          cursor: 'pointer',
+                          transition: 'all 0.2s'
+                        }}
+                        onMouseOver={(e) => e.currentTarget.style.filter = 'brightness(1.2)'}
+                        onMouseOut={(e) => e.currentTarget.style.filter = 'brightness(1)'}
+                      >
+                        <td style={{ padding: '12px 8px', width: '50px', textAlign: 'center' }}>{badge}</td>
                         <td style={{ padding: '12px 8px' }}>
                           <div>{row.nome}</div>
                           <div style={{ fontSize: '11px', color: '#94a3b8' }}>{row.cliente}</div>
