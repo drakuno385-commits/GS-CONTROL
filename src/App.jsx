@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, Suspense, lazy } from 'react';
 import Papa from 'papaparse';
 import { supabase } from './supabaseClient';
 import { 
