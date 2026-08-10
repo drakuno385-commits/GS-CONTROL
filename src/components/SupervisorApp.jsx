@@ -105,7 +105,7 @@ const SupervisorApp = ({ currentUser }) => {
       const { data, error } = await supabase.from('postos').select('*');
       if (error) throw error;
       
-      const ignored = ['ADMINISTRATIVO', 'ACOFORTE', 'ENERGISA', 'INST PREV OSASCO', 'RESERVA TÉCNICA', 'RESERVA TECNICA', 'REGIONAL ADM'];
+      const ignored = ['ADMINISTRATIVO', 'ACOFORTE', 'ENERGISA', 'BELLS', 'INST PREV OSASCO', 'RESERVA TÉCNICA', 'RESERVA TECNICA', 'REGIONAL ADM'];
       const isIgnored = (nome) => {
         if (!nome) return false;
         const upper = nome.trim().toUpperCase();
