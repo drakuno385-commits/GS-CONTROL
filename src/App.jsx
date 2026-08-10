@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, Suspense, lazy } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import Papa from 'papaparse';
 import { supabase } from './supabaseClient';
 import { 
@@ -1501,6 +1502,14 @@ const App = () => {
       </aside>
 
       <main className="main-content">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeMenu}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2 }}
+          >
         <header className="header" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <div style={{ display: 'flex', width: '100%', justifyContent: 'space-between', alignItems: 'center' }}>
             <h1>Painel de Controle</h1>
@@ -1605,6 +1614,8 @@ const App = () => {
         {activeMenu === 'relatorio_visitas' && <RelatorioVisitas currentUser={currentUser} rawEfetivos={rawEfetivos} rawPresencas={rawPresencas} />}
         {activeMenu === 'app_supervisor' && <SupervisorApp currentUser={currentUser} />}
         {activeMenu === 'usuarios' && <Usuarios currentUser={currentUser} />}
+                </motion.div>
+        </AnimatePresence>
       </main>
     </div>
   );

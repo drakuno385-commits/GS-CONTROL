@@ -1,9 +1,9 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
 
 :root {
-  --bg-main: #0b0f19;
-  --bg-panel: rgba(20, 27, 45, 0.6);
-  --bg-card: rgba(30, 41, 59, 0.8);
+  --bg-main: #09090b;
+  --bg-panel: rgba(24, 24, 27, 0.6);
+  --bg-card: rgba(39, 39, 42, 0.8);
   --text-main: #f8fafc;
   --text-muted: #94a3b8;
   --accent-primary: #3b82f6;
@@ -21,7 +21,7 @@
 }
 
 body {
-  font-family: 'Inter', sans-serif;
+  font-family: 'Outfit', sans-serif;
   background-color: var(--bg-main);
   background-image: 
     linear-gradient(to bottom, rgba(11, 15, 25, 0.8), rgba(11, 15, 25, 0.95)),
@@ -289,3 +289,19 @@ body {
 
 
 @keyframes pulse { 0% { opacity: 0.6; } 50% { opacity: 0.2; } 100% { opacity: 0.6; } }
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-main);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
