@@ -30,14 +30,7 @@ const RelatorioVisitas = ({ rawEfetivos = [], rawPresencas = [] }) => {
     const fetchPostosApp = async () => {
       const { data } = await supabase.from('postos').select('*');
       if (data) {
-        const ignored = ['ADMINISTRATIVO', 'ACOFORTE', 'ENERGISA', 'INST PREV OSASCO', 'RESERVA TÉCNICA', 'RESERVA TECNICA', 'REGIONAL ADM'];
-      const isIgnored = (nome) => {
-        if (!nome) return false;
-        const upper = nome.trim().toUpperCase();
-        return ignored.some(ign => upper.includes(ign));
-      };
-      const filteredData = data.filter(item => !isIgnored(item.nomecli));
-        setPostosApp(filteredData);
+        setPostosApp(data);
       }
     };
     fetchPostosApp();

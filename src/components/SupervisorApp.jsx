@@ -105,37 +105,30 @@ const SupervisorApp = ({ currentUser }) => {
       const { data, error } = await supabase.from('postos').select('*');
       if (error) throw error;
       
-      const ignored = ['ADMINISTRATIVO', 'ACOFORTE', 'ENERGISA', 'BELLS', 'INST PREV OSASCO', 'RESERVA TÉCNICA', 'RESERVA TECNICA', 'REGIONAL ADM'];
-      const isIgnored = (nome) => {
-        if (!nome) return false;
-        const upper = nome.trim().toUpperCase();
-        return ignored.some(ign => upper.includes(ign));
-      };
-      const filteredData = data.filter(item => !isIgnored(item.nomecli));
       
       const clientesMap = new Map();
-      (typeof filteredData !== 'undefined' ? filteredData : data).forEach(item => {
+      data.forEach(item => {
         if (!clientesMap.has(item.nomecli)) clientesMap.set(item.nomecli, item);
       });
       const uniqueClientes = Array.from(clientesMap.values()).sort((a, b) => a.nomecli.localeCompare(b.nomecli));
       
       setClientes(uniqueClientes);
-      setPostos(typeof filteredData !== 'undefined' ? filteredData : data);
+      setPostosdata;
       
       // Save offline cache
-      localStorage.setItem('offline_postos', JSON.stringify(typeof filteredData !== 'undefined' ? filteredData : data));
+      localStorage.setItem('offline_postos', JSON.stringifydata);
     } catch (e) {
       console.warn("Falha ao buscar postos da nuvem, tentando offline:", e);
       const cached = localStorage.getItem('offline_postos');
       if (cached) {
         const data = JSON.parse(cached);
         const clientesMap = new Map();
-        (typeof filteredData !== 'undefined' ? filteredData : data).forEach(item => {
+        data.forEach(item => {
           if (!clientesMap.has(item.nomecli)) clientesMap.set(item.nomecli, item);
         });
         const uniqueClientes = Array.from(clientesMap.values()).sort((a, b) => a.nomecli.localeCompare(b.nomecli));
         setClientes(uniqueClientes);
-        setPostos(typeof filteredData !== 'undefined' ? filteredData : data);
+        setPostosdata;
       }
     }
     setFetchingData(false);
