@@ -22,12 +22,12 @@ export default defineConfig({
         display: 'standalone',
         icons: [
           {
-            src: 'https://via.placeholder.com/192x192/0f172a/3b82f6?text=GS',
+            src: '/pwa-192x192.png',
             sizes: '192x192',
             type: 'image/png'
           },
           {
-            src: 'https://via.placeholder.com/512x512/0f172a/3b82f6?text=GS',
+            src: '/pwa-512x512.png',
             sizes: '512x512',
             type: 'image/png'
           }

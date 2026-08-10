@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { supabase } from '../supabaseClient';
-import { Lock, User, LogIn } from 'lucide-react';
+import { Lock, User, LogIn, Download } from 'lucide-react';
 
 export default function Login({ onLoginSuccess }) {
   const [username, setUsername] = useState('');
@@ -11,6 +11,26 @@ export default function Login({ onLoginSuccess }) {
   const [needsNewPass, setNeedsNewPass] = useState(false);
   const [newPassword, setNewPassword] = useState('');
   const [userDoc, setUserDoc] = useState(null);
+  
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+  
+  React.useEffect(() => {
+    const handler = (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+    window.addEventListener('beforeinstallprompt', handler);
+    return () => window.removeEventListener('beforeinstallprompt', handler);
+  }, []);
+  
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      setDeferredPrompt(null);
+    }
+  };
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -177,6 +197,31 @@ export default function Login({ onLoginSuccess }) {
               <LogIn size={18} /> {loading ? 'Entrando...' : 'Entrar'}
             </button>
           </form>
+          {deferredPrompt && (
+            <button 
+              onClick={handleInstallClick}
+              style={{
+                width: '100%',
+                padding: '14px',
+                background: '#10b981',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                fontSize: '16px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                marginTop: '16px',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                gap: '8px',
+                boxShadow: '0 4px 6px rgba(16, 185, 129, 0.2)'
+              }}
+            >
+              <Download size={20} />
+              Instalar Aplicativo (App)
+            </button>
+          )}
         ) : (
           <form onSubmit={handleChangePassword} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             <div style={{ color: '#f59e0b', fontSize: '14px', marginBottom: '10px' }}>
