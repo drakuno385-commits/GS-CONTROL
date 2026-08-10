@@ -324,7 +324,7 @@ const Monitoramento = ({ currentUser }) => {
       {/* Modal Fechamento */}
       {resolvendoOcorrencia && (
           <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-             <div className="card glass-panel" style={{ width: '100%', maxWidth: '500px', padding: '30px', position: 'relative' }}>
+             <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.8, opacity: 0 }} transition={{ type: "spring", damping: 25, stiffness: 300 }} className="card glass-panel" style={{ width: '100%', maxWidth: '500px', padding: '30px', position: 'relative' }}>
                  <button onClick={() => setResolvendoOcorrencia(null)} style={{ position: 'absolute', top: '16px', right: '16px', background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer' }}><X /></button>
                  <h2 style={{ color: '#fff', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}><CheckCircle color="#10b981" /> Resolver Ocorrência</h2>
                  <div style={{ marginBottom: '16px', color: '#cbd5e1', fontSize: '14px', background: 'rgba(255,255,255,0.05)', padding: '12px', borderRadius: '8px' }}>
@@ -344,7 +344,7 @@ const Monitoramento = ({ currentUser }) => {
                         <button type="submit" style={{ flex: 2, padding: '12px', background: '#10b981', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 600 }}>Salvar e Fechar</button>
                     </div>
                  </form>
-             </div>
+             </motion.div>
           </div>
       )}
 
@@ -365,7 +365,7 @@ const Monitoramento = ({ currentUser }) => {
             </div>
          ) : (
             <div className="card glass-panel" style={{ padding: 0, overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '1000px' }}>
+            <table className="table-row-hover" style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '1000px' }}>
                 <thead style={{ background: 'rgba(255,255,255,0.05)' }}>
                     <tr>
                         <th style={{ padding: '16px', color: '#cbd5e1', fontWeight: 600 }}>SLA / Data</th>
@@ -449,7 +449,7 @@ const Monitoramento = ({ currentUser }) => {
         </div>
       ) : (
         <div className="card glass-panel" style={{ padding: 0, overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '900px' }}>
+          <table className="table-row-hover" style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '900px' }}>
             <thead style={{ background: 'rgba(255,255,255,0.05)' }}>
               <tr>
                 <th style={{ padding: '16px', color: '#cbd5e1', fontWeight: 600, width: '180px' }}>Data/Hora</th>

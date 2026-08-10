@@ -305,3 +305,12 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.2);
 }
+
+/* Table row hover styling */
+.table-row-hover tbody tr {
+  transition: all 0.2s ease;
+}
+.table-row-hover tbody tr:hover {
+  background-color: rgba(255,255,255,0.05) !important;
+  transform: scale(1.002);
+}

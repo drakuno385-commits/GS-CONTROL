@@ -853,7 +853,7 @@ const App = () => {
           <div className="chart-header" style={{ marginBottom: '16px' }}><div className="chart-title">Reserva Técnica</div></div>
           <div className="reserva-table">
             {reservaTecnica && reservaTecnica.length > 0 ? (
-              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+              <table className="table-row-hover" style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                 <thead>
                   <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', color: '#94a3b8' }}>
                     <th style={{ padding: '12px 8px', fontWeight: 500 }}>Nome</th>
@@ -1037,7 +1037,7 @@ const App = () => {
           </div>
           <div className="reserva-table">
             {atestadosRanking && atestadosRanking.length > 0 ? (
-              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+              <table className="table-row-hover" style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                 <thead>
                   <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', color: '#94a3b8' }}>
                     <th style={{ padding: '12px 8px', fontWeight: 500 }}>Posição</th>
@@ -1124,7 +1124,7 @@ const App = () => {
             </div>
 
             <div style={{ overflowY: 'auto', flex: 1, border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', background: 'rgba(0,0,0,0.3)', boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.1)' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+              <table className="table-row-hover" style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                 <thead style={{ position: 'sticky', top: 0, background: '#1e293b', backdropFilter: 'blur(4px)' }}>
                   <tr>
                     <th style={{ padding: '16px', fontWeight: 600, color: '#94a3b8', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Período</th>
@@ -1229,7 +1229,7 @@ const App = () => {
           </div>
           <div className="reserva-table">
             {discAlertas && discAlertas.length > 0 ? (
-              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+              <table className="table-row-hover" style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                 <thead>
                   <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', color: '#94a3b8' }}>
                     <th style={{ padding: '12px 8px', fontWeight: 500 }}>Nome</th>
@@ -1283,7 +1283,7 @@ const App = () => {
             </div>
 
             <div style={{ overflowY: 'auto', flex: 1, border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', background: 'rgba(0,0,0,0.3)', boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.1)' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+              <table className="table-row-hover" style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                 <thead style={{ position: 'sticky', top: 0, background: '#1e293b', backdropFilter: 'blur(4px)' }}>
                   <tr>
                     <th style={{ padding: '16px', fontWeight: 600, color: '#94a3b8', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Data</th>
