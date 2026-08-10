@@ -6,7 +6,7 @@ import {
 } from 'recharts';
 import { Calendar, Search, Loader2, FileText, CheckCircle, Clock, AlertTriangle } from 'lucide-react';
 
-const COLORS = ['#38bdf8', '#818cf8', '#2dd4bf', '#fbbf24', '#f472b6', '#a78bfa', '#4ade80', '#60a5fa'];
+const COLORS = ['url(#metalSteel)', 'url(#metalBlue)', 'url(#metalSilver)', 'url(#metalGold)', 'url(#metalCyan)', 'url(#metalEmerald)', 'url(#metalBronze)', 'url(#metalPurple)'];
 
 const RelatorioVisitas = ({ rawEfetivos = [], rawPresencas = [] }) => {
   const [visitas, setVisitas] = useState([]);

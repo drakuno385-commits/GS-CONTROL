@@ -14,8 +14,8 @@ import Monitoramento from './components/Monitoramento';
 import RelatorioVisitas from './components/RelatorioVisitas';
 import Usuarios from './components/Usuarios';
 
-const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
-const FALTAS_COLORS = ['#ef4444', '#f97316', '#f43f5e', '#d946ef', '#8b5cf6', '#f59e0b'];
+const COLORS = ['url(#metalSteel)', 'url(#metalBlue)', 'url(#metalSilver)', 'url(#metalGold)', 'url(#metalCyan)', 'url(#metalEmerald)', 'url(#metalBronze)', 'url(#metalPurple)'];
+const FALTAS_COLORS = ['url(#metalBronze)', 'url(#metalGold)', 'url(#metalPurple)', 'url(#metalCyan)', 'url(#metalSilver)', 'url(#metalSteel)'];
 
 
 const hasAccess = (user, screen) => {
@@ -967,7 +967,7 @@ const App = () => {
                 <PieChart>
                   <Pie data={frotaCombustivel} innerRadius={60} outerRadius={80} paddingAngle={2} dataKey="value" label={{ fill: '#e2e8f0', fontSize: 11, fontWeight: 500 }}>
                     {frotaCombustivel.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#d946ef'][index % 7]} />
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))} 
                   </Pie>
                   <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }} />
@@ -1370,22 +1370,52 @@ const App = () => {
 
   return (
     <div className="dashboard-layout">
+
       <svg style={{ height: 0, position: 'absolute' }}>
         <defs>
-          <linearGradient id="colorCusto" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.9}/>
-            <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.9}/>
+          <linearGradient id="metalSteel" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="#94a3b8" />
+            <stop offset="50%" stopColor="#475569" />
+            <stop offset="100%" stopColor="#1e293b" />
           </linearGradient>
-          <linearGradient id="colorConsumo" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="5%" stopColor="#10b981" stopOpacity={0.9}/>
-            <stop offset="95%" stopColor="#059669" stopOpacity={0.9}/>
+          <linearGradient id="metalSilver" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="#e2e8f0" />
+            <stop offset="50%" stopColor="#94a3b8" />
+            <stop offset="100%" stopColor="#64748b" />
           </linearGradient>
-          <linearGradient id="colorRanking" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.9}/>
-            <stop offset="95%" stopColor="#d97706" stopOpacity={0.9}/>
+          <linearGradient id="metalGold" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="#fde047" />
+            <stop offset="50%" stopColor="#ca8a04" />
+            <stop offset="100%" stopColor="#854d0e" />
+          </linearGradient>
+          <linearGradient id="metalBronze" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="#fdba74" />
+            <stop offset="50%" stopColor="#ea580c" />
+            <stop offset="100%" stopColor="#9a3412" />
+          </linearGradient>
+          <linearGradient id="metalBlue" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="#7dd3fc" />
+            <stop offset="50%" stopColor="#0284c7" />
+            <stop offset="100%" stopColor="#0f172a" />
+          </linearGradient>
+          <linearGradient id="metalCyan" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="#67e8f9" />
+            <stop offset="50%" stopColor="#0891b2" />
+            <stop offset="100%" stopColor="#164e63" />
+          </linearGradient>
+          <linearGradient id="metalPurple" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="#d8b4fe" />
+            <stop offset="50%" stopColor="#9333ea" />
+            <stop offset="100%" stopColor="#4c1d95" />
+          </linearGradient>
+          <linearGradient id="metalEmerald" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="#6ee7b7" />
+            <stop offset="50%" stopColor="#059669" />
+            <stop offset="100%" stopColor="#064e3b" />
           </linearGradient>
         </defs>
       </svg>
+
       <aside className="sidebar">
         <div className="sidebar-logo" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <img src="/logo.jpg" alt="GSolimpio" style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover', border: '2px solid rgba(59, 130, 246, 0.5)' }} />
