@@ -165,7 +165,7 @@ export default function Login({ onLoginSuccess }) {
           </div>
         )}
 
-        {!needsNewPass ? (
+        {!needsNewPass ? (<>
           <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             <div>
               <label style={{ display: 'block', marginBottom: '8px', color: 'var(--text-muted)', fontSize: '14px' }}>Nome de Usuário</label>
@@ -222,6 +222,7 @@ export default function Login({ onLoginSuccess }) {
               Instalar Aplicativo (App)
             </button>
           )}
+          </>
         ) : (
           <form onSubmit={handleChangePassword} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             <div style={{ color: '#f59e0b', fontSize: '14px', marginBottom: '10px' }}>
