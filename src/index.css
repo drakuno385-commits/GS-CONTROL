@@ -1,9 +1,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
 
 :root {
-  --bg-main: #09090b;
-  --bg-panel: rgba(24, 24, 27, 0.6);
-  --bg-card: rgba(39, 39, 42, 0.8);
+  --bg-main: #0f172a;
+  --bg-panel: rgba(30, 41, 59, 0.6);
+  --bg-card: rgba(15, 23, 42, 0.7);
   --text-main: #f8fafc;
   --text-muted: #94a3b8;
   --accent-primary: #3b82f6;
@@ -24,7 +24,7 @@ body {
   font-family: 'Outfit', sans-serif;
   background-color: var(--bg-main);
   background-image: 
-    linear-gradient(to bottom, rgba(11, 15, 25, 0.8), rgba(11, 15, 25, 0.95)),
+    linear-gradient(to bottom, rgba(15, 23, 42, 0.85), rgba(15, 23, 42, 0.98)),
     url('/bg.jpg');
   background-size: cover;
   background-position: center;
