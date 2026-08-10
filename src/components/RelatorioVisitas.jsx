@@ -6,7 +6,7 @@ import {
 } from 'recharts';
 import { Calendar, Search, Loader2, FileText, CheckCircle, Clock, AlertTriangle } from 'lucide-react';
 
-const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#ec4899', '#14b8a6'];
+const COLORS = ['#6366f1', '#ec4899', '#8b5cf6', '#14b8a6', '#f59e0b', '#10b981', '#3b82f6', '#f43f5e', '#0ea5e9'];
 
 const RelatorioVisitas = ({ rawEfetivos = [], rawPresencas = [] }) => {
   const [visitas, setVisitas] = useState([]);
@@ -158,7 +158,7 @@ const RelatorioVisitas = ({ rawEfetivos = [], rawPresencas = [] }) => {
       </div>
 
       {/* Filtros */}
-      <div className="card glass-panel" style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', marginBottom: '24px', alignItems: 'flex-end', padding: '20px' }}>
+      <div className="card glass-panel" style={{ display: 'flex', flexWrap: 'wrap', gap: '20px', marginBottom: '32px', alignItems: 'flex-end', padding: '24px', borderTop: '4px solid #3b82f6', borderRadius: '16px', boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.3)' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           <label style={{ fontSize: '13px', color: '#94a3b8', fontWeight: 600 }}>Data Inicial</label>
           <div style={{ position: 'relative' }}>
@@ -167,7 +167,7 @@ const RelatorioVisitas = ({ rawEfetivos = [], rawPresencas = [] }) => {
               type="date" 
               value={dataInicio}
               onChange={(e) => setDataInicio(e.target.value)}
-              style={{ background: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(255,255,255,0.1)', padding: '10px 12px 10px 40px', borderRadius: '8px', color: '#fff', fontSize: '14px', width: '160px', colorScheme: 'dark' }}
+              style={{ background: 'rgba(30, 41, 59, 0.7)', border: '1px solid rgba(148, 163, 184, 0.2)', padding: '12px 12px 12px 42px', borderRadius: '10px', color: '#f8fafc', fontSize: '14px', width: '160px', colorScheme: 'dark', transition: 'all 0.2s', outline: 'none', boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.1)' }}
             />
           </div>
         </div>
@@ -180,7 +180,7 @@ const RelatorioVisitas = ({ rawEfetivos = [], rawPresencas = [] }) => {
               type="date" 
               value={dataFim}
               onChange={(e) => setDataFim(e.target.value)}
-              style={{ background: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(255,255,255,0.1)', padding: '10px 12px 10px 40px', borderRadius: '8px', color: '#fff', fontSize: '14px', width: '160px', colorScheme: 'dark' }}
+              style={{ background: 'rgba(30, 41, 59, 0.7)', border: '1px solid rgba(148, 163, 184, 0.2)', padding: '12px 12px 12px 42px', borderRadius: '10px', color: '#f8fafc', fontSize: '14px', width: '160px', colorScheme: 'dark', transition: 'all 0.2s', outline: 'none', boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.1)' }}
             />
           </div>
         </div>
@@ -194,7 +194,7 @@ const RelatorioVisitas = ({ rawEfetivos = [], rawPresencas = [] }) => {
               placeholder="Digite o nome..."
               value={buscaSupervisor}
               onChange={(e) => setBuscaSupervisor(e.target.value)}
-              style={{ background: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(255,255,255,0.1)', padding: '10px 12px 10px 40px', borderRadius: '8px', color: '#fff', fontSize: '14px', width: '100%' }}
+              style={{ background: 'rgba(30, 41, 59, 0.7)', border: '1px solid rgba(148, 163, 184, 0.2)', padding: '12px 12px 12px 42px', borderRadius: '10px', color: '#f8fafc', fontSize: '14px', width: '100%', transition: 'all 0.2s', outline: 'none', boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.1)' }}
             />
           </div>
         </div>
@@ -210,7 +210,7 @@ const RelatorioVisitas = ({ rawEfetivos = [], rawPresencas = [] }) => {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '20px', marginBottom: '24px' }}>
             
             {/* Gráfico Supervisor */}
-            <div className="card glass-panel" style={{ padding: '24px' }}>
+            <div className="card glass-panel" style={{ padding: '24px', borderRadius: '16px', boxShadow: '0 8px 20px -6px rgba(0, 0, 0, 0.25)', border: '1px solid rgba(255,255,255,0.05)' }}>
               <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#e2e8f0', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <div style={{ width: '4px', height: '16px', background: '#3b82f6', borderRadius: '2px' }} />
                 Volume de Visitas por Supervisor
@@ -244,7 +244,7 @@ const RelatorioVisitas = ({ rawEfetivos = [], rawPresencas = [] }) => {
             </div>
 
             {/* Gráfico Tempo Médio Cliente */}
-            <div className="card glass-panel" style={{ padding: '24px' }}>
+            <div className="card glass-panel" style={{ padding: '24px', borderRadius: '16px', boxShadow: '0 8px 20px -6px rgba(0, 0, 0, 0.25)', border: '1px solid rgba(255,255,255,0.05)' }}>
               <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#e2e8f0', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <div style={{ width: '4px', height: '16px', background: '#f59e0b', borderRadius: '2px' }} />
                 Tempo Médio de Visita por Cliente (Top 15)
@@ -258,7 +258,7 @@ const RelatorioVisitas = ({ rawEfetivos = [], rawPresencas = [] }) => {
                     <XAxis type="number" stroke="#64748b" tick={{fill: '#64748b', fontSize: 12}} />
                     <YAxis dataKey="name" type="category" width={120} stroke="#64748b" tick={{fill: '#94a3b8', fontSize: 12}} />
                     <Tooltip content={<CustomTooltipTempo />} />
-                    <Bar dataKey="minutosMedios" name="Minutos" fill="#f59e0b" radius={[0, 4, 4, 0]}>
+                    <Bar dataKey="minutosMedios" name="Minutos" fill="#8b5cf6" radius={[0, 6, 6, 0]}>
                       {dataTempoMedio.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={COLORS[(index+2) % COLORS.length]} />
                       ))}
@@ -270,13 +270,13 @@ const RelatorioVisitas = ({ rawEfetivos = [], rawPresencas = [] }) => {
           </div>
 
           {/* Postos Não Visitados */}
-          <div className="card glass-panel" style={{ padding: '24px' }}>
+          <div className="card glass-panel" style={{ padding: '24px', borderRadius: '16px', boxShadow: '0 8px 20px -6px rgba(0, 0, 0, 0.25)', border: '1px solid rgba(255,255,255,0.05)' }}>
             <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#e2e8f0', marginBottom: '20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <div style={{ width: '4px', height: '16px', background: '#ef4444', borderRadius: '2px' }} />
                 Postos Não Visitados no Período
               </div>
-              <span style={{ fontSize: '13px', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', padding: '4px 10px', borderRadius: '20px' }}>
+              <span style={{ fontSize: '13px', fontWeight: 600, background: 'linear-gradient(90deg, rgba(239, 68, 68, 0.2), rgba(244, 63, 94, 0.1))', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#fca5a5', padding: '6px 14px', borderRadius: '24px', boxShadow: '0 2px 10px rgba(239,68,68,0.1)' }}>
                 {postosNaoVisitados.length} postos pendentes
               </span>
             </h3>
@@ -299,7 +299,7 @@ const RelatorioVisitas = ({ rawEfetivos = [], rawPresencas = [] }) => {
                   </thead>
                   <tbody>
                     {postosNaoVisitados.map((p, idx) => (
-                      <tr key={idx} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', transition: 'background 0.2s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.02)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                      <tr key={idx} style={{ borderBottom: '1px solid rgba(148, 163, 184, 0.1)', transition: 'all 0.2s ease', cursor: 'default' }} onMouseEnter={e => {e.currentTarget.style.background = 'rgba(59, 130, 246, 0.05)'; e.currentTarget.style.transform = 'translateY(-1px)';}} onMouseLeave={e => {e.currentTarget.style.background = 'transparent'; e.currentTarget.style.transform = 'none';}}>
                         <td style={{ padding: '12px 16px', color: '#94a3b8', fontSize: '13px', fontWeight: 500 }}>
                           {p.cliente || 'Sem Cliente'}
                         </td>
@@ -307,7 +307,7 @@ const RelatorioVisitas = ({ rawEfetivos = [], rawPresencas = [] }) => {
                           {p.posto}
                         </td>
                         <td style={{ padding: '12px 16px', textAlign: 'center' }}>
-                           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '11px', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', padding: '4px 8px', borderRadius: '12px', fontWeight: 600 }}>
+                           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '11px', background: 'rgba(239, 68, 68, 0.15)', color: '#fca5a5', padding: '6px 10px', borderRadius: '12px', fontWeight: 700, border: '1px solid rgba(239, 68, 68, 0.2)' }}>
                               <AlertTriangle size={12} />
                               Sem Visita
                            </span>
