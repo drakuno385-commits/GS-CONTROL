@@ -10,7 +10,6 @@ const COLORS = ['#6366f1', '#ec4899', '#8b5cf6', '#14b8a6', '#f59e0b', '#10b981'
 
 const RelatorioVisitas = ({ rawEfetivos = [], rawPresencas = [] }) => {
   const [visitas, setVisitas] = useState([]);
-  const [postosApp, setPostosApp] = useState([]);
   const [loading, setLoading] = useState(true);
   
   // By default, current month
@@ -25,16 +24,6 @@ const RelatorioVisitas = ({ rawEfetivos = [], rawPresencas = [] }) => {
   useEffect(() => {
     fetchVisitas();
   }, [dataInicio, dataFim]);
-
-  useEffect(() => {
-    const fetchPostosApp = async () => {
-      const { data } = await supabase.from('postos').select('*');
-      if (data) {
-        setPostosApp(data);
-      }
-    };
-    fetchPostosApp();
-  }, []);
 
   
   const runFixAccents = async () => {
@@ -149,11 +138,16 @@ const RelatorioVisitas = ({ rawEfetivos = [], rawPresencas = [] }) => {
     // 1. Gather all unique postos from Efetivos and Presencas
     const todosPostos = new Map();
     
-    const isValid = p => p && p.toString().trim() !== '';
+    const isValid = p => p && !p.toString().toUpperCase().includes('FALTA INJUSTIFICADA') && p.toString().trim() !== '';
 
-    postosApp.forEach(r => {
-      if (isValid(r.nomepos)) {
-        todosPostos.set(r.nomepos.trim().toUpperCase(), { posto: r.nomepos.trim(), cliente: (r.nomecli || '').trim() });
+    rawEfetivos.forEach(r => {
+      if (isValid(r.posto)) {
+        todosPostos.set(r.posto.trim().toUpperCase(), { posto: r.posto.trim(), cliente: (r.cliente || '').trim() });
+      }
+    });
+    rawPresencas.forEach(r => {
+      if (isValid(r.posto)) {
+        todosPostos.set(r.posto.trim().toUpperCase(), { posto: r.posto.trim(), cliente: (r.cliente || '').trim() });
       }
     });
 
@@ -175,7 +169,7 @@ const RelatorioVisitas = ({ rawEfetivos = [], rawPresencas = [] }) => {
 
     // Sort by client, then posto
     return naoVisitados.sort((a, b) => a.cliente.localeCompare(b.cliente) || a.posto.localeCompare(b.posto));
-  }, [postosApp, visitasFiltradas]);
+  }, [rawEfetivos, rawPresencas, visitasFiltradas]);
 
   // Visitas por Supervisor
   const dataSupervisor = useMemo(() => {
