@@ -43,6 +43,57 @@ const RelatorioVisitas = ({ rawEfetivos = [], rawPresencas = [] }) => {
     fetchPostosApp();
   }, []);
 
+  
+  const runFixAccents = async () => {
+    alert('Iniciando correção de acentos no banco de dados...');
+    const { data } = await supabase.from('postos').select('id, nomecli, nomepos');
+    let count = 0;
+    
+    const fixStr = (str) => {
+      if (!str) return str;
+      let f = str;
+      
+      // UTF-8 decoded as ISO-8859-1
+      f = f.replace(/Ã£/g, 'ã').replace(/Ã¡/g, 'á').replace(/Ã©/g, 'é').replace(/Ãª/g, 'ê')
+           .replace(/Ã³/g, 'ó').replace(/Ã§/g, 'ç').replace(/Ãº/g, 'ú').replace(/Ã­/g, 'í')
+           .replace(/Ãµ/g, 'õ').replace(/Ã¢/g, 'â').replace(/Ã´/g, 'ô');
+           
+      // UTF-8 decoded as ISO-8859-1 (uppercase variants)
+      f = f.replace(/Ã\x83/g, 'Ã').replace(/Ã\x81/g, 'Á').replace(/Ã\x89/g, 'É')
+           .replace(/Ã\x8A/g, 'Ê').replace(/Ã\x93/g, 'Ó').replace(/Ã\x87/g, 'Ç')
+           .replace(/Ã\x9A/g, 'Ú').replace(/Ã\x8D/g, 'Í').replace(/Ã\x95/g, 'Õ')
+           .replace(/Ã\x82/g, 'Â').replace(/Ã\x94/g, 'Ô');
+           
+      // If there are replacement characters, we try to guess based on common words
+      f = f.replace(/USINAGEM DE PRECIS\ufffdO/gi, 'USINAGEM DE PRECISÃO');
+      f = f.replace(/M\ufffdDICO/gi, 'MÉDICO');
+      f = f.replace(/S\ufffdO PAULO/gi, 'SÃO PAULO');
+      f = f.replace(/CONDOM\ufffdNIO/gi, 'CONDOMÍNIO');
+      f = f.replace(/COM\ufffdRCIO/gi, 'COMÉRCIO');
+      f = f.replace(/LOG\ufffdSTICA/gi, 'LOGÍSTICA');
+      f = f.replace(/T\ufffdCNICA/gi, 'TÉCNICA');
+      f = f.replace(/T\ufffdCNICO/gi, 'TÉCNICO');
+      f = f.replace(/SERVI\ufffdOS/gi, 'SERVIÇOS');
+      f = f.replace(/A\ufffd\ufffdO/gi, 'AÇÃO');
+      f = f.replace(/A\ufffd\ufffdES/gi, 'AÇÕES');
+      f = f.replace(/M\ufffdquinas/gi, 'Máquinas');
+      f = f.replace(/S\ufffdo/gi, 'São');
+      
+      return f;
+    };
+
+    for (const row of data) {
+      const fixedCli = fixStr(row.nomecli);
+      const fixedPos = fixStr(row.nomepos);
+      
+      if (fixedCli !== row.nomecli || fixedPos !== row.nomepos) {
+        await supabase.from('postos').update({ nomecli: fixedCli, nomepos: fixedPos }).eq('id', row.id);
+        count++;
+      }
+    }
+    alert('Concluído! ' + count + ' postos corrigidos. Atualize a página.');
+  };
+
   const fetchVisitas = async () => {
     setLoading(true);
     let query = supabase.from('visitas').select('*');
