@@ -133,11 +133,13 @@ const Monitoramento = ({ currentUser }) => {
       e.preventDefault();
       if (!tratativaTexto.trim()) return alert("Descreva a tratativa.");
       
+      const finalTratativa = `Resolvido por ${currentUser.username}:\n${tratativaTexto}`;
+
       const { error } = await supabase
         .from('ocorrencias_visitas')
         .update({
             status: 'Fechado',
-            tratativa: tratativaTexto,
+            tratativa: finalTratativa,
             closed_at: new Date().toISOString()
         })
         .eq('id', resolvendoOcorrencia.id);
@@ -395,7 +397,7 @@ const Monitoramento = ({ currentUser }) => {
                                 {isFechado && oc.tratativa && (
                                     <div style={{ background: 'rgba(16, 185, 129, 0.05)', padding: '8px', borderRadius: '6px', borderLeft: '2px solid #10b981' }}>
                                         <div style={{ color: '#10b981', fontWeight: 600, fontSize: '11px', marginBottom: '2px' }}>Tratativa:</div>
-                                        <div style={{ color: '#cbd5e1' }}>{oc.tratativa}</div>
+                                        <div style={{ color: '#cbd5e1', whiteSpace: 'pre-wrap' }}>{oc.tratativa}</div>
                                         <div style={{ color: '#64748b', fontSize: '10px', marginTop: '4px' }}>Fechado em: {formatDate(oc.closed_at)} {formatTime(oc.closed_at)}</div>
                                     </div>
                                 )}
