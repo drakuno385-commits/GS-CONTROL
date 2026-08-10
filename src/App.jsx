@@ -965,7 +965,7 @@ const App = () => {
             {frotaCombustivel.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
-                  <Pie data={frotaCombustivel} innerRadius={60} outerRadius={80} paddingAngle={2} dataKey="value" label>
+                  <Pie data={frotaCombustivel} innerRadius={60} outerRadius={80} paddingAngle={2} dataKey="value" label={{ fill: '#e2e8f0', fontSize: 11, fontWeight: 500 }}>
                     {frotaCombustivel.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#d946ef'][index % 7]} />
                     ))} 

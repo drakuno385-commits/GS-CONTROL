@@ -6,7 +6,7 @@ import {
 } from 'recharts';
 import { Calendar, Search, Loader2, FileText, CheckCircle, Clock, AlertTriangle } from 'lucide-react';
 
-const COLORS = ['#6366f1', '#ec4899', '#8b5cf6', '#14b8a6', '#f59e0b', '#10b981', '#3b82f6', '#f43f5e', '#0ea5e9'];
+const COLORS = ['#38bdf8', '#818cf8', '#2dd4bf', '#fbbf24', '#f472b6', '#a78bfa', '#4ade80', '#60a5fa'];
 
 const RelatorioVisitas = ({ rawEfetivos = [], rawPresencas = [] }) => {
   const [visitas, setVisitas] = useState([]);
@@ -276,7 +276,11 @@ const RelatorioVisitas = ({ rawEfetivos = [], rawPresencas = [] }) => {
                       cx="50%"
                       cy="50%"
                       labelLine={false}
-                      label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
+                      label={({ name, percent, x, y, cx }) => (
+                        <text x={x} y={y} fill="#e2e8f0" textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central" fontSize={11} fontWeight={500}>
+                          {`${name} (${(percent * 100).toFixed(0)}%)`}
+                        </text>
+                      )}
                       outerRadius={100}
                       fill="#8884d8"
                       dataKey="value"
