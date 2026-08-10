@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { motion } from 'framer-motion';
 import { supabase } from '../supabaseClient';
 import { Camera, MapPin, Building, Clock, Activity, Search, Calendar, User, ExternalLink, Image as ImageIcon, Trash2, AlertCircle, CheckCircle, X } from 'lucide-react';
 
@@ -348,7 +349,13 @@ const Monitoramento = ({ currentUser }) => {
       )}
 
       {loading ? (
-        <div style={{ color: '#94a3b8', padding: '40px', textAlign: 'center' }}>Carregando dados...</div>
+        
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="skeleton-container" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          {[1, 2, 3, 4, 5].map(i => (
+            <div key={i} className="card glass-panel" style={{ height: '80px', borderRadius: '12px', animation: 'pulse 1.5s infinite', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}></div>
+          ))}
+        </motion.div>
+
       ) : activeTab === 'ocorrencias' ? (
          // TELA DE OCORRENCIAS
          ocorrenciasFiltradas.length === 0 ? (
