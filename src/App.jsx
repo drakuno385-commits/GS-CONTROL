@@ -1324,7 +1324,7 @@ const App = () => {
             <LogOut size={18} /> Sair
           </button>
         </div>
-        <SupervisorApp currentUser={currentUser} />
+        <SupervisorApp currentUser={currentUser} rawEfetivos={rawEfetivos} rawPresencas={rawPresencas} />
       </div>
     );
   }

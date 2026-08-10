@@ -11,7 +11,7 @@ const getBRTString = () => {
   return `${brt.getUTCFullYear()}-${pad(brt.getUTCMonth()+1)}-${pad(brt.getUTCDate())}T${pad(brt.getUTCHours())}:${pad(brt.getUTCMinutes())}:${pad(brt.getUTCSeconds())}-03:00`;
 };
 
-const SupervisorApp = ({ currentUser }) => {
+const SupervisorApp = ({ currentUser, rawEfetivos = [], rawPresencas = [] }) => {
   const [clientes, setClientes] = useState([]);
   const [postos, setPostos] = useState([]);
   
@@ -99,18 +99,13 @@ const SupervisorApp = ({ currentUser }) => {
     return () => clearInterval(timer);
   }, [currentUser.id]);
 
-  const fetchClientes = async () => {
+  const fetchClientes = () => {
     setFetchingData(true);
-    try {
-      // 1. Fetch from efetivos and presencas to get all unique clients and postos
-      const { data: dEfetivos, error: err1 } = await supabase.from('efetivos').select('cliente, posto').limit(10000);
-      if (err1) throw err1;
-      
-      const { data: dPresencas, error: err2 } = await supabase.from('presencas').select('cliente, posto').limit(10000);
-      if (err2) throw err2;
-      
-      const allData = [...(dEfetivos || []), ...(dPresencas || [])];
-      
+    
+    // Use the raw data passed from App.jsx (which has all 47k+ rows chunked correctly)
+    const allData = [...(rawEfetivos || []), ...(rawPresencas || [])];
+    
+    if (allData.length > 0) {
       const clientesMap = new Map();
       const postosList = [];
       const postosMap = new Set();
@@ -129,7 +124,6 @@ const SupervisorApp = ({ currentUser }) => {
              const postoKey = (cli + " - " + pos).toUpperCase();
              if (!postosMap.has(postoKey)) {
                  postosMap.add(postoKey);
-                 // We give each posto a fake unique ID so the select works
                  postosList.push({ id: Math.random().toString(36).substr(2, 9), nomecli: cli, nomepos: pos, codcli: '', codpos: '' });
              }
          }
@@ -142,8 +136,10 @@ const SupervisorApp = ({ currentUser }) => {
       
       // Save offline cache
       localStorage.setItem('offline_postos', JSON.stringify(postosList));
-    } catch (e) {
-      console.warn("Falha ao buscar postos da nuvem, tentando offline:", e);
+      setFetchingData(false);
+    } else {
+      // If props are empty (e.g. offline on load), fallback to cache
+      console.warn("Props vazias, tentando offline cache");
       const cached = localStorage.getItem('offline_postos');
       if (cached) {
         const postosList = JSON.parse(cached);
@@ -155,9 +151,17 @@ const SupervisorApp = ({ currentUser }) => {
         setClientes(uniqueClientes);
         setPostos(postosList);
       }
+      setFetchingData(false);
     }
-    setFetchingData(false);
   };
+
+  // Watch for changes in rawEfetivos/rawPresencas
+  useEffect(() => {
+    if (rawEfetivos.length > 0 || rawPresencas.length > 0) {
+      fetchClientes();
+    }
+  }, [rawEfetivos, rawPresencas]);
+  
 
   const handleClienteChange = (e) => {
     setSelectedCliente(e.target.value);
