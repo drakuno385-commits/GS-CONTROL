@@ -550,7 +550,7 @@ const App = () => {
       const clienteGrpAtest = row.nomecli ? row.nomecli.trim() : "Sem Cliente";
       const dias = parseFloatBR(row.tot_dias || 0);
       
-      if (!atestadoData[pessoaNome]) atestadoData[pessoaNome] = { nome: pessoaNome, dias: [], cliente: clienteGrpAtest, total: 0 };
+      if (!atestadoData[pessoaNome]) atestadoData[pessoaNome] = { nome: pessoaNome, dias: [], cliente: clienteGrpAtest, totalDias: 0, qtdAtestados: 0 };
       
       atestadoData[pessoaNome].dias.push({ 
         data: (row.iniocor || '') + ' a ' + (row.fimocor || ''), 
@@ -560,18 +560,19 @@ const App = () => {
         medico: row.nomemedi || 'Não informado',
         crm: row.crm || ''
       });
-      atestadoData[pessoaNome].total += dias;
+      atestadoData[pessoaNome].totalDias += dias;
+      atestadoData[pessoaNome].qtdAtestados += 1;
 
       if (!atestadoClienteData[clienteGrpAtest]) atestadoClienteData[clienteGrpAtest] = 0;
       atestadoClienteData[clienteGrpAtest] += dias;
     });
 
     const arrAtestados = Object.values(atestadoData)
-      .sort((a, b) => b.total - a.total)
+      .sort((a, b) => b.qtdAtestados - a.qtdAtestados)
       .map(p => {
         let cor = '#10b981'; // verde
-        if (p.total >= 5) cor = '#ef4444'; // vermelho
-        else if (p.total >= 3) cor = '#f59e0b'; // amarelo
+        if (p.qtdAtestados >= 3) cor = '#ef4444'; // vermelho
+        else if (p.qtdAtestados >= 2) cor = '#f59e0b'; // amarelo
         return { ...p, cor };
       });
       
@@ -580,13 +581,13 @@ const App = () => {
       .sort((a, b) => b.total - a.total)
       .slice(0, 15);
       
-      let totalDias = 0;
-      arrAtestados.forEach(p => totalDias += p.total);
+      let totalDiasGlobais = 0;
+      Object.values(atestadoData).forEach(p => totalDiasGlobais += p.totalDias);
       const critico = arrAtestCliente.length > 0 ? arrAtestCliente[0].cliente : 'Nenhum';
 
-      setAtestadosRanking(arrAtestados.slice(0, 50)); // Top 50 campeões
+      setAtestadosRanking(arrAtestados.slice(0, 50));
       setAtestadosPorCliente(arrAtestCliente);
-      setTotalsAtestados({ diasPerdidos: totalDias, totalColaboradores: arrAtestados.length, clienteCritico: critico });
+      setTotalsAtestados({ diasPerdidos: totalDiasGlobais, totalColaboradores: arrAtestados.length, clienteCritico: critico });
 
   }, [rawAtestados, filters]);
 
@@ -1056,20 +1057,13 @@ const App = () => {
                         onClick={() => setSelectedAtestadoPerson(row)}
                         style={{ 
                           borderBottom: '1px solid rgba(255,255,255,0.05)', 
-                          background: `rgba(${row.cor === '#ef4444' ? '239, 68, 68' : row.cor === '#f59e0b' ? '245, 158, 11' : '16, 185, 129'}, 0.1)`,
-                          cursor: 'pointer',
-                          transition: 'all 0.2s'
-                        }}
-                        onMouseOver={(e) => e.currentTarget.style.filter = 'brightness(1.2)'}
-                        onMouseOut={(e) => e.currentTarget.style.filter = 'brightness(1)'}
-                      >
-                        <td style={{ padding: '12px 8px', width: '50px', textAlign: 'center' }}>{badge}</td>
+                      <td style={{ padding: '12px 8px', width: '50px', textAlign: 'center' }}>{badge}</td>
                         <td style={{ padding: '12px 8px' }}>
                           <div>{row.nome}</div>
                           <div style={{ fontSize: '11px', color: '#94a3b8' }}>{row.cliente}</div>
                         </td>
                         <td style={{ padding: '12px 8px', color: row.cor, fontWeight: 700, textAlign: 'center', fontSize: '18px' }}>
-                          {row.total}
+                          {row.qtdAtestados}
                         </td>
                       </tr>
                     )
