@@ -102,33 +102,58 @@ const SupervisorApp = ({ currentUser }) => {
   const fetchClientes = async () => {
     setFetchingData(true);
     try {
-      const { data, error } = await supabase.from('postos').select('*').limit(10000).limit(10000);
-      if (error) throw error;
+      // 1. Fetch from efetivos and presencas to get all unique clients and postos
+      const { data: dEfetivos, error: err1 } = await supabase.from('efetivos').select('cliente, posto').limit(10000);
+      if (err1) throw err1;
       
+      const { data: dPresencas, error: err2 } = await supabase.from('presencas').select('cliente, posto').limit(10000);
+      if (err2) throw err2;
+      
+      const allData = [...(dEfetivos || []), ...(dPresencas || [])];
       
       const clientesMap = new Map();
-      data.forEach(item => {
-        if (!clientesMap.has(item.nomecli)) clientesMap.set(item.nomecli, item);
+      const postosList = [];
+      const postosMap = new Set();
+      
+      const isValid = p => p && !p.toString().toUpperCase().includes('FALTA INJUSTIFICADA') && p.toString().trim() !== '';
+
+      allData.forEach((item, index) => {
+         const cli = (item.cliente || 'SEM CLIENTE').trim();
+         const pos = (item.posto || '').trim();
+         
+         if (isValid(pos)) {
+             if (!clientesMap.has(cli)) {
+                 clientesMap.set(cli, { nomecli: cli, codcli: '' });
+             }
+             
+             const postoKey = (cli + " - " + pos).toUpperCase();
+             if (!postosMap.has(postoKey)) {
+                 postosMap.add(postoKey);
+                 // We give each posto a fake unique ID so the select works
+                 postosList.push({ id: Math.random().toString(36).substr(2, 9), nomecli: cli, nomepos: pos, codcli: '', codpos: '' });
+             }
+         }
       });
+      
       const uniqueClientes = Array.from(clientesMap.values()).sort((a, b) => a.nomecli.localeCompare(b.nomecli));
       
       setClientes(uniqueClientes);
-      setPostos(data);
+      setPostos(postosList);
       
       // Save offline cache
-      localStorage.setItem('offline_postos', JSON.stringify(data));
+      localStorage.setItem('offline_postos', JSON.stringify(postosList));
     } catch (e) {
       console.warn("Falha ao buscar postos da nuvem, tentando offline:", e);
       const cached = localStorage.getItem('offline_postos');
       if (cached) {
-        const data = JSON.parse(cached);
+        const postosList = JSON.parse(cached);
         const clientesMap = new Map();
-        data.forEach(item => {
-          if (!clientesMap.has(item.nomecli)) clientesMap.set(item.nomecli, item);
+        postosList.forEach(item => {
+          if (!clientesMap.has(item.nomecli)) clientesMap.set(item.nomecli, { nomecli: item.nomecli, codcli: item.codcli });
         });
         const uniqueClientes = Array.from(clientesMap.values()).sort((a, b) => a.nomecli.localeCompare(b.nomecli));
         setClientes(uniqueClientes);
-        setPostos(data);
+        setPostos(postosList);
       }
     }
     setFetchingData(false);
