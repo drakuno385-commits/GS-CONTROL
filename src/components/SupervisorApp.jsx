@@ -105,29 +105,32 @@ const SupervisorApp = ({ currentUser }) => {
       const { data, error } = await supabase.from('postos').select('*');
       if (error) throw error;
       
+      const ignored = ['ADMINISTRATIVO', 'ACOFORTE', 'ENERGISA', 'INST PREV OSASCO- LOGICA SERV', 'RESERVA TÉCNICA', 'RESERVA TECNICA', 'REGIONAL ADM'];
+      const filteredData = data.filter(item => item.nomecli && !ignored.includes(item.nomecli.trim().toUpperCase()));
+      
       const clientesMap = new Map();
-      data.forEach(item => {
+      (typeof filteredData !== 'undefined' ? filteredData : data).forEach(item => {
         if (!clientesMap.has(item.nomecli)) clientesMap.set(item.nomecli, item);
       });
       const uniqueClientes = Array.from(clientesMap.values()).sort((a, b) => a.nomecli.localeCompare(b.nomecli));
       
       setClientes(uniqueClientes);
-      setPostos(data);
+      setPostos(typeof filteredData !== 'undefined' ? filteredData : data);
       
       // Save offline cache
-      localStorage.setItem('offline_postos', JSON.stringify(data));
+      localStorage.setItem('offline_postos', JSON.stringify(typeof filteredData !== 'undefined' ? filteredData : data));
     } catch (e) {
       console.warn("Falha ao buscar postos da nuvem, tentando offline:", e);
       const cached = localStorage.getItem('offline_postos');
       if (cached) {
         const data = JSON.parse(cached);
         const clientesMap = new Map();
-        data.forEach(item => {
+        (typeof filteredData !== 'undefined' ? filteredData : data).forEach(item => {
           if (!clientesMap.has(item.nomecli)) clientesMap.set(item.nomecli, item);
         });
         const uniqueClientes = Array.from(clientesMap.values()).sort((a, b) => a.nomecli.localeCompare(b.nomecli));
         setClientes(uniqueClientes);
-        setPostos(data);
+        setPostos(typeof filteredData !== 'undefined' ? filteredData : data);
       }
     }
     setFetchingData(false);
