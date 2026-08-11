@@ -14,6 +14,58 @@ import Monitoramento from './components/Monitoramento';
 import RelatorioVisitas from './components/RelatorioVisitas';
 import Usuarios from './components/Usuarios';
 
+const fixDatabaseAccents = (str) => {
+  if (!str) return str;
+  if (!str.includes('\ufffd')) return str;
+  return str
+    .replace(/PLANT�O/g, 'PLANTÃO')
+    .replace(/A�OFORTE/g, 'AÇOFORTE')
+    .replace(/INSPE��O/g, 'INSPEÇÃO')
+    .replace(/S�O JO�O/g, 'SÃO JOÃO')
+    .replace(/S�O/g, 'SÃO')
+    .replace(/C�U/g, 'CÉU')
+    .replace(/ICARA�/g, 'ICARAÍ')
+    .replace(/GALV�O/g, 'GALVÃO')
+    .replace(/ESPERAN�A/g, 'ESPERANÇA')
+    .replace(/NAZAR�/g, 'NAZARÉ')
+    .replace(/PARNA�BA/g, 'PARNAÍBA')
+    .replace(/PLAT�O/g, 'PLATÃO')
+    .replace(/BRAGAN�A/g, 'BRAGANÇA')
+    .replace(/CAPTA��O/g, 'CAPTAÇÃO')
+    .replace(/PR�DIO/g, 'PRÉDIO')
+    .replace(/JOAN�POLIS/g, 'JOANÓPOLIS')
+    .replace(/T�NEL/g, 'TÚNEL')
+    .replace(/MANUTEN��O/g, 'MANUTENÇÃO')
+    .replace(/ALIAN�A/g, 'ALIANÇA')
+    .replace(/BRAND�O/g, 'BRANDÃO')
+    .replace(/CAMBU�/g, 'CAMBUÍ')
+    .replace(/C�NDIDO/g, 'CÂNDIDO')
+    .replace(/CATIGU�/g, 'CATIGUÁ')
+    .replace(/TABAPU�/g, 'TABAPUÃ')
+    .replace(/ECHAPOR�/g, 'ECHAPORÃ')
+    .replace(/IEP�/g, 'IEPÊ')
+    .replace(/IRAPU�/g, 'IRAPUÃ')
+    .replace(/LUC�LIA/g, 'LUCÉLIA')
+    .replace(/MARACA�/g, 'MARACAÍ')
+    .replace(/MARTIN�POLIS/g, 'MARTINÓPOLIS')
+    .replace(/PARAGUA�U/g, 'PARAGUAÇU')
+    .replace(/PARAPU�/g, 'PARAPUÃ')
+    .replace(/EPIT�CIO/g, 'EPITÁCIO')
+    .replace(/QUAT�/g, 'QUATÁ')
+    .replace(/FEIJ�/g, 'FEIJÓ')
+    .replace(/RIN�POLIS/g, 'RINÓPOLIS')
+    .replace(/ANAST�CIO/g, 'ANASTÁCIO')
+    .replace(/TARUM�/g, 'TARUMÃ')
+    .replace(/SERVI�O/g, 'SERVIÇO')
+    .replace(/TUP�/g, 'TUPÃ')
+    .replace(/URUP�S/g, 'URUPÊS')
+    .replace(/DEP�SITO/g, 'DEPÓSITO')
+    .replace(/A��O/g, 'AÇÃO')
+    .replace(/CONCEI��O/g, 'CONCEIÇÃO')
+    .replace(/SITUA��O/g, 'SITUAÇÃO');
+};
+
+
 const EXCLUDED_CLIENTS = [
   'ADMINISTRATIVO',
   'ENERGISA',
