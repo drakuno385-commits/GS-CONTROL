@@ -156,7 +156,18 @@ const Monitoramento = ({ currentUser }) => {
 
   const visitasFiltradas = useMemo(() => {
     return visitas.filter(v => {
-      const matchData = filterData ? (v.created_at || '').startsWith(filterData) : true;
+      const matchData = filterData ? (() => {
+        if (!v.created_at) return false;
+        try {
+          const d = new Date(v.created_at);
+          if (isNaN(d.getTime())) return (v.created_at || '').startsWith(filterData);
+          const formatter = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' });
+          const localDateStr = formatter.format(d);
+          return localDateStr === filterData;
+        } catch(e) {
+          return (v.created_at || '').startsWith(filterData);
+        }
+      })() : true;
       const matchSup = filterSupervisor ? (v.nome_supervisor || '').toLowerCase().includes(filterSupervisor.toLowerCase()) : true;
       const matchCli = filterCliente ? (v.nomecli || '').toLowerCase().includes(filterCliente.toLowerCase()) : true;
       return matchData && matchSup && matchCli;
