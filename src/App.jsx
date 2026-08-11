@@ -14,6 +14,23 @@ import Monitoramento from './components/Monitoramento';
 import RelatorioVisitas from './components/RelatorioVisitas';
 import Usuarios from './components/Usuarios';
 
+const EXCLUDED_CLIENTS = [
+  'ADMINISTRATIVO',
+  'ENERGISA-BELLS',
+  'BELLS ADM',
+  'INST PREV OSASCO- LOGICA SERV',
+  'LOGICA ADM',
+  'REGIONAL ADM',
+  'RESERVA TECNICA'
+];
+
+const isClientAllowed = (c) => {
+  if (!c) return true;
+  const upper = c.toString().toUpperCase().trim();
+  return !EXCLUDED_CLIENTS.some(ex => upper.includes(ex));
+};
+
+
 const COLORS = ['url(#metalSteel)', 'url(#metalBlue)', 'url(#metalSilver)', 'url(#metalGold)', 'url(#metalCyan)', 'url(#metalEmerald)', 'url(#metalBronze)', 'url(#metalPurple)'];
 const FALTAS_COLORS = ['url(#metalBronze)', 'url(#metalGold)', 'url(#metalPurple)', 'url(#metalCyan)', 'url(#metalSilver)', 'url(#metalSteel)'];
 
