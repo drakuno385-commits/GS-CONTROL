@@ -968,6 +968,12 @@ const App = () => {
             {frotaDesempenho.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <ComposedChart data={frotaDesempenho} margin={{ top: 20, right: 20, bottom: 40, left: 20 }}>
+                  <defs>
+                    <linearGradient id="colorCusto" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.9}/>
+                      <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.9}/>
+                    </linearGradient>
+                  </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
                   <XAxis dataKey="placa" stroke="#94a3b8" tick={{fontSize: 12}} angle={-45} textAnchor="end" height={50}/>
                   <YAxis yAxisId="left" stroke="#06b6d4" orientation="left" width={90} tickFormatter={(val) => `R$ ${val.toLocaleString('pt-BR')}`} />
