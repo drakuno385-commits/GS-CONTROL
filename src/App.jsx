@@ -16,9 +16,9 @@ import Usuarios from './components/Usuarios';
 
 const EXCLUDED_CLIENTS = [
   'ADMINISTRATIVO',
-  'ENERGISA-BELLS',
+  'ENERGISA',
   'BELLS ADM',
-  'INST PREV OSASCO- LOGICA SERV',
+  'INST PREV OSASCO',
   'LOGICA ADM',
   'REGIONAL ADM',
   'RESERVA TECNICA'
