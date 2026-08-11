@@ -149,11 +149,13 @@ const RelatorioVisitas = ({ rawEfetivos = [], rawPresencas = [] }) => {
     const isValid = p => p && !p.toString().toUpperCase().includes('FALTA INJUSTIFICADA') && p.toString().trim() !== '';
 
     rawEfetivos.forEach(r => {
+      if (!isClientAllowed(r.cliente)) return;
       if (isValid(r.posto)) {
         todosPostos.set(r.posto.trim().toUpperCase(), { posto: r.posto.trim(), cliente: (r.cliente || '').trim() });
       }
     });
     rawPresencas.forEach(r => {
+      if (!isClientAllowed(r.cliente)) return;
       if (isValid(r.posto)) {
         todosPostos.set(r.posto.trim().toUpperCase(), { posto: r.posto.trim(), cliente: (r.cliente || '').trim() });
       }
