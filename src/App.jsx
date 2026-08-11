@@ -160,8 +160,8 @@ const App = () => {
   // List of unique clients for the filter dropdown
   const clientsList = useMemo(() => {
     const list = new Set();
-    rawEfetivos.forEach(r => r.cliente && list.add(r.cliente));
-    rawPresencas.forEach(r => r.cliente && list.add(r.cliente));
+    rawEfetivos.forEach(r => r.cliente && isClientAllowed(r.cliente) && list.add(r.cliente));
+    rawPresencas.forEach(r => r.cliente && isClientAllowed(r.cliente) && list.add(r.cliente));
     return Array.from(list).sort();
   }, [rawEfetivos, rawPresencas]);
 
@@ -171,14 +171,14 @@ const App = () => {
     const isValid = p => p && !p.toString().toUpperCase().includes('FALTA INJUSTIFICADA');
     
     if (!filters.cliente) {
-      rawEfetivos.forEach(r => isValid(r.posto) && list.add(r.posto.trim()));
-      rawPresencas.forEach(r => isValid(r.posto) && list.add(r.posto.trim()));
+      rawEfetivos.forEach(r => isValid(r.posto) && isClientAllowed(r.cliente) && list.add(r.posto.trim()));
+      rawPresencas.forEach(r => isValid(r.posto) && isClientAllowed(r.cliente) && list.add(r.posto.trim()));
     } else {
       rawEfetivos.forEach(r => {
-        if (isValid(r.posto) && r.cliente && r.cliente.toString().trim() === filters.cliente.trim()) list.add(r.posto.trim());
+        if (isValid(r.posto) && r.cliente && isClientAllowed(r.cliente) && r.cliente.toString().trim() === filters.cliente.trim()) list.add(r.posto.trim());
       });
       rawPresencas.forEach(r => {
-        if (isValid(r.posto) && r.cliente && r.cliente.toString().trim() === filters.cliente.trim()) list.add(r.posto.trim());
+        if (isValid(r.posto) && r.cliente && isClientAllowed(r.cliente) && r.cliente.toString().trim() === filters.cliente.trim()) list.add(r.posto.trim());
       });
     }
     return Array.from(list).sort();

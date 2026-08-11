@@ -6,6 +6,14 @@ import {
 } from 'recharts';
 import { Calendar, Search, Loader2, FileText, CheckCircle, Clock, AlertTriangle } from 'lucide-react';
 
+
+const EXCLUDED_CLIENTS = ["ADMINISTRATIVO","ENERGISA-BELLS","BELLS ADM","INST PREV OSASCO- LOGICA SERV","LOGICA ADM","REGIONAL ADM","RESERVA TECNICA"];
+const isClientAllowed = (c) => {
+  if (!c) return true;
+  const upper = c.toString().toUpperCase().trim();
+  return !EXCLUDED_CLIENTS.some(ex => upper.includes(ex));
+};
+
 const COLORS = ['url(#metalSteel)', 'url(#metalBlue)', 'url(#metalSilver)', 'url(#metalGold)', 'url(#metalCyan)', 'url(#metalEmerald)', 'url(#metalBronze)', 'url(#metalPurple)'];
 
 const RelatorioVisitas = ({ rawEfetivos = [], rawPresencas = [] }) => {

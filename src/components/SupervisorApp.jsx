@@ -4,6 +4,14 @@ import { supabase } from '../supabaseClient';
 import { saveVisitOffline, getPendingVisits, syncAll, fileToBase64 } from '../utils/syncManager';
 import { CloudOff, RefreshCw } from 'lucide-react';
 
+
+const EXCLUDED_CLIENTS = ["ADMINISTRATIVO","ENERGISA-BELLS","BELLS ADM","INST PREV OSASCO- LOGICA SERV","LOGICA ADM","REGIONAL ADM","RESERVA TECNICA"];
+const isClientAllowed = (c) => {
+  if (!c) return true;
+  const upper = c.toString().toUpperCase().trim();
+  return !EXCLUDED_CLIENTS.some(ex => upper.includes(ex));
+};
+
 const getBRTString = () => {
   const d = new Date();
   const brt = new Date(d.getTime() - 3 * 3600 * 1000);
