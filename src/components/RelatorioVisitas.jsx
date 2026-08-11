@@ -7,11 +7,10 @@ import {
 import { Calendar, Search, Loader2, FileText, CheckCircle, Clock, AlertTriangle } from 'lucide-react';
 
 
-const EXCLUDED_CLIENTS = ["ADMINISTRATIVO","ENERGISA-BELLS","BELLS ADM","INST PREV OSASCO- LOGICA SERV","LOGICA ADM","REGIONAL ADM","RESERVA TECNICA"];
-const isClientAllowed = (c) => {
-  if (!c) return true;
-  const upper = c.toString().toUpperCase().trim();
-  return !EXCLUDED_CLIENTS.some(ex => upper.includes(ex));
+const EXCLUDED_CLIENTS = ["ADMINISTRATIVO","ENERGISA","BELLS ADM","INST PREV OSASCO","LOGICA ADM","REGIONAL ADM","RESERVA TECNICA"];
+const isClientAllowed = (c, p = '') => {
+  const str = (c || '').toString().toUpperCase() + ' ' + (p || '').toString().toUpperCase();
+  return !EXCLUDED_CLIENTS.some(ex => str.includes(ex));
 };
 
 const COLORS = ['url(#metalSteel)', 'url(#metalBlue)', 'url(#metalSilver)', 'url(#metalGold)', 'url(#metalCyan)', 'url(#metalEmerald)', 'url(#metalBronze)', 'url(#metalPurple)'];
@@ -149,13 +148,13 @@ const RelatorioVisitas = ({ rawEfetivos = [], rawPresencas = [] }) => {
     const isValid = p => p && !p.toString().toUpperCase().includes('FALTA INJUSTIFICADA') && p.toString().trim() !== '';
 
     rawEfetivos.forEach(r => {
-      if (!isClientAllowed(r.cliente)) return;
+      if (!isClientAllowed(r.cliente, r.posto)) return;
       if (isValid(r.posto)) {
         todosPostos.set(r.posto.trim().toUpperCase(), { posto: r.posto.trim(), cliente: (r.cliente || '').trim() });
       }
     });
     rawPresencas.forEach(r => {
-      if (!isClientAllowed(r.cliente)) return;
+      if (!isClientAllowed(r.cliente, r.posto)) return;
       if (isValid(r.posto)) {
         todosPostos.set(r.posto.trim().toUpperCase(), { posto: r.posto.trim(), cliente: (r.cliente || '').trim() });
       }

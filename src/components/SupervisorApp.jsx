@@ -5,11 +5,10 @@ import { saveVisitOffline, getPendingVisits, syncAll, fileToBase64 } from '../ut
 import { CloudOff, RefreshCw } from 'lucide-react';
 
 
-const EXCLUDED_CLIENTS = ["ADMINISTRATIVO","ENERGISA-BELLS","BELLS ADM","INST PREV OSASCO- LOGICA SERV","LOGICA ADM","REGIONAL ADM","RESERVA TECNICA"];
-const isClientAllowed = (c) => {
-  if (!c) return true;
-  const upper = c.toString().toUpperCase().trim();
-  return !EXCLUDED_CLIENTS.some(ex => upper.includes(ex));
+const EXCLUDED_CLIENTS = ["ADMINISTRATIVO","ENERGISA","BELLS ADM","INST PREV OSASCO","LOGICA ADM","REGIONAL ADM","RESERVA TECNICA"];
+const isClientAllowed = (c, p = '') => {
+  const str = (c || '').toString().toUpperCase() + ' ' + (p || '').toString().toUpperCase();
+  return !EXCLUDED_CLIENTS.some(ex => str.includes(ex));
 };
 
 const getBRTString = () => {
