@@ -743,7 +743,10 @@ const App = () => {
     });
 
     const arrPessoaAll = Object.values(faltasPessoa).sort((a, b) => b.faltas - a.faltas);
-    setDiscFaltasPorDia(Object.keys(faltasDia).map(k => ({ dia: k.substring(0, 5), faltas: faltasDia[k], rawDate: k })).sort((a, b) => a.rawDate.localeCompare(b.rawDate)));
+    setDiscFaltasPorDia(Object.keys(faltasDia).map(k => {
+      const p = k.split('/');
+      return { dia: k.substring(0, 5), faltas: faltasDia[k], rawDate: k, sDate: p.length === 3 ? p[2]+p[1]+p[0] : k };
+    }).sort((a, b) => a.sDate.localeCompare(b.sDate)));
     setDiscFaltasPorArea(Object.keys(faltasArea).map(k => ({ name: k, value: faltasArea[k] })).sort((a, b) => b.value - a.value));
     setDiscRanking(arrPessoaAll.slice(0, 10));
     setDiscAlertas(arrPessoaAll.filter(p => p.faltas >= 3).map(p => {
