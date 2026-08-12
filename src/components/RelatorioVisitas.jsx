@@ -281,8 +281,7 @@ const RelatorioVisitas = ({ rawEfetivos = [], rawPresencas = [] }) => {
               ) : (
                  <ResponsiveContainer width="100%" height={300}>
                   <PieChart>
-                    <Pie
-                      data={dataSupervisor}
+                    <Pie onClick={(data, index) => { if(data && data.name) setSupHistory(data.name); }} style={{ cursor: "pointer" }} data={dataSupervisor}
                       cx="50%"
                       cy="50%"
                       labelLine={false}

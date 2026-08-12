@@ -8,7 +8,6 @@ const Monitoramento = ({ currentUser }) => {
   const [ocorrencias, setOcorrencias] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('visitas');
-  const [supHistory, setSupHistory] = useState(null);
 
   const [filterData, setFilterData] = useState(() => localStorage.getItem('mon_filter_data') || '');
   const [filterSupervisor, setFilterSupervisor] = useState(() => localStorage.getItem('mon_filter_sup') || '');
@@ -504,7 +503,7 @@ const Monitoramento = ({ currentUser }) => {
                         )}
                       </div>
                     </td>
-                    <td style={{ padding: '16px', color: '#0ea5e9', fontWeight: 600, cursor: 'pointer', textDecoration: 'underline' }} onClick={() => setSupHistory(visita.nome_supervisor || 'Anônimo')} title="Clique para ver histórico completo">
+                    <td style={{ padding: '16px', color: '#e2e8f0', fontWeight: 500 }}>
                       {visita.nome_supervisor || 'Anônimo'}
                     </td>
                     <td style={{ padding: '16px', color: '#cbd5e1', fontSize: '14px' }}>
@@ -577,33 +576,7 @@ const Monitoramento = ({ currentUser }) => {
           </table>
         </div>
       )}
-    
-      {supHistory && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(2, 6, 23, 0.8)', backdropFilter: 'blur(4px)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setSupHistory(null)}>
-          <div style={{ background: 'linear-gradient(145deg, #0f172a 0%, #1e293b 100%)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px', padding: '24px', width: '90%', maxWidth: '600px', maxHeight: '80vh', overflowY: 'auto', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)' }} onClick={e => e.stopPropagation()}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '12px', position: 'sticky', top: '-24px', background: '#0f172a', zIndex: 10 }}>
-              <h3 style={{ margin: 0, color: '#f8fafc', fontSize: '18px', display: 'flex', alignItems: 'center', gap: '8px' }}><User size={20} color="#0ea5e9" /> Histórico de Visitas - {supHistory}</h3>
-              <button onClick={() => setSupHistory(null)} style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer' }}><X size={24} /></button>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {visitas.filter(v => (v.nome_supervisor || 'Anônimo') === supHistory).map(v => (
-                <div key={v.id} style={{ background: 'rgba(0,0,0,0.2)', padding: '16px', borderRadius: '8px', borderLeft: '4px solid #0ea5e9' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                    <span style={{ color: '#94a3b8', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '4px' }}><Calendar size={14} /> {formatDate(v.created_at)} {formatTime(v.hora_chegada || v.created_at)}</span>
-                    {v.hora_saida && <span style={{ color: '#ef4444', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '4px' }}><Clock size={14} /> Saída: {formatTime(v.hora_saida)}</span>}
-                  </div>
-                  <div style={{ color: '#f1f5f9', fontWeight: 500, fontSize: '15px', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}><MapPin size={16} color="#f59e0b" /> {v.posto}</div>
-                  <div style={{ color: '#cbd5e1', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}><Building size={14} color="#94a3b8" /> Cliente: {v.nomecli}</div>
-                </div>
-              ))}
-              {visitas.filter(v => (v.nome_supervisor || 'Anônimo') === supHistory).length === 0 && (
-                <div style={{ color: '#94a3b8', textAlign: 'center', padding: '20px' }}>Nenhuma visita encontrada.</div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-</div>
+    </div>
   );
 };
 
