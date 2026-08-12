@@ -27,6 +27,7 @@ const RelatorioVisitas = ({ rawEfetivos = [], rawPresencas = [] }) => {
   const [dataInicio, setDataInicio] = useState(startOfMonth);
   const [dataFim, setDataFim] = useState(endOfMonth);
   const [buscaSupervisor, setBuscaSupervisor] = useState('');
+  const [supHistory, setSupHistory] = useState(null);
 
   useEffect(() => {
     fetchVisitas();
@@ -286,7 +287,7 @@ const RelatorioVisitas = ({ rawEfetivos = [], rawPresencas = [] }) => {
                       cy="50%"
                       labelLine={false}
                       label={({ name, percent, x, y, cx }) => (
-                        <text x={x} y={y} fill="#e2e8f0" textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central" fontSize={11} fontWeight={500}>
+                        <text x={x} y={y} fill="#e2e8f0" style={{ cursor: 'pointer' }} onClick={() => setSupHistory(name)} textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central" fontSize={11} fontWeight={500}>
                           {`${name} (${(percent * 100).toFixed(0)}%)`}
                         </text>
                       )}
@@ -295,7 +296,7 @@ const RelatorioVisitas = ({ rawEfetivos = [], rawPresencas = [] }) => {
                       dataKey="value"
                     >
                       {dataSupervisor.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} style={{ cursor: 'pointer', outline: 'none' }} onClick={() => setSupHistory(entry.name)} />
                       ))}
                     </Pie>
                     <Tooltip 
@@ -385,7 +386,62 @@ const RelatorioVisitas = ({ rawEfetivos = [], rawPresencas = [] }) => {
           </div>
         </>
       )}
-    </div>
+    
+      {supHistory && (() => {
+        const supVisitas = visitasFiltradas.filter(v => (v.nome_supervisor || 'Não Identificado') === supHistory);
+        const postosAgrupados = Object.values(supVisitas.reduce((acc, v) => {
+          const p = v.posto || 'Posto Desconhecido';
+          if (!acc[p]) acc[p] = { nome: p, cliente: v.nomecli || 'Sem Cliente', count: 0, datas: [] };
+          acc[p].count++;
+          acc[p].datas.push(v);
+          return acc;
+        }, {})).sort((a, b) => b.count - a.count);
+        
+        return (
+          <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(2, 6, 23, 0.8)', backdropFilter: 'blur(4px)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setSupHistory(null)}>
+            <div style={{ background: 'linear-gradient(145deg, #0f172a 0%, #1e293b 100%)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px', padding: '24px', width: '90%', maxWidth: '700px', maxHeight: '80vh', overflowY: 'auto', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)' }} onClick={e => e.stopPropagation()}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '12px', position: 'sticky', top: '-24px', background: '#0f172a', zIndex: 10 }}>
+                <h3 style={{ margin: 0, color: '#f8fafc', fontSize: '18px', display: 'flex', alignItems: 'center', gap: '8px' }}>Histórico de Visitas - {supHistory}</h3>
+                <button onClick={() => setSupHistory(null)} style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer', fontSize: '20px' }}>&times;</button>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {postosAgrupados.map(p => (
+                  <div key={p.nome} style={{ background: 'rgba(0,0,0,0.2)', padding: '16px', borderRadius: '8px', borderLeft: '4px solid #3b82f6' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                      <div>
+                        <div style={{ color: '#f1f5f9', fontWeight: 600, fontSize: '16px', marginBottom: '4px' }}>{p.nome}</div>
+                        <div style={{ color: '#94a3b8', fontSize: '13px' }}>Cliente: {p.cliente}</div>
+                      </div>
+                      <div style={{ background: 'rgba(59, 130, 246, 0.2)', color: '#3b82f6', padding: '4px 10px', borderRadius: '12px', fontSize: '12px', fontWeight: 600 }}>
+                        {p.count} {p.count === 1 ? 'visita' : 'visitas'}
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                      {p.datas.map(v => {
+                        const d = new Date(v.created_at);
+                        const dataLocal = isNaN(d.getTime()) ? '' : d.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+                        let timeStr = '';
+                        if (v.hora_chegada) {
+                           timeStr = typeof v.hora_chegada === 'string' && v.hora_chegada.includes(' ') ? v.hora_chegada.split(' ')[1].substring(0,5) : (typeof v.hora_chegada === 'string' && v.hora_chegada.includes('T') ? v.hora_chegada.split('T')[1].substring(0,5) : v.hora_chegada);
+                        }
+                        return (
+                          <div key={v.id} style={{ background: 'rgba(255,255,255,0.05)', padding: '4px 8px', borderRadius: '6px', fontSize: '12px', color: '#cbd5e1', border: '1px solid rgba(255,255,255,0.05)' }}>
+                            {dataLocal} {timeStr ? ` às ${timeStr}` : ''}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+                {postosAgrupados.length === 0 && (
+                  <div style={{ color: '#94a3b8', textAlign: 'center', padding: '20px' }}>Nenhuma visita encontrada neste período.</div>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+</div>
   );
 };
 
