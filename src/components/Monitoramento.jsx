@@ -156,16 +156,22 @@ const Monitoramento = ({ currentUser }) => {
 
   const visitasFiltradas = useMemo(() => {
     return visitas.filter(v => {
-      const matchData = filterData ? (() => {
-        if (!v.created_at) return false;
+            const matchData = filterData ? (() => {
+        const targetDate = v.hora_chegada || v.created_at;
+        if (!targetDate) return false;
         try {
-          const d = new Date(v.created_at);
-          if (isNaN(d.getTime())) return (v.created_at || '').startsWith(filterData);
+          const d = new Date(targetDate);
+          if (isNaN(d.getTime())) return targetDate.startsWith(filterData);
+          
+          // Desloca 6 horas para trás para que visitas da madrugada (00:00 às 05:59)
+          // caiam no filtro do dia anterior (plantão da noite)
+          d.setHours(d.getHours() - 6);
+          
           const formatter = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' });
           const localDateStr = formatter.format(d);
           return localDateStr === filterData;
         } catch(e) {
-          return (v.created_at || '').startsWith(filterData);
+          return (v.hora_chegada || v.created_at || '').startsWith(filterData);
         }
       })() : true;
       const matchSup = filterSupervisor ? (v.nome_supervisor || '').toLowerCase().includes(filterSupervisor.toLowerCase()) : true;
