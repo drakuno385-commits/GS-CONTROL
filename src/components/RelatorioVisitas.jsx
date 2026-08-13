@@ -89,10 +89,12 @@ const RelatorioVisitas = ({ rawEfetivos = [], rawPresencas = [] }) => {
     let query = supabase.from('visitas').select('*').limit(10000);
     
     if (dataInicio) {
-      query = query.gte('created_at', `${dataInicio}T00:00:00.000Z`);
+      const start = new Date(`${dataInicio}T00:00:00.000-03:00`);
+      query = query.gte('created_at', start.toISOString());
     }
     if (dataFim) {
-      query = query.lte('created_at', `${dataFim}T23:59:59.999Z`);
+      const end = new Date(`${dataFim}T23:59:59.999-03:00`);
+      query = query.lte('created_at', end.toISOString());
     }
 
     const { data, error } = await query;

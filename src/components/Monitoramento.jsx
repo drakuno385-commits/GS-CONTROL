@@ -163,11 +163,7 @@ const Monitoramento = ({ currentUser }) => {
           const d = new Date(targetDate);
           if (isNaN(d.getTime())) return targetDate.startsWith(filterData);
           
-          // Desloca 6 horas para trás para que visitas da madrugada (00:00 às 05:59)
-          // caiam no filtro do dia anterior (plantão da noite)
-          d.setHours(d.getHours() - 6);
-          
-          const formatter = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' });
+const formatter = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' });
           const localDateStr = formatter.format(d);
           return localDateStr === filterData;
         } catch(e) {
