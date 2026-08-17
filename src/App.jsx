@@ -1623,44 +1623,87 @@ const App = () => {
             
             <div style={{ display: 'flex', gap: '20px', alignItems: 'center', background: 'rgba(30, 41, 59, 0.4)', padding: '8px 16px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', backdropFilter: 'blur(10px)' }}>
               
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <label style={{ color: '#cbd5e1', fontSize: '13px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Mês Ref:</label>
-                <input 
-                  type="month" 
-                  value={filters.dataInicio ? filters.dataInicio.substring(0, 7) : ''}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    if (!val) {
-                      setAllFilters({ ...allFilters, [activeMenu]: { ...filters, dataInicio: '', dataFim: '' } });
-                    } else {
-                      const [year, month] = val.split('-');
-                      const lastDay = new Date(year, month, 0).getDate();
-                      setAllFilters({ 
-                        ...allFilters, 
-                        [activeMenu]: {
-                          ...filters,
-                          dataInicio: `${val}-01`, 
-                          dataFim: `${val}-${lastDay}` 
-                        }
-                      });
-                    }
-                  }}
-                  style={{ 
-                    background: 'rgba(15, 23, 42, 0.6)', 
-                    border: '1px solid rgba(148, 163, 184, 0.2)', 
-                    color: '#f8fafc', 
-                    padding: '6px 12px', 
-                    borderRadius: '8px',
-                    outline: 'none',
-                    colorScheme: 'dark',
-                    fontSize: '14px',
-                    transition: 'all 0.2s',
-                    cursor: 'pointer'
-                  }} 
-                  onMouseOver={(e) => e.target.style.borderColor = 'rgba(148, 163, 184, 0.5)'}
-                  onMouseOut={(e) => e.target.style.borderColor = 'rgba(148, 163, 184, 0.2)'}
-                />
-              </div>
+                            {activeMenu === 'rh' ? (
+                <>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <label style={{ color: '#cbd5e1', fontSize: '13px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>De:</label>
+                    <input 
+                      type="date" 
+                      value={filters.dataInicio || ''}
+                      onChange={(e) => setAllFilters({ ...allFilters, [activeMenu]: { ...filters, dataInicio: e.target.value } })}
+                      style={{ 
+                        background: 'rgba(15, 23, 42, 0.6)', 
+                        border: '1px solid rgba(148, 163, 184, 0.2)', 
+                        color: '#f8fafc', 
+                        padding: '6px 12px', 
+                        borderRadius: '8px',
+                        outline: 'none',
+                        colorScheme: 'dark',
+                        fontSize: '14px',
+                        cursor: 'pointer'
+                      }}
+                    />
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <label style={{ color: '#cbd5e1', fontSize: '13px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Até:</label>
+                    <input 
+                      type="date" 
+                      value={filters.dataFim || ''}
+                      onChange={(e) => setAllFilters({ ...allFilters, [activeMenu]: { ...filters, dataFim: e.target.value } })}
+                      style={{ 
+                        background: 'rgba(15, 23, 42, 0.6)', 
+                        border: '1px solid rgba(148, 163, 184, 0.2)', 
+                        color: '#f8fafc', 
+                        padding: '6px 12px', 
+                        borderRadius: '8px',
+                        outline: 'none',
+                        colorScheme: 'dark',
+                        fontSize: '14px',
+                        cursor: 'pointer'
+                      }}
+                    />
+                  </div>
+                </>
+              ) : (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <label style={{ color: '#cbd5e1', fontSize: '13px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Mês Ref:</label>
+                  <input 
+                    type="month" 
+                    value={filters.dataInicio ? filters.dataInicio.substring(0, 7) : ''}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (!val) {
+                        setAllFilters({ ...allFilters, [activeMenu]: { ...filters, dataInicio: '', dataFim: '' } });
+                      } else {
+                        const [year, month] = val.split('-');
+                        const lastDay = new Date(year, month, 0).getDate();
+                        setAllFilters({ 
+                          ...allFilters, 
+                          [activeMenu]: {
+                            ...filters,
+                            dataInicio: `${val}-01`, 
+                            dataFim: `${val}-${lastDay}` 
+                          }
+                        });
+                      }
+                    }}
+                    style={{ 
+                      background: 'rgba(15, 23, 42, 0.6)', 
+                      border: '1px solid rgba(148, 163, 184, 0.2)', 
+                      color: '#f8fafc', 
+                      padding: '6px 12px', 
+                      borderRadius: '8px',
+                      outline: 'none',
+                      colorScheme: 'dark',
+                      fontSize: '14px',
+                      transition: 'all 0.2s',
+                      cursor: 'pointer'
+                    }} 
+                    onMouseOver={(e) => e.target.style.borderColor = 'rgba(148, 163, 184, 0.5)'}
+                    onMouseOut={(e) => e.target.style.borderColor = 'rgba(148, 163, 184, 0.2)'}
+                  />
+                </div>
+              )}
 
               {(activeMenu === 'rh' || activeMenu === 'atestados' || activeMenu === 'disciplina') && (
                 <>
