@@ -13,6 +13,7 @@ import SupervisorApp from './components/SupervisorApp';
 import Monitoramento from './components/Monitoramento';
 import RelatorioVisitas from './components/RelatorioVisitas';
 import Usuarios from './components/Usuarios';
+import Medicao from './components/Medicao';
 
 const fixDatabaseAccents = (str) => {
   if (!str) return str;
@@ -786,6 +787,7 @@ const App = () => {
         else if (activeMenu === 'disciplina' && sheetType === 'disciplina') isValidForPage = true;
         else if (activeMenu === 'frota' && sheetType === 'frota') isValidForPage = true;
         else if (activeMenu === 'atestados' && sheetType === 'atestados') isValidForPage = true;
+        else if (activeMenu === 'medicao' && sheetType === 'presencas') isValidForPage = true;
 
         if (!isValidForPage) {
           alert("Esta planilha não pertence a esta página. Por favor, acesse o menu correto antes de importar.");
@@ -1617,6 +1619,7 @@ const App = () => {
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.2 }}
           >
+        {activeMenu !== 'medicao' && (
         <header className="header" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <div style={{ display: 'flex', width: '100%', justifyContent: 'space-between', alignItems: 'center' }}>
             <h1>Painel de Controle</h1>
@@ -1754,6 +1757,7 @@ const App = () => {
             </div>
           </div>
         </header>
+        )}
 
         
         {activeMenu === 'rh' && renderRH()}
@@ -1764,6 +1768,7 @@ const App = () => {
         {activeMenu === 'relatorio_visitas' && <RelatorioVisitas currentUser={currentUser} rawEfetivos={rawEfetivos} rawPresencas={rawPresencas} />}
         {activeMenu === 'app_supervisor' && <SupervisorApp currentUser={currentUser} />}
         {activeMenu === 'usuarios' && <Usuarios currentUser={currentUser} />}
+        {activeMenu === 'medicao' && <Medicao rawPresencas={rawPresencas} currentUser={currentUser} />}
                 </motion.div>
         </AnimatePresence>
       </main>
