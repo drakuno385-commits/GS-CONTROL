@@ -90,6 +90,8 @@ const FALTAS_COLORS = ['url(#metalBronze)', 'url(#metalGold)', 'url(#metalPurple
 const hasAccess = (user, screen) => {
   if (!user) return false;
   if (user.role === 'SUPERVISOR' && screen !== 'app_supervisor') return false;
+  if (user.role === 'MASTER') return true;
+  if (screen === 'medicao') return true;
   if (!user.allowed_screens || user.allowed_screens.length === 0) return true;
   return user.allowed_screens.includes(screen);
 };
@@ -1500,7 +1502,7 @@ const App = () => {
           <img src="/logo.jpg" alt="GSolimpio" style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover', border: '2px solid rgba(59, 130, 246, 0.5)' }} />
           GS-Control
         </div>
-                        <nav className="nav-menu">
+        <nav className="nav-menu">
           {currentUser.role !== 'SUPERVISOR' && (
             <>
               {hasAccess(currentUser, 'rh') && (
@@ -1525,6 +1527,12 @@ const App = () => {
                 <a className={`nav-item ${activeMenu === 'atestados' ? 'active' : ''}`} onClick={() => setActiveMenu('atestados')}>
                   <Stethoscope size={20} />
                   <span>Campeões de Atestado</span>
+                </a>
+              )}
+              {hasAccess(currentUser, 'medicao') && (
+                <a className={`nav-item ${activeMenu === 'medicao' ? 'active' : ''}`} onClick={() => setActiveMenu('medicao')}>
+                  <Calculator size={20} />
+                  <span>Medição de Serviços</span>
                 </a>
               )}
               {hasAccess(currentUser, 'monitoramento') && (

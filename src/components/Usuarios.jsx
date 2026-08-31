@@ -273,7 +273,7 @@ const Usuarios = ({ currentUser }) => {
               <div>
                 <label style={{ display: 'block', marginBottom: '6px', color: '#cbd5e1', fontSize: '13px' }}>Permissões de Telas (Deixe vazio para padrão)</label>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', background: 'rgba(15, 23, 42, 0.6)', padding: '12px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.1)' }}>
-                  {['dashboard', 'rh', 'frota', 'disciplina', 'atestados', 'monitoramento', 'Apresentação', 'app_supervisor'].map(screen => (
+                  {['dashboard', 'rh', 'frota', 'disciplina', 'atestados', 'medicao', 'monitoramento', 'Apresentação', 'app_supervisor'].map(screen => (
                     <label key={screen} style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#cbd5e1', fontSize: '13px', cursor: 'pointer' }}>
                       <input 
                         type="checkbox" 
@@ -287,7 +287,7 @@ const Usuarios = ({ currentUser }) => {
                         }}
                         style={{ accentColor: '#8b5cf6', width: '16px', height: '16px' }}
                       />
-                      {screen === 'Apresentação' ? 'Modo TV' : screen === 'app_supervisor' ? 'App Supervisor' : screen === 'rh' ? 'RH' : screen.charAt(0).toUpperCase() + screen.slice(1)}
+                      {screen === 'Apresentação' ? 'Modo TV' : screen === 'app_supervisor' ? 'App Supervisor' : screen === 'rh' ? 'RH' : screen === 'medicao' ? 'Medição' : screen.charAt(0).toUpperCase() + screen.slice(1)}
                     </label>
                   ))}
                 </div>
