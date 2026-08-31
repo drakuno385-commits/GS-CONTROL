@@ -5,7 +5,7 @@ import { supabase } from './supabaseClient';
 import { 
   LayoutDashboard, Users, Settings, Upload, UserCheck, UserX, Briefcase, 
   Activity, Truck, Fuel, Map, DollarSign, AlertTriangle, Scale, Loader2, Cloud, Filter, FileText, CheckCircle, Droplet, Shield, Menu,
-  Car, MapPin, Smartphone, LogOut, Download, Stethoscope, X
+  Car, MapPin, Smartphone, LogOut, Download, Stethoscope, X, Calculator
 } from 'lucide-react';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area, PieChart, Pie, Cell, ComposedChart, LabelList } from 'recharts';
 import Login from './components/Login';
