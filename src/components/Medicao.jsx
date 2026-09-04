@@ -774,6 +774,47 @@ export default function Medicao({ rawPresencas = [], currentUser }) {
         </div>
       )}
 
+      {/* Toggle de Cenário (Cálculo) */}
+      <div style={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        gap: '12px', 
+        background: 'rgba(15, 23, 42, 0.4)', 
+        padding: '6px', 
+        borderRadius: '12px',
+        border: '1px solid rgba(255, 255, 255, 0.05)',
+        width: 'fit-content'
+      }}>
+        <button
+          onClick={() => setTipoCobranca('executado')}
+          style={{
+            display: 'flex', alignItems: 'center', gap: '8px',
+            padding: '10px 24px', borderRadius: '8px', cursor: 'pointer',
+            fontWeight: 600, fontSize: '14px', transition: 'all 0.3s', border: 'none',
+            background: tipoCobranca === 'executado' ? '#3b82f6' : 'transparent',
+            color: tipoCobranca === 'executado' ? '#fff' : '#94a3b8',
+            boxShadow: tipoCobranca === 'executado' ? '0 4px 12px rgba(59, 130, 246, 0.3)' : 'none'
+          }}
+        >
+          <Calendar size={18} />
+          Cenário: Real Executado
+        </button>
+        <button
+          onClick={() => setTipoCobranca('cheio')}
+          style={{
+            display: 'flex', alignItems: 'center', gap: '8px',
+            padding: '10px 24px', borderRadius: '8px', cursor: 'pointer',
+            fontWeight: 600, fontSize: '14px', transition: 'all 0.3s', border: 'none',
+            background: tipoCobranca === 'cheio' ? '#10b981' : 'transparent',
+            color: tipoCobranca === 'cheio' ? '#fff' : '#94a3b8',
+            boxShadow: tipoCobranca === 'cheio' ? '0 4px 12px rgba(16, 185, 129, 0.3)' : 'none'
+          }}
+        >
+          <Building size={18} />
+          Cenário: Contrato Cheio
+        </button>
+      </div>
+
       {/* KPI Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '18px' }}>
         
@@ -1057,28 +1098,6 @@ export default function Medicao({ rawPresencas = [], currentUser }) {
               colorScheme: 'dark'
             }}
           />
-        </div>
-
-        {/* Tipo Cobrança (Cheio vs Executado) */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <label style={{ color: '#94a3b8', fontSize: '12px', fontWeight: 600 }}>Cálculo:</label>
-          <select 
-            value={tipoCobranca} 
-            onChange={(e) => setTipoCobranca(e.target.value)}
-            style={{ 
-              padding: '8px 12px', 
-              background: 'rgba(59, 130, 246, 0.15)', 
-              border: '1px solid rgba(59, 130, 246, 0.3)', 
-              borderRadius: '8px', 
-              color: '#60a5fa', 
-              fontSize: '13px',
-              fontWeight: 600,
-              cursor: 'pointer'
-            }}
-          >
-            <option value="executado">Executado (Dias Trabalhados)</option>
-            <option value="cheio">Valor Cheio (Mensal Contratado)</option>
-          </select>
         </div>
 
         {/* Limpar Filtros */}
