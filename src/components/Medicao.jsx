@@ -206,6 +206,21 @@ export default function Medicao({ rawPresencas = [], currentUser }) {
   const [editingPosto, setEditingPosto] = useState(null);
   const [isNovoPosto, setIsNovoPosto] = useState(false);
 
+  // KMs
+  const [kmsData, setKmsData] = useState(() => {
+    const saved = localStorage.getItem("medicao_kms_v1");
+    if (saved) {
+      try { return JSON.parse(saved); } catch (e) { }
+    }
+    return {};
+  });
+  const [showKmModal, setShowKmModal] = useState(false);
+  const [kmForm, setKmForm] = useState({ key: "", km: "", valor_km: "" });
+
+  useEffect(() => {
+    localStorage.setItem("medicao_kms_v1", JSON.stringify(kmsData));
+  }, [kmsData]);
+
   // Salvar base no localStorage
   useEffect(() => {
     localStorage.setItem('medicao_postos_db_v1', JSON.stringify(postosBase));
@@ -347,7 +362,9 @@ export default function Medicao({ rawPresencas = [], currentUser }) {
 
     // 3. Agrupar por [codcli, codpos, turno]
     const mapaPresencas = new Map();
+    const clientesNaFicha = new Set();
     presTrabalhadas.forEach(p => {
+      clientesNaFicha.add(parseInt(p.codcli, 10) || 0);
       const key = `${p.codcli}_${p.codpos}_${p.turno}`;
       if (!mapaPresencas.has(key)) {
         mapaPresencas.set(key, {
@@ -420,7 +437,8 @@ export default function Medicao({ rawPresencas = [], currentUser }) {
           valor_total: 0,
           diferenca_mensal: 0,
           detalhes: presInfo.detalhes,
-          _nao_cadastrado: true  // Flag para identificar visualmente
+          _nao_cadastrado: true,
+          status_divergencia: "NAO_CADASTRADO"
         });
       }
     });
