@@ -218,7 +218,9 @@ export default function Medicao({ rawPresencas = [], currentUser }) {
     });
 
     // 4. Cruzar com a base de Prévia Postos
-    return postosBase.map(posto => {
+    const postosBaseKeys = new Set(postosBase.map(p => `${p.codcli}_${p.codpos}_${p.turno}`));
+
+    const resultado = postosBase.map(posto => {
       const key = `${posto.codcli}_${posto.codpos}_${posto.turno}`;
       const presInfo = mapaPresencas.get(key) || { count: 0, colaboradores: new Set(), detalhes: [] };
 
@@ -237,6 +239,36 @@ export default function Medicao({ rawPresencas = [], currentUser }) {
         detalhes: presInfo.detalhes
       };
     });
+
+    // 5. Incluir postos que existem na Ficha Presença mas NÃO estão no cadastro prévio
+    mapaPresencas.forEach((presInfo, key) => {
+      if (!postosBaseKeys.has(key)) {
+        // Extrair dados do primeiro registro de presença para preencher informações do posto
+        const primeiro = presInfo.detalhes[0] || {};
+        resultado.push({
+          id: `auto_${key}`,
+          codcli: parseInt(primeiro.codcli, 10) || 0,
+          cliente: primeiro.cliente || 'Não Identificado',
+          codpos: parseInt(primeiro.codpos, 10) || 0,
+          posto: primeiro.posto || 'Não Identificado',
+          turno: primeiro.turno || 'DIURNO',
+          filial: 0,
+          empresa: '',
+          produto: primeiro.cargo || '',
+          escala: '',
+          valor_mensal: 0,
+          valor_dia: 0,
+          dias_trabalhados: presInfo.count,
+          total_colaboradores: presInfo.colaboradores.size,
+          valor_total: 0,
+          diferenca_mensal: 0,
+          detalhes: presInfo.detalhes,
+          _nao_cadastrado: true  // Flag para identificar visualmente
+        });
+      }
+    });
+
+    return resultado;
   }, [postosBase, presencasEfetivas, dataInicio, dataFim]);
 
   // Lista de Clientes, Empresas, Turnos e Produtos únicos para filtros
@@ -267,12 +299,14 @@ export default function Medicao({ rawPresencas = [], currentUser }) {
     let valorContratado = 0;
     let totalDias = 0;
     let postosComTrabalho = 0;
+    let postosSemCadastro = 0;
 
     medicaoFiltrada.forEach(item => {
-      valorMedicao += item.valor_total;
-      valorContratado += item.valor_mensal;
+      valorMedicao += Number(item.valor_total || 0);
+      valorContratado += Number(item.valor_mensal || 0);
       totalDias += item.dias_trabalhados;
       if (item.dias_trabalhados > 0) postosComTrabalho += 1;
+      if (item._nao_cadastrado) postosSemCadastro += 1;
     });
 
     return {
@@ -281,7 +315,8 @@ export default function Medicao({ rawPresencas = [], currentUser }) {
       totalDias,
       postosComTrabalho,
       totalPostos: medicaoFiltrada.length,
-      saldoGeral: valorMedicao - valorContratado
+      saldoGeral: valorMedicao - valorContratado,
+      postosSemCadastro
     };
   }, [medicaoFiltrada]);
 
@@ -322,11 +357,12 @@ export default function Medicao({ rawPresencas = [], currentUser }) {
         'Empresa': item.empresa,
         'Função / Produto': item.produto,
         'Escala': item.escala,
-        'Valor Diária (R$)': item.valor_dia.toFixed(3).replace('.', ','),
+        'Valor Diária (R$)': Number(item.valor_dia || 0).toFixed(3).replace('.', ','),
         'Dias Trabalhados': item.dias_trabalhados,
-        'Valor Total Medição (R$)': item.valor_total.toFixed(2).replace('.', ','),
-        'Valor Mensal Contratado (R$)': item.valor_mensal.toFixed(2).replace('.', ','),
-        'Diferença (R$)': item.diferenca_mensal.toFixed(2).replace('.', ',')
+        'Valor Total Medição (R$)': Number(item.valor_total || 0).toFixed(2).replace('.', ','),
+        'Valor Mensal Contratado (R$)': Number(item.valor_mensal || 0).toFixed(2).replace('.', ','),
+        'Diferença (R$)': Number(item.diferenca_mensal || 0).toFixed(2).replace('.', ','),
+        'Status Cadastro': item._nao_cadastrado ? 'NÃO CADASTRADO' : 'CADASTRADO'
       }));
 
       const csv = Papa.unparse(rows, { delimiter: ';' });
@@ -351,7 +387,7 @@ export default function Medicao({ rawPresencas = [], currentUser }) {
               'Turno': item.turno,
               'Empresa': item.empresa,
               'Função': item.produto,
-              'Valor Diária (R$)': item.valor_dia.toFixed(3).replace('.', ','),
+              'Valor Diária (R$)': Number(item.valor_dia || 0).toFixed(3).replace('.', ','),
               'Data': d.data,
               'RE': d.re,
               'Nome Colaborador': d.nome,
@@ -680,6 +716,29 @@ export default function Medicao({ rawPresencas = [], currentUser }) {
 
       </div>
 
+      {/* Alerta de Postos Sem Cadastro */}
+      {totais.postosSemCadastro > 0 && (
+        <div style={{ 
+          background: 'rgba(245, 158, 11, 0.1)', 
+          border: '1px solid rgba(245, 158, 11, 0.25)', 
+          borderRadius: '12px', 
+          padding: '14px 20px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px',
+          color: '#fbbf24',
+          fontSize: '13px'
+        }}>
+          <AlertCircle size={20} color="#f59e0b" />
+          <div>
+            <strong>{totais.postosSemCadastro} posto(s)</strong> da Ficha Presença não possuem cadastro na Prévia de Postos. 
+            Esses postos aparecem com a etiqueta <span style={{ padding: '1px 6px', borderRadius: '4px', background: 'rgba(245, 158, 11, 0.2)', fontSize: '11px', fontWeight: 600 }}>SEM CADASTRO</span> e 
+            estão com valor de diária R$ 0,00. Para incluí-los na medição com valores corretos, 
+            cadastre-os na tela <strong>"Cadastro de Postos & Diárias"</strong>.
+          </div>
+        </div>
+      )}
+
       {/* Barra de Filtros Interativos */}
       <div style={{ 
         background: 'rgba(30, 41, 59, 0.5)', 
@@ -988,18 +1047,32 @@ export default function Medicao({ rawPresencas = [], currentUser }) {
                     onClick={() => setDetalhePosto(item)}
                     style={{ 
                       borderBottom: '1px solid rgba(255, 255, 255, 0.04)',
-                      background: idx % 2 === 0 ? 'transparent' : 'rgba(255, 255, 255, 0.01)',
+                      background: item._nao_cadastrado 
+                        ? 'rgba(245, 158, 11, 0.04)' 
+                        : (idx % 2 === 0 ? 'transparent' : 'rgba(255, 255, 255, 0.01)'),
+                      borderLeft: item._nao_cadastrado ? '3px solid #f59e0b' : 'none',
                       cursor: 'pointer',
                       transition: 'background 0.2s'
                     }}
                     onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(59, 130, 246, 0.08)'}
-                    onMouseLeave={(e) => e.currentTarget.style.background = idx % 2 === 0 ? 'transparent' : 'rgba(255, 255, 255, 0.01)'}
+                    onMouseLeave={(e) => e.currentTarget.style.background = item._nao_cadastrado 
+                      ? 'rgba(245, 158, 11, 0.04)' 
+                      : (idx % 2 === 0 ? 'transparent' : 'rgba(255, 255, 255, 0.01)')}
                   >
                     <td style={{ padding: '12px 14px', color: '#64748b' }}>
                       {item.codcli}-{item.codpos}
                     </td>
                     <td style={{ padding: '12px 14px', fontWeight: 600, color: '#e2e8f0' }}>
                       {item.cliente}
+                      {item._nao_cadastrado && (
+                        <span style={{ 
+                          marginLeft: '8px', fontSize: '10px', padding: '2px 6px', 
+                          borderRadius: '4px', background: 'rgba(245, 158, 11, 0.15)', 
+                          color: '#fbbf24', fontWeight: 600, verticalAlign: 'middle'
+                        }}>
+                          SEM CADASTRO
+                        </span>
+                      )}
                     </td>
                     <td style={{ padding: '12px 14px', color: '#f8fafc', fontWeight: 500 }}>
                       {item.posto}
