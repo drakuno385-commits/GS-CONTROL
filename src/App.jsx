@@ -14,6 +14,7 @@ import Monitoramento from './components/Monitoramento';
 import RelatorioVisitas from './components/RelatorioVisitas';
 import Usuarios from './components/Usuarios';
 import Medicao from './components/Medicao';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 const fixDatabaseAccents = (str) => {
   if (!str) return str;
@@ -96,10 +97,19 @@ const hasAccess = (user, screen) => {
   return user.allowed_screens.includes(screen);
 };
 
+// Stable reference for empty filters - MUST be outside the component
+// to avoid creating a new object on every render (which causes infinite useEffect loops)
+const INIT_FILTERS = { dataInicio: '', dataFim: '', cliente: '', posto: '' };
+
 const App = () => {
   const [currentUser, setCurrentUser] = useState(() => {
-    const saved = sessionStorage.getItem('acoweb_user');
-    return saved ? JSON.parse(saved) : null;
+    try {
+      const saved = sessionStorage.getItem('acoweb_user');
+      return saved ? JSON.parse(saved) : null;
+    } catch (e) {
+      sessionStorage.removeItem('acoweb_user');
+      return null;
+    }
   });
 
   const [activeMenu, setActiveMenu] = useState(() => {
@@ -109,8 +119,12 @@ const App = () => {
 
   const [ApresentacaoStep, setApresentacaoStep] = useState(0);
   const [tvScreens, setTvScreens] = useState(() => {
-    const saved = localStorage.getItem('acoweb_tv_screens');
-    return saved ? JSON.parse(saved) : ['rh', 'frota', 'disciplina', 'atestados'];
+    try {
+      const saved = localStorage.getItem('acoweb_tv_screens');
+      return saved ? JSON.parse(saved) : ['rh', 'frota', 'disciplina', 'atestados'];
+    } catch (e) {
+      return ['rh', 'frota', 'disciplina', 'atestados'];
+    }
   });
   
   useEffect(() => {
@@ -165,11 +179,10 @@ const App = () => {
   const [rawAtestados, setRawAtestados] = useState([]);
 
   // Filters State
-  const initF = { dataInicio: '', dataFim: '', cliente: '', posto: '' };
   const [allFilters, setAllFilters] = useState({
-    rh: {...initF}, frota: {...initF}, disciplina: {...initF}, atestados: {...initF}, monitoramento: {...initF}, app_supervisor: {...initF}, usuarios: {...initF}, Apresentação: {...initF}, relatorio_visitas: {...initF}
+    rh: {...INIT_FILTERS}, frota: {...INIT_FILTERS}, disciplina: {...INIT_FILTERS}, atestados: {...INIT_FILTERS}, monitoramento: {...INIT_FILTERS}, app_supervisor: {...INIT_FILTERS}, usuarios: {...INIT_FILTERS}, Apresentação: {...INIT_FILTERS}, relatorio_visitas: {...INIT_FILTERS}, medicao: {...INIT_FILTERS}
   });
-  const filters = allFilters[activeMenu] || initF;
+  const filters = allFilters[activeMenu] ?? INIT_FILTERS;
 
   // Calculated States for RH
   const [efetivoPorCliente, setEfetivoPorCliente] = useState([]);
@@ -607,8 +620,9 @@ const App = () => {
     setPresencaDiaria(arrPresenca);
     setTiposDeFalta(arrFaltas);
     setFolgasTrabalhadas(folgasSorted.slice(0, 10));
-    setTotalsRH(prev => ({ ...prev, efetivo: totalEfetivo, faltas: globalFaltas.size, folgas: globalFolgasTrab.size }));
-  }, [rawEfetivos, rawPresencas, filters]);
+    setTotalsRH({ efetivo: totalEfetivo, faltas: globalFaltas.size, folgas: globalFolgasTrab.size });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rawEfetivos, rawPresencas, filters.cliente, filters.posto, filters.dataInicio, filters.dataFim]);
 
   // Process Atestados
   useEffect(() => {
@@ -1619,13 +1633,13 @@ const App = () => {
       </aside>
 
       <main className="main-content">
-        <AnimatePresence mode="wait">
+        <AnimatePresence mode="sync">
           <motion.div
             key={activeMenu}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.2 }}
+            transition={{ duration: 0.15 }}
           >
         {activeMenu !== 'medicao' && (
         <header className="header" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -1776,7 +1790,11 @@ const App = () => {
         {activeMenu === 'relatorio_visitas' && <RelatorioVisitas currentUser={currentUser} rawEfetivos={rawEfetivos} rawPresencas={rawPresencas} />}
         {activeMenu === 'app_supervisor' && <SupervisorApp currentUser={currentUser} />}
         {activeMenu === 'usuarios' && <Usuarios currentUser={currentUser} />}
-        {activeMenu === 'medicao' && <Medicao rawPresencas={rawPresencas} currentUser={currentUser} />}
+        {activeMenu === 'medicao' && (
+          <ErrorBoundary>
+            <Medicao rawPresencas={rawPresencas} currentUser={currentUser} />
+          </ErrorBoundary>
+        )}
                 </motion.div>
         </AnimatePresence>
       </main>

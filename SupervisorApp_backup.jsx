@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Camera, UploadCloud, MapPin, Building, CheckCircle, Loader2, X, Plus, Clock, Play, Activity, Search } from 'lucide-react';
 import { supabase } from '../supabaseClient';
-import { saveVisitOffline, getPendingVisits, syncAll, fileToBase64, base64ToFile } from '../utils/syncManager';
-import localforage from 'localforage';
+import { saveVisitOffline, getPendingVisits, syncAll, fileToBase64 } from '../utils/syncManager';
 import { CloudOff, RefreshCw } from 'lucide-react';
 
 
@@ -101,28 +100,6 @@ const SupervisorApp = ({ currentUser, rawEfetivos = [], rawPresencas = [] }) => 
       if (savedChecklist) {
         setChecklist(JSON.parse(savedChecklist));
       }
-      
-      // Load draft photos from localforage
-      localforage.getItem('draft_fotos_' + currentUser.id).then(arr => {
-         if (arr && arr.length > 0) {
-             const restoredFiles = arr.map(item => base64ToFile(item.base64, item.name));
-             setFotos(restoredFiles);
-             setPreviews(restoredFiles.map(f => URL.createObjectURL(f)));
-         }
-      });
-
-      localforage.getItem('draft_check_fotos_' + currentUser.id).then(obj => {
-         if (obj && Object.keys(obj).length > 0) {
-             const restoredObj = {};
-             const restoredPreviews = {};
-             for (const k of Object.keys(obj)) {
-                 restoredObj[k] = base64ToFile(obj[k].base64, obj[k].name);
-                 restoredPreviews[k] = URL.createObjectURL(restoredObj[k]);
-             }
-             setChecklistFotos(restoredObj);
-             setChecklistPreviews(restoredPreviews);
-         }
-      });
     }
 
     const timer = setInterval(() => setCurrentTime(new Date()), 60000); // update clock every minute
@@ -235,36 +212,18 @@ const SupervisorApp = ({ currentUser, rawEfetivos = [], rawPresencas = [] }) => 
     localStorage.setItem('activeVisit_' + currentUser.id, JSON.stringify(novaVisita));
   };
 
-  const handleFotoChange = async (e) => {
+  const handleFotoChange = (e) => {
     const files = Array.from(e.target.files);
     if (files.length > 0) {
-      const newFotos = [...fotos, ...files];
-      setFotos(newFotos);
-      const newPreviews = [...previews, ...files.map(f => URL.createObjectURL(f))];
-      setPreviews(newPreviews);
-      
-      try {
-        const b64Array = await Promise.all(newFotos.map(async f => ({
-          name: f.name,
-          base64: await fileToBase64(f)
-        })));
-        await localforage.setItem('draft_fotos_' + currentUser.id, b64Array);
-      } catch (err) { console.error('Erro ao salvar fotos no draft', err); }
+      setFotos(prev => [...prev, ...files]);
+      const newPreviews = files.map(f => URL.createObjectURL(f));
+      setPreviews(prev => [...prev, ...newPreviews]);
     }
   };
 
-  const removeFoto = async (index) => {
-    const newFotos = fotos.filter((_, i) => i !== index);
-    setFotos(newFotos);
+  const removeFoto = (index) => {
+    setFotos(prev => prev.filter((_, i) => i !== index));
     setPreviews(prev => prev.filter((_, i) => i !== index));
-    
-    try {
-        const b64Array = await Promise.all(newFotos.map(async f => ({
-          name: f.name,
-          base64: await fileToBase64(f)
-        })));
-        await localforage.setItem('draft_fotos_' + currentUser.id, b64Array);
-    } catch (err) {}
   };
 
   const handleCancelarVisita = () => {
@@ -277,8 +236,6 @@ const SupervisorApp = ({ currentUser, rawEfetivos = [], rawPresencas = [] }) => 
       setChecklistPreviews({});
       localStorage.removeItem('activeVisit_' + currentUser.id);
       localStorage.removeItem('activeChecklist_' + currentUser.id);
-      localforage.removeItem('draft_fotos_' + currentUser.id);
-      localforage.removeItem('draft_check_fotos_' + currentUser.id);
     }
   };
 
@@ -288,42 +245,17 @@ const SupervisorApp = ({ currentUser, rawEfetivos = [], rawPresencas = [] }) => 
     localStorage.setItem('activeChecklist_' + currentUser.id, JSON.stringify(updated));
   };
 
-  const handleChecklistFotoChange = async (key, e) => {
+  const handleChecklistFotoChange = (key, e) => {
     const file = e.target.files[0];
     if (file) {
-      const newChecklistFotos = { ...checklistFotos, [key]: file };
-      setChecklistFotos(newChecklistFotos);
+      setChecklistFotos(prev => ({ ...prev, [key]: file }));
       setChecklistPreviews(prev => ({ ...prev, [key]: URL.createObjectURL(file) }));
-
-      try {
-        const b64Data = {};
-        for (const k of Object.keys(newChecklistFotos)) {
-            b64Data[k] = {
-                name: newChecklistFotos[k].name,
-                base64: await fileToBase64(newChecklistFotos[k])
-            };
-        }
-        await localforage.setItem('draft_check_fotos_' + currentUser.id, b64Data);
-      } catch (err) { console.error(err); }
     }
   };
 
-  const removeChecklistFoto = async (key) => {
-    const newFotos = {...checklistFotos};
-    delete newFotos[key];
-    setChecklistFotos(newFotos);
+  const removeChecklistFoto = (key) => {
+    setChecklistFotos(prev => { const n = {...prev}; delete n[key]; return n; });
     setChecklistPreviews(prev => { const n = {...prev}; delete n[key]; return n; });
-    
-    try {
-        const b64Data = {};
-        for (const k of Object.keys(newFotos)) {
-            b64Data[k] = {
-                name: newFotos[k].name,
-                base64: await fileToBase64(newFotos[k])
-            };
-        }
-        await localforage.setItem('draft_check_fotos_' + currentUser.id, b64Data);
-    } catch(err){}
   };
 
   const handleSubmit = async (e) => {
@@ -466,8 +398,6 @@ const SupervisorApp = ({ currentUser, rawEfetivos = [], rawPresencas = [] }) => 
       setChecklistPreviews({});
       localStorage.removeItem('activeVisit_' + currentUser.id);
       localStorage.removeItem('activeChecklist_' + currentUser.id);
-      localforage.removeItem('draft_fotos_' + currentUser.id);
-      localforage.removeItem('draft_check_fotos_' + currentUser.id);
       setSelectedCliente('');
       setSelectedPostoId('');
 
@@ -497,16 +427,18 @@ const SupervisorApp = ({ currentUser, rawEfetivos = [], rawPresencas = [] }) => 
     return `${h}h ${m}m`;
   };
 
+  if (fetchingData) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', color: '#94a3b8' }}>
+        <Loader2 className="animate-spin" size={32} style={{ marginRight: '12px' }} />
+        Carregando postos...
+      </div>
+    );
+  }
+
   return (
     <div className="supervisor-container" style={{ maxWidth: '500px', margin: '0 auto', padding: '20px' }}>
       
-      {fetchingData && (
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '12px', color: '#94a3b8', background: 'rgba(15, 23, 42, 0.4)', borderRadius: '8px', marginBottom: '16px' }}>
-          <Loader2 className="animate-spin" size={20} style={{ marginRight: '8px' }} />
-          Atualizando postos...
-        </div>
-      )}
-
       {success ? (
         <div className="card glass-panel" style={{ textAlign: 'center', padding: '40px 20px', borderColor: '#10b981' }}>
           <CheckCircle size={64} color="#10b981" style={{ margin: '0 auto 16px' }} />
