@@ -5,7 +5,7 @@ import { supabase } from './supabaseClient';
 import { 
   LayoutDashboard, Users, Settings, Upload, UserCheck, UserX, Briefcase, 
   Activity, Truck, Fuel, Map, DollarSign, AlertTriangle, Scale, Loader2, Cloud, Filter, FileText, CheckCircle, Droplet, Shield, Menu,
-  Car, MapPin, Smartphone, LogOut, Download, Stethoscope, X, Calculator
+  Car, MapPin, Smartphone, LogOut, Download, Stethoscope, X, Calculator, ChevronDown, ChevronRight
 } from 'lucide-react';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area, PieChart, Pie, Cell, ComposedChart, LabelList } from 'recharts';
 import Login from './components/Login';
@@ -116,6 +116,15 @@ const App = () => {
     const saved = localStorage.getItem('acoweb_menu');
     return saved || (currentUser?.role === 'SUPERVISOR' ? 'app_supervisor' : 'rh');
   });
+  
+  const [isDashboardsOpen, setIsDashboardsOpen] = useState(() => {
+    const saved = localStorage.getItem('acoweb_dashboards_open');
+    return saved !== null ? saved === 'true' : true;
+  });
+
+  useEffect(() => {
+    localStorage.setItem('acoweb_dashboards_open', isDashboardsOpen);
+  }, [isDashboardsOpen]);
 
   const [ApresentacaoStep, setApresentacaoStep] = useState(0);
   const [tvScreens, setTvScreens] = useState(() => {
@@ -1518,30 +1527,112 @@ const App = () => {
         <nav className="nav-menu">
           {currentUser.role !== 'SUPERVISOR' && (
             <>
-              {hasAccess(currentUser, 'rh') && (
-                <a className={`nav-item ${activeMenu === 'rh' ? 'active' : ''}`} onClick={() => setActiveMenu('rh')}>
-                  <Users size={20} />
-                  <span>Gestão de Efetivos</span>
+              {/* DASHBOARDS MENU */}
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <a 
+                  className="nav-item" 
+                  onClick={() => setIsDashboardsOpen(!isDashboardsOpen)}
+                  style={{ justifyContent: 'space-between', paddingRight: '12px' }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <LayoutDashboard size={20} />
+                    <span>Dashboards</span>
+                  </div>
+                  {isDashboardsOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
                 </a>
-              )}
-              {hasAccess(currentUser, 'frota') && (
-                <a className={`nav-item ${activeMenu === 'frota' ? 'active' : ''}`} onClick={() => setActiveMenu('frota')}>
-                  <Car size={20} />
-                  <span>Gestão de Frota</span>
-                </a>
-              )}
-              {hasAccess(currentUser, 'disciplina') && (
-                <a className={`nav-item ${activeMenu === 'disciplina' ? 'active' : ''}`} onClick={() => setActiveMenu('disciplina')}>
-                  <FileText size={20} />
-                  <span>Disciplina</span>
-                </a>
-              )}
-              {hasAccess(currentUser, 'atestados') && (
-                <a className={`nav-item ${activeMenu === 'atestados' ? 'active' : ''}`} onClick={() => setActiveMenu('atestados')}>
-                  <Stethoscope size={20} />
-                  <span>Campeões de Atestado</span>
-                </a>
-              )}
+                
+                <AnimatePresence>
+                  {isDashboardsOpen && (
+                    <motion.div 
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column', paddingLeft: '16px' }}
+                    >
+                      {hasAccess(currentUser, 'rh') && (
+                        <a className={`nav-item ${activeMenu === 'rh' ? 'active' : ''}`} onClick={() => setActiveMenu('rh')}>
+                          <Users size={18} />
+                          <span style={{ fontSize: '13px' }}>Gestão de Efetivos</span>
+                        </a>
+                      )}
+                      {hasAccess(currentUser, 'frota') && (
+                        <a className={`nav-item ${activeMenu === 'frota' ? 'active' : ''}`} onClick={() => setActiveMenu('frota')}>
+                          <Car size={18} />
+                          <span style={{ fontSize: '13px' }}>Gestão de Frota</span>
+                        </a>
+                      )}
+                      {hasAccess(currentUser, 'disciplina') && (
+                        <a className={`nav-item ${activeMenu === 'disciplina' ? 'active' : ''}`} onClick={() => setActiveMenu('disciplina')}>
+                          <FileText size={18} />
+                          <span style={{ fontSize: '13px' }}>Disciplina</span>
+                        </a>
+                      )}
+                      {hasAccess(currentUser, 'atestados') && (
+                        <a className={`nav-item ${activeMenu === 'atestados' ? 'active' : ''}`} onClick={() => setActiveMenu('atestados')}>
+                          <Stethoscope size={18} />
+                          <span style={{ fontSize: '13px' }}>Campeões de Atestado</span>
+                        </a>
+                      )}
+                      {(currentUser?.role === 'MASTER' || currentUser?.role === 'RH') && (
+                        <a className={`nav-item ${activeMenu === 'relatorio_visitas' ? 'active' : ''}`} onClick={() => setActiveMenu('relatorio_visitas')}>
+                          <FileText size={18} />
+                          <span style={{ fontSize: '13px' }}>Relatório Visitas</span>
+                        </a>
+                      )}
+                      {hasAccess(currentUser, 'Apresentação') && (
+                        <>
+                          <a className={`nav-item ${activeMenu === 'Apresentação' ? 'active' : ''}`} onClick={() => setActiveMenu('Apresentação')}>
+                            <Activity size={18} />
+                            <span style={{ fontSize: '13px' }}>Modo Apresentação (TV)</span>
+                          </a>
+                          <div style={{ margin: '4px 16px 8px 16px', padding: '12px', background: 'rgba(0,0,0,0.2)', borderRadius: '8px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            <label style={{ color: '#94a3b8', fontSize: '12px', fontWeight: 600 }}>Tempo no Modo TV:</label>
+                            <select 
+                              value={tvInterval}
+                              onChange={(e) => setTvInterval(Number(e.target.value))}
+                              style={{ background: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(255,255,255,0.1)', color: '#e2e8f0', borderRadius: '6px', padding: '6px', fontSize: '13px', width: '100%', cursor: 'pointer' }}
+                            >
+                              <option value={5}>5 segundos</option>
+                              <option value={10}>10 segundos</option>
+                              <option value={15}>15 segundos</option>
+                              <option value={30}>30 segundos</option>
+                              <option value={60}>1 minuto</option>
+                            </select>
+                            
+                            <label style={{ color: '#94a3b8', fontSize: '12px', fontWeight: 600, marginTop: '8px' }}>Telas do Modo TV:</label>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '2px' }}>
+                              {[
+                                { id: 'rh', label: 'Efetivo (RH)' },
+                                { id: 'frota', label: 'Frota' },
+                                { id: 'disciplina', label: 'Disciplina' },
+                                { id: 'atestados', label: 'Atestados' }
+                              ].map(tela => (
+                                <label key={tela.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#e2e8f0', fontSize: '12px', cursor: 'pointer' }}>
+                                  <input 
+                                    type="checkbox" 
+                                    checked={tvScreens.includes(tela.id)}
+                                    onChange={(e) => {
+                                      if (e.target.checked) {
+                                        setTvScreens(prev => [...prev, tela.id]);
+                                      } else {
+                                        setTvScreens(prev => prev.length > 1 ? prev.filter(id => id !== tela.id) : prev);
+                                      }
+                                    }}
+                                    style={{ cursor: 'pointer' }}
+                                  />
+                                  {tela.label}
+                                </label>
+                              ))}
+                            </div>
+                          </div>
+                        </>
+                      )}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              {/* INDEPENDENT MENUS */}
               {hasAccess(currentUser, 'medicao') && (
                 <a className={`nav-item ${activeMenu === 'medicao' ? 'active' : ''}`} onClick={() => setActiveMenu('medicao')}>
                   <Calculator size={20} />
@@ -1553,61 +1644,6 @@ const App = () => {
                   <MapPin size={20} />
                   <span>Monitoramento</span>
                 </a>
-              )}
-              {(currentUser?.role === 'MASTER' || currentUser?.role === 'RH') && (
-                <a className={`nav-item ${activeMenu === 'relatorio_visitas' ? 'active' : ''}`} onClick={() => setActiveMenu('relatorio_visitas')}>
-                  <FileText size={20} />
-                  <span>Relatório Visitas</span>
-                </a>
-              )}
-              {hasAccess(currentUser, 'Apresentação') && (
-                <a className={`nav-item ${activeMenu === 'Apresentação' ? 'active' : ''}`} onClick={() => setActiveMenu('Apresentação')}>
-                  <Activity size={20} />
-                  <span>Modo Apresentação (TV)</span>
-                </a>
-              )}
-              
-              {hasAccess(currentUser, 'Apresentação') && (
-                <div style={{ margin: '8px 16px', padding: '12px', background: 'rgba(0,0,0,0.2)', borderRadius: '8px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <label style={{ color: '#94a3b8', fontSize: '12px', fontWeight: 600 }}>Tempo no Modo TV:</label>
-                  <select 
-                    value={tvInterval}
-                    onChange={(e) => setTvInterval(Number(e.target.value))}
-                    style={{ background: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(255,255,255,0.1)', color: '#e2e8f0', borderRadius: '6px', padding: '6px', fontSize: '13px', width: '100%', cursor: 'pointer' }}
-                  >
-                    <option value={5}>5 segundos</option>
-                    <option value={10}>10 segundos</option>
-                    <option value={15}>15 segundos</option>
-                    <option value={30}>30 segundos</option>
-                    <option value={60}>1 minuto</option>
-                  </select>
-                  
-                  <label style={{ color: '#94a3b8', fontSize: '12px', fontWeight: 600, marginTop: '12px' }}>Telas do Modo TV:</label>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '4px' }}>
-                    {[
-                      { id: 'rh', label: 'Efetivo (RH)' },
-                      { id: 'frota', label: 'Frota' },
-                      { id: 'disciplina', label: 'Disciplina' },
-                      { id: 'atestados', label: 'Atestados' }
-                    ].map(tela => (
-                      <label key={tela.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#e2e8f0', fontSize: '12px', cursor: 'pointer' }}>
-                        <input 
-                          type="checkbox" 
-                          checked={tvScreens.includes(tela.id)}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setTvScreens(prev => [...prev, tela.id]);
-                            } else {
-                              setTvScreens(prev => prev.length > 1 ? prev.filter(id => id !== tela.id) : prev);
-                            }
-                          }}
-                          style={{ cursor: 'pointer' }}
-                        />
-                        {tela.label}
-                      </label>
-                    ))}
-                  </div>
-                </div>
               )}
             </>
           )}
