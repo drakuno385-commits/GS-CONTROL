@@ -780,7 +780,6 @@ const App = () => {
     Papa.parse(file, {
       header: true,
       skipEmptyLines: true,
-      delimiter: ";", 
       complete: function(results) {
         const data = results.data;
         if (!data || data.length === 0) return alert("Planilha vazia.");

@@ -233,7 +233,6 @@ export default function Medicao({ rawPresencas = [], currentUser }) {
     Papa.parse(file, {
       header: true,
       skipEmptyLines: true,
-      delimiter: ';',
       encoding: 'latin1',
       complete: (results) => {
         setIsUploading(false);
@@ -317,6 +316,9 @@ export default function Medicao({ rawPresencas = [], currentUser }) {
       });
     }
 
+    // 1.5 Identificar a quantidade de dias do mês (30 ou 31) baseando-se nas datas presentes na ficha
+    const diasDoMes = new Set(presFiltradas.map(p => p.data).filter(Boolean)).size || 30;
+
     // 2. Filtrar apenas registros de trabalho efetivo
     const presTrabalhadas = presFiltradas.filter(p => {
       const sit = (p.sithoje || '').toString().toUpperCase().trim();
@@ -352,13 +354,21 @@ export default function Medicao({ rawPresencas = [], currentUser }) {
       const valorMensal = Number(posto.valor_mensal || 0);
       
       const valorTotalReal = diasTrabalhados * valorDia;
-      const valorTotal = tipoCobranca === 'cheio' ? valorMensal : valorTotalReal;
+      
+      // O contrato cheio considera todos os postos do ficha presença
+      // Se não houver presença para esse posto (ex: arquivo de 1 cliente só), não cobra nada
+      const isPresente = diasTrabalhados > 0;
+      const valorTotalCheio = isPresente ? (valorMensal / 30) * diasDoMes : 0;
+      const valorTotal = tipoCobranca === 'cheio' ? valorTotalCheio : valorTotalReal;
+      
+      const diasExibicao = tipoCobranca === 'cheio' ? (isPresente ? diasDoMes : 0) : diasTrabalhados;
       
       const diferenca = valorTotalReal - valorMensal;
 
       return {
         ...posto,
-        dias_trabalhados: diasTrabalhados,
+        dias_trabalhados: diasExibicao,
+        dias_trabalhados_reais: diasTrabalhados,
         total_colaboradores: presInfo.colaboradores.size,
         valor_total: valorTotal, // Valor que será exibido e totalizado
         valor_total_real: valorTotalReal, // O valor executado independentemente do tipo de cobrança
