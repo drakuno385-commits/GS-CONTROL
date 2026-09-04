@@ -177,6 +177,7 @@ export default function Medicao({ rawPresencas = [], currentUser }) {
   const [filtroBusca, setFiltroBusca] = useState('');
   const [dataInicio, setDataInicio] = useState('');
   const [dataFim, setDataFim] = useState('');
+  const [tipoCobranca, setTipoCobranca] = useState('executado'); // 'executado' ou 'cheio'
 
   // Modais
   const [detalhePosto, setDetalhePosto] = useState(null);
@@ -348,15 +349,19 @@ export default function Medicao({ rawPresencas = [], currentUser }) {
 
       const diasTrabalhados = presInfo.count;
       const valorDia = Number(posto.valor_dia || 0);
-      const valorTotal = diasTrabalhados * valorDia;
       const valorMensal = Number(posto.valor_mensal || 0);
-      const diferenca = valorTotal - valorMensal;
+      
+      const valorTotalReal = diasTrabalhados * valorDia;
+      const valorTotal = tipoCobranca === 'cheio' ? valorMensal : valorTotalReal;
+      
+      const diferenca = valorTotalReal - valorMensal;
 
       return {
         ...posto,
         dias_trabalhados: diasTrabalhados,
         total_colaboradores: presInfo.colaboradores.size,
-        valor_total: valorTotal,
+        valor_total: valorTotal, // Valor que será exibido e totalizado
+        valor_total_real: valorTotalReal, // O valor executado independentemente do tipo de cobrança
         diferenca_mensal: diferenca,
         detalhes: presInfo.detalhes
       };
@@ -391,7 +396,7 @@ export default function Medicao({ rawPresencas = [], currentUser }) {
     });
 
     return resultado;
-  }, [postosBase, presencasEfetivas, dataInicio, dataFim]);
+  }, [postosBase, presencasEfetivas, dataInicio, dataFim, tipoCobranca]);
 
   // Lista de Clientes, Empresas, Turnos e Produtos únicos para filtros
   const clientesList = useMemo(() => [...new Set(postosBase.map(p => p.cliente))].filter(Boolean).sort(), [postosBase]);
@@ -508,7 +513,7 @@ export default function Medicao({ rawPresencas = [], currentUser }) {
         'Escala': item.escala,
         'Valor Diária (R$)': Number(item.valor_dia || 0).toFixed(3).replace('.', ','),
         'Dias Trabalhados': item.dias_trabalhados,
-        'Valor Total Medição (R$)': Number(item.valor_total || 0).toFixed(2).replace('.', ','),
+        [`Valor Medição ${tipoCobranca === 'cheio' ? 'CHEIO' : 'EXECUTADO'} (R$)`]: Number(item.valor_total || 0).toFixed(2).replace('.', ','),
         'Valor Mensal Contratado (R$)': Number(item.valor_mensal || 0).toFixed(2).replace('.', ','),
         'Diferença (R$)': Number(item.diferenca_mensal || 0).toFixed(2).replace('.', ','),
         'Status Cadastro': item._nao_cadastrado ? 'NÃO CADASTRADO' : 'CADASTRADO'
@@ -1052,6 +1057,28 @@ export default function Medicao({ rawPresencas = [], currentUser }) {
               colorScheme: 'dark'
             }}
           />
+        </div>
+
+        {/* Tipo Cobrança (Cheio vs Executado) */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <label style={{ color: '#94a3b8', fontSize: '12px', fontWeight: 600 }}>Cálculo:</label>
+          <select 
+            value={tipoCobranca} 
+            onChange={(e) => setTipoCobranca(e.target.value)}
+            style={{ 
+              padding: '8px 12px', 
+              background: 'rgba(59, 130, 246, 0.15)', 
+              border: '1px solid rgba(59, 130, 246, 0.3)', 
+              borderRadius: '8px', 
+              color: '#60a5fa', 
+              fontSize: '13px',
+              fontWeight: 600,
+              cursor: 'pointer'
+            }}
+          >
+            <option value="executado">Executado (Dias Trabalhados)</option>
+            <option value="cheio">Valor Cheio (Mensal Contratado)</option>
+          </select>
         </div>
 
         {/* Limpar Filtros */}
