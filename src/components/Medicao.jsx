@@ -39,6 +39,26 @@ function PendenteRow({ item, onCadastrar, onVerDetalhes }) {
   const [valorMensal, setValorMensal] = useState('');
   const [cadastrado, setCadastrado] = useState(false);
 
+  const handleValorDiaChange = (e) => {
+    const val = e.target.value;
+    setValorDia(val);
+    if (val !== '' && !isNaN(val)) {
+      setValorMensal((parseFloat(val) * 30).toFixed(2));
+    } else {
+      setValorMensal('');
+    }
+  };
+
+  const handleValorMensalChange = (e) => {
+    const val = e.target.value;
+    setValorMensal(val);
+    if (val !== '' && !isNaN(val)) {
+      setValorDia((parseFloat(val) / 30).toFixed(3));
+    } else {
+      setValorDia('');
+    }
+  };
+
   const handleCadastrar = () => {
     if (!valorDia || parseFloat(valorDia) <= 0) {
       alert('Informe o Valor da Diária antes de cadastrar.');
@@ -102,7 +122,7 @@ function PendenteRow({ item, onCadastrar, onVerDetalhes }) {
       <td style={{ padding: '10px 8px', textAlign: 'right' }}>
         <input
           type="number" step="0.001" placeholder="0,000"
-          value={valorDia} onChange={(e) => setValorDia(e.target.value)}
+          value={valorDia} onChange={handleValorDiaChange}
           style={{ 
             width: '100px', padding: '5px 8px', 
             background: '#1e293b', border: '1px solid rgba(245, 158, 11, 0.4)', 
@@ -114,7 +134,7 @@ function PendenteRow({ item, onCadastrar, onVerDetalhes }) {
       <td style={{ padding: '10px 8px', textAlign: 'right' }}>
         <input
           type="number" step="0.01" placeholder="0,00"
-          value={valorMensal} onChange={(e) => setValorMensal(e.target.value)}
+          value={valorMensal} onChange={handleValorMensalChange}
           style={{ 
             width: '100px', padding: '5px 8px', 
             background: '#1e293b', border: '1px solid rgba(255, 255, 255, 0.15)', 
