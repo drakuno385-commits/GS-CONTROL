@@ -198,6 +198,7 @@ export default function Medicao({ rawPresencas = [], currentUser }) {
   const [dataInicio, setDataInicio] = useState('');
   const [dataFim, setDataFim] = useState('');
   const [tipoCobranca, setTipoCobranca] = useState('executado'); // 'executado' ou 'cheio'
+  const [diasMesCalculo, setDiasMesCalculo] = useState(31);
 
   // Modais
   const [detalhePosto, setDetalhePosto] = useState(null);
