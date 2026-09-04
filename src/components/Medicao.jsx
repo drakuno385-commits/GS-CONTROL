@@ -33,6 +33,127 @@ const formatMoney = (val) => {
   return Number(val).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 };
 
+// Componente de linha para postos pendentes (com state local para inputs de valor)
+function PendenteRow({ item, onCadastrar, onVerDetalhes }) {
+  const [valorDia, setValorDia] = useState('');
+  const [valorMensal, setValorMensal] = useState('');
+  const [cadastrado, setCadastrado] = useState(false);
+
+  const handleCadastrar = () => {
+    if (!valorDia || parseFloat(valorDia) <= 0) {
+      alert('Informe o Valor da Diária antes de cadastrar.');
+      return;
+    }
+    onCadastrar(item, valorDia, valorMensal);
+    setCadastrado(true);
+  };
+
+  if (cadastrado) {
+    return (
+      <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.04)', background: 'rgba(16, 185, 129, 0.06)' }}>
+        <td style={{ padding: '10px 8px', color: '#64748b' }}>{item.codcli}</td>
+        <td style={{ padding: '10px 8px', color: '#e2e8f0', fontWeight: 600 }}>{item.cliente}</td>
+        <td style={{ padding: '10px 8px', color: '#64748b' }}>{item.codpos}</td>
+        <td style={{ padding: '10px 8px', color: '#f8fafc', fontWeight: 500 }}>{item.posto}</td>
+        <td colSpan={6} style={{ padding: '10px 8px', textAlign: 'center' }}>
+          <span style={{ 
+            display: 'inline-flex', alignItems: 'center', gap: '6px',
+            padding: '4px 14px', borderRadius: '6px', 
+            background: 'rgba(16, 185, 129, 0.15)', color: '#34d399', 
+            fontWeight: 600, fontSize: '12px' 
+          }}>
+            <CheckCircle2 size={14} /> Cadastrado com sucesso!
+          </span>
+        </td>
+      </tr>
+    );
+  }
+
+  return (
+    <tr style={{ 
+      borderBottom: '1px solid rgba(255,255,255,0.04)', 
+      borderLeft: '3px solid #f59e0b',
+      background: 'rgba(245, 158, 11, 0.03)'
+    }}>
+      <td style={{ padding: '10px 8px', color: '#64748b' }}>{item.codcli}</td>
+      <td style={{ padding: '10px 8px', color: '#e2e8f0', fontWeight: 600 }}>{item.cliente}</td>
+      <td style={{ padding: '10px 8px', color: '#64748b' }}>{item.codpos}</td>
+      <td style={{ padding: '10px 8px', color: '#f8fafc', fontWeight: 500 }}>{item.posto}</td>
+      <td style={{ padding: '10px 8px' }}>
+        <span style={{ 
+          padding: '2px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: 600,
+          background: item.turno === 'NOTURNO' ? 'rgba(139, 92, 246, 0.15)' : 'rgba(59, 130, 246, 0.15)',
+          color: item.turno === 'NOTURNO' ? '#a78bfa' : '#60a5fa'
+        }}>
+          {item.turno}
+        </span>
+      </td>
+      <td style={{ padding: '10px 8px', textAlign: 'center' }}>
+        <span style={{ 
+          padding: '2px 8px', borderRadius: '12px', fontWeight: 'bold', fontSize: '12px',
+          background: 'rgba(245, 158, 11, 0.15)', color: '#fbbf24'
+        }}>
+          {item.dias_trabalhados}
+        </span>
+      </td>
+      <td style={{ padding: '10px 8px', textAlign: 'center', color: '#a78bfa', fontWeight: 600 }}>
+        {item.total_colaboradores}
+      </td>
+      <td style={{ padding: '10px 8px', textAlign: 'right' }}>
+        <input
+          type="number" step="0.001" placeholder="0,000"
+          value={valorDia} onChange={(e) => setValorDia(e.target.value)}
+          style={{ 
+            width: '100px', padding: '5px 8px', 
+            background: '#1e293b', border: '1px solid rgba(245, 158, 11, 0.4)', 
+            borderRadius: '6px', color: '#fbbf24', fontSize: '12px', textAlign: 'right',
+            fontFamily: 'monospace'
+          }}
+        />
+      </td>
+      <td style={{ padding: '10px 8px', textAlign: 'right' }}>
+        <input
+          type="number" step="0.01" placeholder="0,00"
+          value={valorMensal} onChange={(e) => setValorMensal(e.target.value)}
+          style={{ 
+            width: '100px', padding: '5px 8px', 
+            background: '#1e293b', border: '1px solid rgba(255, 255, 255, 0.15)', 
+            borderRadius: '6px', color: '#e2e8f0', fontSize: '12px', textAlign: 'right',
+            fontFamily: 'monospace'
+          }}
+        />
+      </td>
+      <td style={{ padding: '10px 8px', textAlign: 'center' }}>
+        <div style={{ display: 'flex', gap: '6px', justifyContent: 'center' }}>
+          <button
+            onClick={handleCadastrar}
+            style={{ 
+              display: 'flex', alignItems: 'center', gap: '4px',
+              background: 'linear-gradient(135deg, #10b981, #059669)', 
+              color: '#fff', border: 'none', padding: '5px 10px', 
+              borderRadius: '6px', fontSize: '11px', fontWeight: 600, cursor: 'pointer'
+            }}
+            title="Cadastrar posto com os valores informados"
+          >
+            <Plus size={12} /> Cadastrar
+          </button>
+          <button
+            onClick={() => onVerDetalhes(item)}
+            style={{ 
+              background: 'rgba(59, 130, 246, 0.15)', color: '#60a5fa', 
+              border: 'none', padding: '5px 8px', borderRadius: '6px', 
+              fontSize: '11px', cursor: 'pointer'
+            }}
+            title="Ver detalhes dos colaboradores"
+          >
+            <ChevronRight size={12} />
+          </button>
+        </div>
+      </td>
+    </tr>
+  );
+}
+
 export default function Medicao({ rawPresencas = [], currentUser }) {
   // Base de postos cadastrados (Prévia)
   const [postosBase, setPostosBase] = useState(() => {
@@ -60,6 +181,7 @@ export default function Medicao({ rawPresencas = [], currentUser }) {
   // Modais
   const [detalhePosto, setDetalhePosto] = useState(null);
   const [showGerenciarPostos, setShowGerenciarPostos] = useState(false);
+  const [showPendentes, setShowPendentes] = useState(false);
   const [editingPosto, setEditingPosto] = useState(null);
   const [isNovoPosto, setIsNovoPosto] = useState(false);
 
@@ -319,6 +441,33 @@ export default function Medicao({ rawPresencas = [], currentUser }) {
       postosSemCadastro
     };
   }, [medicaoFiltrada]);
+
+  // Lista de postos pendentes de cadastro (não cadastrados previamente, com dias trabalhados)
+  const postosPendentes = useMemo(() => {
+    return medicaoProcessada
+      .filter(item => item._nao_cadastrado && item.dias_trabalhados > 0)
+      .sort((a, b) => b.dias_trabalhados - a.dias_trabalhados);
+  }, [medicaoProcessada]);
+
+  // Cadastrar um posto pendente na base (com valores informados)
+  const handleCadastrarPendente = (pendente, valorDia, valorMensal) => {
+    const novoId = Math.max(0, ...postosBase.map(p => p.id || 0)) + 1;
+    const novo = {
+      id: novoId,
+      codcli: pendente.codcli,
+      cliente: pendente.cliente,
+      codpos: pendente.codpos,
+      posto: pendente.posto,
+      turno: pendente.turno,
+      filial: 0,
+      empresa: pendente.empresa || '',
+      produto: pendente.produto || '',
+      escala: '',
+      valor_mensal: parseFloat(valorMensal) || 0,
+      valor_dia: parseFloat(valorDia) || 0
+    };
+    setPostosBase(prev => [...prev, novo]);
+  };
 
   // Dados para gráficos
   const chartClienteData = useMemo(() => {
@@ -725,17 +874,32 @@ export default function Medicao({ rawPresencas = [], currentUser }) {
           padding: '14px 20px',
           display: 'flex',
           alignItems: 'center',
+          justifyContent: 'space-between',
           gap: '12px',
           color: '#fbbf24',
           fontSize: '13px'
         }}>
-          <AlertCircle size={20} color="#f59e0b" />
-          <div>
-            <strong>{totais.postosSemCadastro} posto(s)</strong> da Ficha Presença não possuem cadastro na Prévia de Postos. 
-            Esses postos aparecem com a etiqueta <span style={{ padding: '1px 6px', borderRadius: '4px', background: 'rgba(245, 158, 11, 0.2)', fontSize: '11px', fontWeight: 600 }}>SEM CADASTRO</span> e 
-            estão com valor de diária R$ 0,00. Para incluí-los na medição com valores corretos, 
-            cadastre-os na tela <strong>"Cadastro de Postos & Diárias"</strong>.
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+            <AlertCircle size={20} color="#f59e0b" style={{ flexShrink: 0 }} />
+            <div>
+              <strong>{totais.postosSemCadastro} posto(s)</strong> da Ficha Presença não possuem cadastro na Prévia de Postos. 
+              Estão com diária R$ 0,00 e não entram no cálculo da medição.
+            </div>
           </div>
+          <button
+            onClick={() => setShowPendentes(true)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '6px',
+              background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+              color: '#fff', border: 'none', padding: '9px 18px',
+              borderRadius: '8px', fontWeight: 700, fontSize: '13px',
+              cursor: 'pointer', whiteSpace: 'nowrap',
+              boxShadow: '0 4px 12px rgba(245, 158, 11, 0.3)'
+            }}
+          >
+            <Search size={15} />
+            Analisar Pendentes ({postosPendentes.length})
+          </button>
         </div>
       )}
 
@@ -1545,6 +1709,120 @@ export default function Medicao({ rawPresencas = [], currentUser }) {
                   style={{ background: '#2563eb', color: '#fff', border: 'none', padding: '8px 20px', borderRadius: '8px', cursor: 'pointer', fontWeight: 600 }}
                 >
                   Concluir & Voltar para Medição
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* MODAL 3: Análise de Postos Pendentes de Cadastro */}
+      <AnimatePresence>
+        {showPendentes && (
+          <div style={{ 
+            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, 
+            background: 'rgba(0, 0, 0, 0.8)', backdropFilter: 'blur(6px)', 
+            zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px'
+          }}>
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              style={{ 
+                background: '#0f172a', border: '1px solid rgba(245, 158, 11, 0.3)', 
+                borderRadius: '16px', width: '100%', maxWidth: '1050px', 
+                maxHeight: '90vh', display: 'flex', flexDirection: 'column', overflow: 'hidden',
+                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
+              }}
+            >
+              {/* Header */}
+              <div style={{ padding: '20px 24px', borderBottom: '1px solid rgba(255, 255, 255, 0.1)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <h3 style={{ fontSize: '18px', fontWeight: 'bold', color: '#fbbf24', margin: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <AlertCircle size={22} color="#f59e0b" />
+                    Postos Pendentes de Cadastro — Análise
+                    <span style={{ fontSize: '12px', padding: '3px 10px', borderRadius: '20px', background: 'rgba(245, 158, 11, 0.15)', color: '#fbbf24', border: '1px solid rgba(245, 158, 11, 0.3)' }}>
+                      {postosPendentes.length} pendentes
+                    </span>
+                  </h3>
+                  <p style={{ fontSize: '13px', color: '#94a3b8', margin: '6px 0 0 0' }}>
+                    Esses postos foram encontrados na Ficha Presença mas não constam no cadastro de Prévia de Postos.
+                    Informe o <strong>Valor da Diária</strong> e <strong>Valor Mensal</strong> e clique em <strong>Cadastrar</strong> para incluí-los na medição.
+                  </p>
+                </div>
+                <button 
+                  onClick={() => setShowPendentes(false)}
+                  style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: '6px' }}
+                >
+                  <X size={22} />
+                </button>
+              </div>
+
+              {/* Resumo rápido */}
+              <div style={{ padding: '12px 24px', background: 'rgba(245, 158, 11, 0.05)', display: 'flex', gap: '24px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                <div>
+                  <span style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase' }}>Postos Pendentes</span>
+                  <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#fbbf24' }}>{postosPendentes.length}</div>
+                </div>
+                <div>
+                  <span style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase' }}>Total Diárias S/ Valor</span>
+                  <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#f87171' }}>
+                    {postosPendentes.reduce((sum, p) => sum + p.dias_trabalhados, 0).toLocaleString('pt-BR')}
+                  </div>
+                </div>
+                <div>
+                  <span style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase' }}>Colaboradores Envolvidos</span>
+                  <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#a78bfa' }}>
+                    {postosPendentes.reduce((sum, p) => sum + p.total_colaboradores, 0)}
+                  </div>
+                </div>
+              </div>
+
+              {/* Tabela de Pendentes */}
+              <div style={{ padding: '0 24px', overflowY: 'auto', flex: 1 }}>
+                {postosPendentes.length === 0 ? (
+                  <div style={{ padding: '40px', textAlign: 'center', color: '#94a3b8' }}>
+                    <CheckCircle2 size={32} color="#10b981" style={{ margin: '0 auto 12px' }} />
+                    <p style={{ fontSize: '15px', fontWeight: 600, color: '#34d399' }}>Nenhum posto pendente!</p>
+                    <p style={{ fontSize: '13px' }}>Todos os postos da Ficha Presença já estão cadastrados na base.</p>
+                  </div>
+                ) : (
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+                    <thead>
+                      <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', color: '#94a3b8', textAlign: 'left', position: 'sticky', top: 0, background: '#0f172a', zIndex: 5 }}>
+                        <th style={{ padding: '10px 8px' }}>Cód. Cli</th>
+                        <th style={{ padding: '10px 8px' }}>Cliente</th>
+                        <th style={{ padding: '10px 8px' }}>Cód. Pos</th>
+                        <th style={{ padding: '10px 8px' }}>Posto</th>
+                        <th style={{ padding: '10px 8px' }}>Turno</th>
+                        <th style={{ padding: '10px 8px', textAlign: 'center' }}>Dias Trab.</th>
+                        <th style={{ padding: '10px 8px', textAlign: 'center' }}>Colaborad.</th>
+                        <th style={{ padding: '10px 8px', textAlign: 'right' }}>Valor Diária</th>
+                        <th style={{ padding: '10px 8px', textAlign: 'right' }}>Valor Mensal</th>
+                        <th style={{ padding: '10px 8px', textAlign: 'center' }}>Ação</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {postosPendentes.map((p, idx) => (
+                        <PendenteRow 
+                          key={p.id || idx} 
+                          item={p} 
+                          onCadastrar={handleCadastrarPendente} 
+                          onVerDetalhes={(item) => { setDetalhePosto(item); setShowPendentes(false); }}
+                        />
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+
+              {/* Footer */}
+              <div style={{ padding: '16px 24px', borderTop: '1px solid rgba(255,255,255,0.1)', display: 'flex', justifyContent: 'flex-end' }}>
+                <button 
+                  onClick={() => setShowPendentes(false)}
+                  style={{ background: '#2563eb', color: '#fff', border: 'none', padding: '8px 20px', borderRadius: '8px', cursor: 'pointer', fontWeight: 600 }}
+                >
+                  Fechar Análise
                 </button>
               </div>
             </motion.div>
