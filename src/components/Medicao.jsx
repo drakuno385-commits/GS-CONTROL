@@ -352,7 +352,7 @@ export default function Medicao({ rawPresencas = [], currentUser }) {
     }
 
     // 1.5 Identificar a quantidade de dias do mês (30 ou 31) baseando-se nas datas presentes na ficha
-    const diasDoMes = new Set(presFiltradas.map(p => p.data).filter(Boolean)).size || 30;
+    const diasDoMes = diasMesCalculo;
 
     // 2. Filtrar apenas registros de trabalho efetivo
     const presTrabalhadas = presFiltradas.filter(p => {
@@ -478,7 +478,7 @@ export default function Medicao({ rawPresencas = [], currentUser }) {
 
     medicaoFiltrada.forEach(item => {
       valorMedicao += Number(item.valor_total || 0);
-      valorContratado += Number(item.valor_mensal || 0);
+      valorContratado += (Number(item.valor_mensal || 0) / 30) * diasMesCalculo;
       totalDias += item.dias_trabalhados;
       if (item.dias_trabalhados > 0) postosComTrabalho += 1;
       if (item._nao_cadastrado) postosSemCadastro += 1;
@@ -562,7 +562,7 @@ export default function Medicao({ rawPresencas = [], currentUser }) {
         'Valor Diária (R$)': Number(item.valor_dia || 0).toFixed(3).replace('.', ','),
         'Dias Trabalhados': item.dias_trabalhados,
         [`Valor Medição ${tipoCobranca === 'cheio' ? 'CHEIO' : 'EXECUTADO'} (R$)`]: Number(item.valor_total || 0).toFixed(2).replace('.', ','),
-        'Valor Mensal Contratado (R$)': Number(item.valor_mensal || 0).toFixed(2).replace('.', ','),
+        'Valor Mensal Contratado (R$)': ((Number(item.valor_mensal || 0) / 30) * diasMesCalculo).toFixed(2).replace('.', ','),
         'Diferença (R$)': Number(item.diferenca_mensal || 0).toFixed(2).replace('.', ','),
         'Status Cadastro': item._nao_cadastrado ? 'NÃO CADASTRADO' : 'CADASTRADO'
       }));
@@ -1114,7 +1114,7 @@ export default function Medicao({ rawPresencas = [], currentUser }) {
           </select>
         </div>
 
-        {/* Filtro Data Início / Fim */}
+        {/* Filtro Data Início / Fim e Dias do Mês */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <label style={{ color: '#94a3b8', fontSize: '12px', fontWeight: 600 }}>De:</label>
           <input 
@@ -1144,6 +1144,22 @@ export default function Medicao({ rawPresencas = [], currentUser }) {
               color: '#f8fafc', 
               fontSize: '13px',
               colorScheme: 'dark'
+            }}
+          />
+          <label style={{ color: '#94a3b8', fontSize: '12px', fontWeight: 600, marginLeft: '12px' }}>Dias do Mês:</label>
+          <input 
+            type="number" 
+            min="28" max="31"
+            value={diasMesCalculo} 
+            onChange={(e) => setDiasMesCalculo(Number(e.target.value))}
+            style={{ 
+              padding: '6px 10px', 
+              background: 'rgba(15, 23, 42, 0.6)', 
+              border: '1px solid rgba(255, 255, 255, 0.1)', 
+              borderRadius: '8px', 
+              color: '#f8fafc', 
+              fontSize: '13px',
+              width: '50px'
             }}
           />
         </div>
@@ -1395,7 +1411,7 @@ export default function Medicao({ rawPresencas = [], currentUser }) {
                       {formatMoney(item.valor_total)}
                     </td>
                     <td style={{ padding: '12px 14px', textAlign: 'right', color: '#94a3b8', fontFamily: 'monospace' }}>
-                      {formatMoney(item.valor_mensal)}
+                      {formatMoney((Number(item.valor_mensal) / 30) * diasMesCalculo)}
                     </td>
                     <td style={{ padding: '12px 14px', textAlign: 'center' }}>
                       <button 
