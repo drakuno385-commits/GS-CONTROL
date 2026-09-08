@@ -177,7 +177,7 @@ function PendenteRow({ item, onCadastrar, onVerDetalhes }) {
 export default function Medicao({ rawPresencas = [], currentUser }) {
   // Base de postos cadastrados (Prévia)
   const [postosBase, setPostosBase] = useState(() => {
-    const saved = localStorage.getItem('medicao_postos_db_v3');
+    const saved = localStorage.getItem('medicao_postos_db_v4');
     if (saved) {
       try { return JSON.parse(saved); } catch (e) { }
     }
@@ -253,9 +253,9 @@ export default function Medicao({ rawPresencas = [], currentUser }) {
   useEffect(() => {
     try {
       const json = JSON.stringify(postosBase);
-      localStorage.setItem('medicao_postos_db_v3', json);
+      localStorage.setItem('medicao_postos_db_v4', json);
       // Verificação: confirma que gravou corretamente
-      const check = localStorage.getItem('medicao_postos_db_v3');
+      const check = localStorage.getItem('medicao_postos_db_v4');
       if (!check || check.length < 10) {
         console.error('ERRO CRÍTICO: Falha ao salvar cadastro de postos!');
       }
