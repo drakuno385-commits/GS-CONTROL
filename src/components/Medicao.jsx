@@ -185,7 +185,21 @@ export default function Medicao({ rawPresencas = [], currentUser }) {
   });
 
   // Dados da Ficha de Presença carregada na tela de medição (ou herdada do global)
-  const [presencasLocais, setPresencasLocais] = useState([]);
+  const [presencasLocais, setPresencasLocais] = useState(() => {
+    try {
+      const saved = localStorage.getItem("medicao_presencas_v1");
+      if (saved) return JSON.parse(saved);
+    } catch(e){}
+    return [];
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("medicao_presencas_v1", JSON.stringify(presencasLocais));
+    } catch(e) {
+      console.warn("Ficha presenca muito grande para localStorage", e);
+    }
+  }, [presencasLocais]);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadStats, setUploadStats] = useState(null);
 
@@ -505,7 +519,7 @@ export default function Medicao({ rawPresencas = [], currentUser }) {
     });
 
     return resultado;
-  }, [postosBase, presencasEfetivas, dataInicio, dataFim, tipoCobranca]);
+  }, [postosBase, presencasEfetivas, dataInicio, dataFim, tipoCobranca, diasOverride, condutorOverride, kmsData]);
 
   // Lista de Clientes, Empresas, Turnos e Produtos únicos para filtros
   const clientesList = useMemo(() => [...new Set(postosBase.map(p => p.cliente))].filter(Boolean).sort(), [postosBase]);
@@ -1543,6 +1557,46 @@ export default function Medicao({ rawPresencas = [], currentUser }) {
               )}
             </tbody>
           </table>
+        </div>
+        
+        <div style={{ padding: '20px', display: 'flex', justifyContent: 'flex-end', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+          <button
+            onClick={() => {
+              if (window.confirm("Deseja realmente CONCLUIR esta medição? Isso salvará o status atual de todos os postos.")) {
+                // Aqui no futuro pode chamar um backend para gravar o snapshot
+                const snapshot = {
+                  data: new Date().toISOString(),
+                  totalContratado: valorContratado,
+                  totalExecutado: valorMedicao,
+                  postos: medicaoFiltrada
+                };
+                let historico = [];
+                try { historico = JSON.parse(localStorage.getItem('medicao_historico') || '[]'); } catch(e){}
+                historico.push(snapshot);
+                localStorage.setItem('medicao_historico', JSON.stringify(historico));
+                
+                alert("Medição concluída e gravada com sucesso!");
+              }
+            }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              background: 'linear-gradient(135deg, #10b981, #059669)',
+              color: '#fff',
+              padding: '12px 24px',
+              borderRadius: '12px',
+              fontWeight: 'bold',
+              fontSize: '15px',
+              border: 'none',
+              cursor: 'pointer',
+              boxShadow: '0 4px 12px rgba(16, 185, 129, 0.4)',
+              transition: 'all 0.2s'
+            }}
+          >
+            <CheckCircle2 size={20} />
+            CONCLUIR MEDIÇÃO
+          </button>
         </div>
       </div>
 
