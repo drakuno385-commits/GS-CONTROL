@@ -1891,6 +1891,43 @@ export default function Medicao({ rawPresencas = [], currentUser }) {
                       />
                       <label style={{ fontSize: '12px', color: '#e2e8f0' }}>Escala Fixa (Não multiplicar pelos Dias do Mês. Útil para 5x2)</label>
                     </div>
+                    <div style={{ gridColumn: 'span 4' }}>
+                      <label style={{ fontSize: '11px', color: '#94a3b8' }}>Preenchimento Rápido (Tabelas Base)</label>
+                      <select 
+                        onChange={(e) => {
+                          const val = parseFloat(e.target.value);
+                          if (val) setEditingPosto({...editingPosto, valor_mensal: val, valor_dia: val / 30});
+                        }}
+                        style={{ width: '100%', padding: '6px', background: '#1e293b', border: '1px solid #475569', borderRadius: '6px', color: '#fff' }}
+                      >
+                        <option value="">-- Selecione para preencher o Valor Mensal --</option>
+                        <optgroup label="AçoForte">
+                          <option value="15446.61">Vig Mot C/ Auto–12Hrs Diá-Diu-Desarmado (R$ 15.446,61)</option>
+                          <option value="17576.27">Vig Mot C/ Auto–12Hrs Diá-Not-Desarmado (R$ 17.576,27)</option>
+                        </optgroup>
+                        <optgroup label="Regional">
+                          <option value="12792.15">Vigilante Diurno (R$ 12.792,15)</option>
+                          <option value="14138.79">Vigilante Noturno (R$ 14.138,79)</option>
+                          <option value="15717.00">Vigilante Ronda Diurno / Condutor (R$ 15.717,00)</option>
+                          <option value="16661.57">Vigilante Ronda Noturno / Condutor (R$ 16.661,57)</option>
+                          <option value="8933.61">Vigilante 5x2 Diurno (R$ 8.933,61)</option>
+                        </optgroup>
+                        <optgroup label="Bell's">
+                          <option value="9328.29">Porteiro Diurno (R$ 9.328,29)</option>
+                          <option value="10711.26">Porteiro Noturno (R$ 10.711,26)</option>
+                          <option value="5496.74">Porteiro 5x2 Diurno (R$ 5.496,74)</option>
+                        </optgroup>
+                      </select>
+                    </div>
+                    <div style={{ gridColumn: 'span 4', display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
+                      <input 
+                        type="checkbox" 
+                        checked={editingPosto.is_condutor || false}
+                        onChange={(e) => setEditingPosto({ ...editingPosto, is_condutor: e.target.checked })}
+                        style={{ width: '16px', height: '16px', accentColor: '#10b981' }}
+                      />
+                      <label style={{ fontSize: '12px', color: '#e2e8f0' }}>Posto é Condutor (Sinalização para base de cálculo)</label>
+                    </div>
                   </div>
                   <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '12px' }}>
                     <button 
