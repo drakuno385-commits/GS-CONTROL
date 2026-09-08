@@ -1976,8 +1976,16 @@ export default function Medicao({ rawPresencas = [], currentUser }) {
                         type="number" 
                         step="0.001" 
                         required 
-                        value={editingPosto.valor_dia} 
-                        onChange={(e) => setEditingPosto({ ...editingPosto, valor_dia: e.target.value })}
+                        value={editingPosto.valor_dia || ''} 
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          const dia = parseFloat(val);
+                          if (!isNaN(dia)) {
+                            setEditingPosto({ ...editingPosto, valor_dia: val, valor_mensal: (dia * 30).toFixed(2) });
+                          } else {
+                            setEditingPosto({ ...editingPosto, valor_dia: val });
+                          }
+                        }}
                         style={{ width: '100%', padding: '6px', background: '#1e293b', border: '1px solid #475569', borderRadius: '6px', color: '#fff' }}
                       />
                     </div>
@@ -1986,8 +1994,16 @@ export default function Medicao({ rawPresencas = [], currentUser }) {
                       <input 
                         type="number" 
                         step="0.01" 
-                        value={editingPosto.valor_mensal} 
-                        onChange={(e) => setEditingPosto({ ...editingPosto, valor_mensal: e.target.value })}
+                        value={editingPosto.valor_mensal || ''} 
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          const mes = parseFloat(val);
+                          if (!isNaN(mes)) {
+                            setEditingPosto({ ...editingPosto, valor_mensal: val, valor_dia: (mes / 30).toFixed(3) });
+                          } else {
+                            setEditingPosto({ ...editingPosto, valor_mensal: val });
+                          }
+                        }}
                         style={{ width: '100%', padding: '6px', background: '#1e293b', border: '1px solid #475569', borderRadius: '6px', color: '#fff' }}
                       />
                     </div>
