@@ -395,7 +395,7 @@ export default function Medicao({ rawPresencas = [], currentUser }) {
       
       // O contrato cheio sempre considera o posto inteiro pelo cadastro, independente da ficha
       const isPresente = diasTrabalhados > 0;
-      const valorTotalCheio = (valorMensal / 30) * diasDoMes;
+      const valorTotalCheio = posto.escala_fixa ? valorMensal : (valorMensal / 30) * diasDoMes;
       
       const km = kmsData[key];
       const totalKm = km ? km.km * km.valor_km : 0;
@@ -490,7 +490,7 @@ export default function Medicao({ rawPresencas = [], currentUser }) {
 
     medicaoFiltrada.forEach(item => {
       valorMedicao += Number(item.valor_total || 0);
-      valorContratado += (Number(item.valor_mensal || 0) / 30) * diasMesCalculo;
+      valorContratado += item.escala_fixa ? Number(item.valor_mensal || 0) : (Number(item.valor_mensal || 0) / 30) * diasMesCalculo;
       totalDias += item.dias_trabalhados;
       if (item.dias_trabalhados > 0) postosComTrabalho += 1;
       if (item._nao_cadastrado) postosSemCadastro += 1;
@@ -574,7 +574,7 @@ export default function Medicao({ rawPresencas = [], currentUser }) {
         'Valor Diária (R$)': Number(item.valor_dia || 0).toFixed(3).replace('.', ','),
         'Dias Trabalhados': item.dias_trabalhados,
         [`Valor Medição ${tipoCobranca === 'cheio' ? 'CHEIO' : 'EXECUTADO'} (R$)`]: Number(item.valor_total || 0).toFixed(2).replace('.', ','),
-        'Valor Mensal Contratado (R$)': ((Number(item.valor_mensal || 0) / 30) * diasMesCalculo).toFixed(2).replace('.', ','),
+        'Valor Mensal Contratado (R$)': (item.escala_fixa ? Number(item.valor_mensal || 0) : ((Number(item.valor_mensal || 0) / 30) * diasMesCalculo)).toFixed(2).replace('.', ','),
         'Diferença (R$)': Number(item.diferenca_mensal || 0).toFixed(2).replace('.', ','),
         'Status Cadastro': item._nao_cadastrado ? 'NÃO CADASTRADO' : 'CADASTRADO'
       }));
@@ -1423,7 +1423,7 @@ export default function Medicao({ rawPresencas = [], currentUser }) {
                       {formatMoney(item.valor_total)}
                     </td>
                     <td style={{ padding: '12px 14px', textAlign: 'right', color: '#94a3b8', fontFamily: 'monospace' }}>
-                      {formatMoney((Number(item.valor_mensal) / 30) * diasMesCalculo)}
+                      {formatMoney(item.escala_fixa ? Number(item.valor_mensal) : (Number(item.valor_mensal) / 30) * diasMesCalculo)}
                     </td>
                     <td style={{ padding: '12px 14px', textAlign: 'center' }}>
                       <button 
