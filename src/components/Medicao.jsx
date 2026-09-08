@@ -527,41 +527,6 @@ export default function Medicao({ rawPresencas = [], currentUser }) {
       };
     });
 
-    // 5. Incluir postos que existem na Ficha Presença mas NÃO estão no cadastro prévio
-    mapaPresencas.forEach((presInfo, key) => {
-      if (!postosBaseKeys.has(key)) {
-        // Extrair dados do primeiro registro de presença para preencher informações do posto
-        const primeiro = presInfo.detalhes[0] || {};
-        const cli = (primeiro.cliente || '').toString().toUpperCase();
-        const pos = (primeiro.posto || '').toString().toUpperCase();
-
-        // Ignorar Reserva Técnica (banco de reserva interno, não é posto faturável de cliente)
-        if (cli.includes('RESERVA') || pos.includes('RESERVA')) return;
-
-        resultado.push({
-          id: `auto_${key}`,
-          codcli: parseInt(primeiro.codcli, 10) || 0,
-          cliente: primeiro.cliente || 'Não Identificado',
-          codpos: parseInt(primeiro.codpos, 10) || 0,
-          posto: primeiro.posto || 'Não Identificado',
-          turno: primeiro.turno || 'DIURNO',
-          filial: 0,
-          empresa: '',
-          produto: primeiro.cargo || '',
-          escala: '',
-          valor_mensal: 0,
-          valor_dia: 0,
-          dias_trabalhados: presInfo.count,
-          total_colaboradores: presInfo.colaboradores.size,
-          valor_total: 0,
-          diferenca_mensal: 0,
-          detalhes: presInfo.detalhes,
-          _nao_cadastrado: true,
-          status_divergencia: "NAO_CADASTRADO"
-        });
-      }
-    });
-
     return resultado;
   }, [postosBase, presencasEfetivas, dataInicio, dataFim, tipoCobranca, diasOverride, condutorOverride, kmsData]);
 
