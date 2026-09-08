@@ -278,23 +278,37 @@ export default function Medicao({ rawPresencas = [], currentUser }) {
     return rawPresencas;
   }, [presencasLocais, rawPresencas]);
 
-  // Função para classificar o turno a partir do horário
-  const calcularTurno = (horInicio) => {
-    if (!horInicio && horInicio !== 0) return 'DIURNO';
-    try {
-      const hStr = horInicio.toString().trim();
-      let hora = 0;
-      if (hStr.includes(':')) {
-        hora = parseInt(hStr.split(':')[0], 10);
-      } else if (hStr.length <= 2) {
-        hora = parseInt(hStr, 10);
-      } else if (hStr.length === 4) {
-        hora = parseInt(hStr.substring(0, 2), 10);
-      }
-      return (hora >= 18 || hora < 5) ? 'NOTURNO' : 'DIURNO';
-    } catch (e) {
-      return 'DIURNO';
+  // Função para classificar o turno a partir do horário ou coluna de turno
+  const calcularTurno = (horInicio, rowTurno) => {
+    if (rowTurno) {
+      const t = rowTurno.toString().toUpperCase().trim();
+      if (t.includes('NOT') || t.includes('NOITE')) return 'NOTURNO';
+      if (t.includes('DIU') || t.includes('DIA')) return 'DIURNO';
     }
+
+    if (horInicio === null || horInicio === undefined || horInicio === '') return 'DIURNO';
+    
+    try {
+      let s = horInicio.toString().trim();
+      if (!s) return 'DIURNO';
+      
+      if (s.includes(':')) {
+        const parts = s.split(':');
+        const h = parseInt(parts[0], 10);
+        return (!isNaN(h) && (h >= 18 || h < 5)) ? 'NOTURNO' : 'DIURNO';
+      }
+      
+      const num = parseInt(s, 10);
+      if (!isNaN(num)) {
+        let h = num;
+        if (num >= 100) {
+          h = Math.floor(num / 100);
+        }
+        return (h >= 18 || h < 5) ? 'NOTURNO' : 'DIURNO';
+      }
+    } catch (e) {}
+    
+    return 'DIURNO';
   };
 
   // Helper para verificar datas
@@ -345,13 +359,15 @@ export default function Medicao({ rawPresencas = [], currentUser }) {
         const kRe = getKey('RE') || getKey('re');
         const kNome = getKey('NOME') || getKey('nome');
         const kCargo = getKey('DESC_CARGO') || getKey('CARGO') || getKey('cargo');
+        const kTurno = getKey('TURNO') || getKey('DESCTURNO') || getKey('DES_TURNO') || getKey('turno');
 
         const parsed = data.map(row => {
           const codcli = parseInt(row[kCodCli], 10) || 0;
           const codpos = parseInt(row[kCodPos], 10) || 0;
           const sithoje = (row[kSitHoje] || '').toString().toUpperCase().trim();
           const hor_inicio = row[kHorInicio];
-          const turno = calcularTurno(hor_inicio);
+          const rawTurno = row[kTurno];
+          const turno = calcularTurno(hor_inicio, rawTurno);
 
           return {
             codcli,
