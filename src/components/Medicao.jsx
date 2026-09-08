@@ -175,11 +175,26 @@ function PendenteRow({ item, onCadastrar, onVerDetalhes }) {
 }
 
 export default function Medicao({ rawPresencas = [], currentUser }) {
-  // Base de postos cadastrados (Prévia)
+  // Base de postos cadastrados (Prévia com recuperação de edições anteriores do usuário)
   const [postosBase, setPostosBase] = useState(() => {
-    const saved = localStorage.getItem('medicao_postos_db_v4');
-    if (saved) {
-      try { return JSON.parse(saved); } catch (e) { }
+    const cacheKeys = ['medicao_postos_db_v3', 'medicao_postos_db_v2', 'medicao_postos_db_v1', 'medicao_postos_db', 'medicao_postos_db_v4'];
+    for (const key of cacheKeys) {
+      const saved = localStorage.getItem(key);
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            // Garantir que o Gopouva BELLS (221/51) permaneça separado em 12x36 (R$ 9.328,29) e 5x2 (R$ 5.496,74)
+            const gopIdx = parsed.findIndex(p => p.codcli === 221 && p.codpos === 51 && p.turno === 'DIURNO' && Number(p.valor_mensal) > 14000);
+            if (gopIdx >= 0) {
+              const gop = parsed[gopIdx];
+              parsed[gopIdx] = { ...gop, escala: '12x36', valor_mensal: 9328.29, valor_dia: 9328.29 / 30, escala_fixa: false };
+              parsed.splice(gopIdx + 1, 0, { ...gop, id: 999222, escala: '5x2', produto: 'PORTEIRO', valor_mensal: 5496.74, valor_dia: 5496.74 / 30, escala_fixa: true });
+            }
+            return parsed;
+          }
+        } catch (e) { }
+      }
     }
     return defaultPreviaPostos;
   });
@@ -261,6 +276,7 @@ export default function Medicao({ rawPresencas = [], currentUser }) {
     try {
       const json = JSON.stringify(postosBase);
       localStorage.setItem('medicao_postos_db_v4', json);
+      localStorage.setItem('medicao_postos_db_v3', json);
       // Verificação: confirma que gravou corretamente
       const check = localStorage.getItem('medicao_postos_db_v4');
       if (!check || check.length < 10) {
