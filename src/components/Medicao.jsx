@@ -185,20 +185,46 @@ export default function Medicao({ rawPresencas = [], currentUser }) {
   });
 
   // Dados da Ficha de Presença carregada na tela de medição (ou herdada do global)
-  const [presencasLocais, setPresencasLocais] = useState(() => {
-    try {
-      const saved = localStorage.getItem("medicao_presencas_v1");
-      if (saved) return JSON.parse(saved);
-    } catch(e){}
-    return [];
-  });
+  const [presencasLocais, setPresencasLocais] = useState([]);
 
+  // Carregar presencas do IndexedDB ao montar
   useEffect(() => {
-    try {
-      localStorage.setItem("medicao_presencas_v1", JSON.stringify(presencasLocais));
-    } catch(e) {
-      console.warn("Ficha presenca muito grande para localStorage", e);
-    }
+    const openDB = () => {
+      return new Promise((resolve, reject) => {
+        const req = indexedDB.open("medicao_db", 1);
+        req.onupgradeneeded = () => { req.result.createObjectStore("presencas"); };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+    };
+    openDB().then(db => {
+      const tx = db.transaction("presencas", "readonly");
+      const store = tx.objectStore("presencas");
+      const getReq = store.get("ficha_v1");
+      getReq.onsuccess = () => {
+        if (getReq.result && Array.isArray(getReq.result)) {
+          setPresencasLocais(getReq.result);
+        }
+      };
+    }).catch(() => {});
+  }, []);
+
+  // Salvar presencas no IndexedDB sempre que mudar
+  useEffect(() => {
+    if (presencasLocais.length === 0) return;
+    const openDB = () => {
+      return new Promise((resolve, reject) => {
+        const req = indexedDB.open("medicao_db", 1);
+        req.onupgradeneeded = () => { req.result.createObjectStore("presencas"); };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+    };
+    openDB().then(db => {
+      const tx = db.transaction("presencas", "readwrite");
+      const store = tx.objectStore("presencas");
+      store.put(presencasLocais, "ficha_v1");
+    }).catch(e => console.warn("Erro ao salvar ficha no IndexedDB:", e));
   }, [presencasLocais]);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadStats, setUploadStats] = useState(null);
