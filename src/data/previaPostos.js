@@ -11,7 +11,7 @@ export const defaultPreviaPostos = [
     "produto": "VIGILANTE CONDUTOR",
     "escala": "12x36",
     "valor_mensal": 17576.27,
-    "valor_dia": 585.876,
+    "valor_dia": 585.8756666666667,
     "escala_fixa": false
   },
   {
@@ -26,7 +26,7 @@ export const defaultPreviaPostos = [
     "produto": "VIGILANTE CONDUTOR",
     "escala": "12x36",
     "valor_mensal": 15446.61,
-    "valor_dia": 514.887,
+    "valor_dia": 514.8870000000001,
     "escala_fixa": false
   },
   {
@@ -41,7 +41,7 @@ export const defaultPreviaPostos = [
     "produto": "VIGILANTE CONDUTOR",
     "escala": "12x36",
     "valor_mensal": 17576.27,
-    "valor_dia": 585.876,
+    "valor_dia": 585.8756666666667,
     "escala_fixa": false
   },
   {
@@ -55,8 +55,8 @@ export const defaultPreviaPostos = [
     "empresa": "ACOFORTE",
     "produto": "VIGILANTE CONDUTOR",
     "escala": "12x36",
-    "valor_mensal": 16511.44,
-    "valor_dia": 550.381,
+    "valor_mensal": 15446.61,
+    "valor_dia": 514.8870000000001,
     "escala_fixa": false
   },
   {
@@ -70,8 +70,8 @@ export const defaultPreviaPostos = [
     "empresa": "ACOFORTE",
     "produto": "VIGILANTE CONDUTOR",
     "escala": "12x36",
-    "valor_mensal": 16511.44,
-    "valor_dia": 550.381,
+    "valor_mensal": 17576.27,
+    "valor_dia": 585.8756666666667,
     "escala_fixa": false
   },
   {
@@ -85,8 +85,8 @@ export const defaultPreviaPostos = [
     "empresa": "ACOFORTE",
     "produto": "VIGILANTE",
     "escala": "12x36",
-    "valor_mensal": 16511.44,
-    "valor_dia": 550.381,
+    "valor_mensal": 15446.61,
+    "valor_dia": 514.8870000000001,
     "escala_fixa": false
   },
   {
@@ -100,8 +100,8 @@ export const defaultPreviaPostos = [
     "empresa": "ACOFORTE",
     "produto": "VIGILANTE",
     "escala": "12x36",
-    "valor_mensal": 16511.44,
-    "valor_dia": 550.381,
+    "valor_mensal": 17576.27,
+    "valor_dia": 585.8756666666667,
     "escala_fixa": false
   },
   {
@@ -115,8 +115,8 @@ export const defaultPreviaPostos = [
     "empresa": "ACOFORTE",
     "produto": "VIGILANTE CONDUTOR",
     "escala": "12x36",
-    "valor_mensal": 16511.44,
-    "valor_dia": 550.381,
+    "valor_mensal": 15446.61,
+    "valor_dia": 514.8870000000001,
     "escala_fixa": false
   },
   {
@@ -130,8 +130,8 @@ export const defaultPreviaPostos = [
     "empresa": "ACOFORTE",
     "produto": "VIGILANTE CONDUTOR",
     "escala": "12x36",
-    "valor_mensal": 16511.44,
-    "valor_dia": 550.381,
+    "valor_mensal": 17576.27,
+    "valor_dia": 585.8756666666667,
     "escala_fixa": false
   },
   {
@@ -145,8 +145,8 @@ export const defaultPreviaPostos = [
     "empresa": "ACOFORTE",
     "produto": "VIGILANTE CONDUTOR",
     "escala": "12x36",
-    "valor_mensal": 16511.44,
-    "valor_dia": 550.381,
+    "valor_mensal": 15446.61,
+    "valor_dia": 514.8870000000001,
     "escala_fixa": false
   },
   {
@@ -160,8 +160,8 @@ export const defaultPreviaPostos = [
     "empresa": "ACOFORTE",
     "produto": "VIGILANTE CONDUTOR",
     "escala": "12x36",
-    "valor_mensal": 16511.44,
-    "valor_dia": 550.381,
+    "valor_mensal": 17576.27,
+    "valor_dia": 585.8756666666667,
     "escala_fixa": false
   },
   {
@@ -176,7 +176,7 @@ export const defaultPreviaPostos = [
     "produto": "VIGILANTE CONDUTOR",
     "escala": "12x36",
     "valor_mensal": 17576.27,
-    "valor_dia": 585.876,
+    "valor_dia": 585.8756666666667,
     "escala_fixa": false
   },
   {
@@ -191,7 +191,7 @@ export const defaultPreviaPostos = [
     "produto": "VIGILANTE CONDUTOR",
     "escala": "12x36",
     "valor_mensal": 15446.61,
-    "valor_dia": 514.887,
+    "valor_dia": 514.8870000000001,
     "escala_fixa": false
   },
   {
@@ -206,7 +206,7 @@ export const defaultPreviaPostos = [
     "produto": "VIGILANTE CONDUTOR",
     "escala": "12x36",
     "valor_mensal": 17576.27,
-    "valor_dia": 585.876,
+    "valor_dia": 585.8756666666667,
     "escala_fixa": false
   },
   {
@@ -221,7 +221,7 @@ export const defaultPreviaPostos = [
     "produto": "VIGILANTE CONDUTOR",
     "escala": "12x36",
     "valor_mensal": 15446.61,
-    "valor_dia": 514.887,
+    "valor_dia": 514.8870000000001,
     "escala_fixa": false
   },
   {
@@ -236,7 +236,7 @@ export const defaultPreviaPostos = [
     "produto": "VIGILANTE CONDUTOR",
     "escala": "12x36",
     "valor_mensal": 17576.27,
-    "valor_dia": 585.876,
+    "valor_dia": 585.8756666666667,
     "escala_fixa": false
   },
   {
@@ -251,7 +251,7 @@ export const defaultPreviaPostos = [
     "produto": "VIGILANTE CONDUTOR",
     "escala": "12x36",
     "valor_mensal": 15446.61,
-    "valor_dia": 514.887,
+    "valor_dia": 514.8870000000001,
     "escala_fixa": false
   },
   {
@@ -266,7 +266,7 @@ export const defaultPreviaPostos = [
     "produto": "VIGILANTE CONDUTOR",
     "escala": "12x36",
     "valor_mensal": 17576.27,
-    "valor_dia": 585.876,
+    "valor_dia": 585.8756666666667,
     "escala_fixa": false
   },
   {
@@ -280,8 +280,8 @@ export const defaultPreviaPostos = [
     "empresa": "ACOFORTE",
     "produto": "VIGILANTE CONDUTOR",
     "escala": "12x36",
-    "valor_mensal": 16511.44,
-    "valor_dia": 550.381,
+    "valor_mensal": 15446.61,
+    "valor_dia": 514.8870000000001,
     "escala_fixa": false
   },
   {
@@ -295,8 +295,8 @@ export const defaultPreviaPostos = [
     "empresa": "ACOFORTE",
     "produto": "VIGILANTE CONDUTOR",
     "escala": "12x36",
-    "valor_mensal": 16511.44,
-    "valor_dia": 550.381,
+    "valor_mensal": 17576.27,
+    "valor_dia": 585.8756666666667,
     "escala_fixa": false
   },
   {
@@ -311,7 +311,7 @@ export const defaultPreviaPostos = [
     "produto": "VIGILANTE CONDUTOR",
     "escala": "12x36",
     "valor_mensal": 17576.27,
-    "valor_dia": 585.876,
+    "valor_dia": 585.8756666666667,
     "escala_fixa": false
   },
   {
@@ -326,7 +326,7 @@ export const defaultPreviaPostos = [
     "produto": "VIGILANTE CONDUTOR",
     "escala": "12x36",
     "valor_mensal": 15446.61,
-    "valor_dia": 514.887,
+    "valor_dia": 514.8870000000001,
     "escala_fixa": false
   },
   {
@@ -340,8 +340,8 @@ export const defaultPreviaPostos = [
     "empresa": "ACOFORTE",
     "produto": "VIGILANTE CONDUTOR",
     "escala": "12x36",
-    "valor_mensal": 16511.44,
-    "valor_dia": 550.381,
+    "valor_mensal": 15446.61,
+    "valor_dia": 514.8870000000001,
     "escala_fixa": false
   },
   {
@@ -355,8 +355,8 @@ export const defaultPreviaPostos = [
     "empresa": "ACOFORTE",
     "produto": "VIGILANTE CONDUTOR",
     "escala": "12x36",
-    "valor_mensal": 16511.44,
-    "valor_dia": 550.381,
+    "valor_mensal": 17576.27,
+    "valor_dia": 585.8756666666667,
     "escala_fixa": false
   },
   {
@@ -371,7 +371,7 @@ export const defaultPreviaPostos = [
     "produto": "VIGILANTE CONDUTOR",
     "escala": "12x36",
     "valor_mensal": 17576.27,
-    "valor_dia": 585.876,
+    "valor_dia": 585.8756666666667,
     "escala_fixa": false
   },
   {
@@ -386,7 +386,7 @@ export const defaultPreviaPostos = [
     "produto": "VIGILANTE CONDUTOR",
     "escala": "12x36",
     "valor_mensal": 15446.61,
-    "valor_dia": 514.887,
+    "valor_dia": 514.8870000000001,
     "escala_fixa": false
   },
   {
@@ -401,7 +401,7 @@ export const defaultPreviaPostos = [
     "produto": "VIGILANTE CONDUTOR",
     "escala": "12x36",
     "valor_mensal": 17576.27,
-    "valor_dia": 585.876,
+    "valor_dia": 585.8756666666667,
     "escala_fixa": false
   },
   {
@@ -416,7 +416,7 @@ export const defaultPreviaPostos = [
     "produto": "VIGILANTE CONDUTOR",
     "escala": "12x36",
     "valor_mensal": 15446.61,
-    "valor_dia": 514.887,
+    "valor_dia": 514.8870000000001,
     "escala_fixa": false
   },
   {
@@ -430,8 +430,8 @@ export const defaultPreviaPostos = [
     "empresa": "ACOFORTE",
     "produto": "VIGILANTE CONDUTOR",
     "escala": "12x36",
-    "valor_mensal": 16511.44,
-    "valor_dia": 550.381,
+    "valor_mensal": 15446.61,
+    "valor_dia": 514.8870000000001,
     "escala_fixa": false
   },
   {
@@ -445,8 +445,8 @@ export const defaultPreviaPostos = [
     "empresa": "ACOFORTE",
     "produto": "VIGILANTE CONDUTOR",
     "escala": "12x36",
-    "valor_mensal": 16511.44,
-    "valor_dia": 550.381,
+    "valor_mensal": 17576.27,
+    "valor_dia": 585.8756666666667,
     "escala_fixa": false
   },
   {
@@ -461,7 +461,7 @@ export const defaultPreviaPostos = [
     "produto": "VIGILANTE CONDUTOR",
     "escala": "12x36",
     "valor_mensal": 17576.27,
-    "valor_dia": 585.876,
+    "valor_dia": 585.8756666666667,
     "escala_fixa": false
   },
   {
@@ -476,7 +476,7 @@ export const defaultPreviaPostos = [
     "produto": "VIGILANTE CONDUTOR",
     "escala": "12x36",
     "valor_mensal": 17576.27,
-    "valor_dia": 585.876,
+    "valor_dia": 585.8756666666667,
     "escala_fixa": false
   },
   {
@@ -491,7 +491,7 @@ export const defaultPreviaPostos = [
     "produto": "VIGILANTE CONDUTOR",
     "escala": "12x36",
     "valor_mensal": 15446.61,
-    "valor_dia": 514.887,
+    "valor_dia": 514.8870000000001,
     "escala_fixa": false
   },
   {
@@ -506,7 +506,7 @@ export const defaultPreviaPostos = [
     "produto": "VIGILANTE CONDUTOR",
     "escala": "12x36",
     "valor_mensal": 17576.27,
-    "valor_dia": 585.876,
+    "valor_dia": 585.8756666666667,
     "escala_fixa": false
   },
   {
@@ -521,7 +521,7 @@ export const defaultPreviaPostos = [
     "produto": "VIGILANTE CONDUTOR",
     "escala": "12x36",
     "valor_mensal": 17576.27,
-    "valor_dia": 585.876,
+    "valor_dia": 585.8756666666667,
     "escala_fixa": false
   },
   {
@@ -536,7 +536,7 @@ export const defaultPreviaPostos = [
     "produto": "VIGILANTE CONDUTOR",
     "escala": "12x36",
     "valor_mensal": 15446.61,
-    "valor_dia": 514.887,
+    "valor_dia": 514.8870000000001,
     "escala_fixa": false
   },
   {
@@ -550,8 +550,8 @@ export const defaultPreviaPostos = [
     "empresa": "ACOFORTE",
     "produto": "VIGILANTE CONDUTOR",
     "escala": "12x36",
-    "valor_mensal": 16511.44,
-    "valor_dia": 550.381,
+    "valor_mensal": 15446.61,
+    "valor_dia": 514.8870000000001,
     "escala_fixa": false
   },
   {
@@ -565,8 +565,8 @@ export const defaultPreviaPostos = [
     "empresa": "ACOFORTE",
     "produto": "VIGILANTE CONDUTOR",
     "escala": "12x36",
-    "valor_mensal": 16511.44,
-    "valor_dia": 550.381,
+    "valor_mensal": 17576.27,
+    "valor_dia": 585.8756666666667,
     "escala_fixa": false
   },
   {
@@ -581,7 +581,7 @@ export const defaultPreviaPostos = [
     "produto": "VIGILANTE CONDUTOR",
     "escala": "12x36",
     "valor_mensal": 17576.27,
-    "valor_dia": 585.876,
+    "valor_dia": 585.8756666666667,
     "escala_fixa": false
   },
   {
@@ -596,7 +596,7 @@ export const defaultPreviaPostos = [
     "produto": "VIGILANTE CONDUTOR",
     "escala": "12x36",
     "valor_mensal": 15446.61,
-    "valor_dia": 514.887,
+    "valor_dia": 514.8870000000001,
     "escala_fixa": false
   },
   {
@@ -611,7 +611,7 @@ export const defaultPreviaPostos = [
     "produto": "VIGILANTE CONDUTOR",
     "escala": "12x36",
     "valor_mensal": 17576.27,
-    "valor_dia": 585.876,
+    "valor_dia": 585.8756666666667,
     "escala_fixa": false
   },
   {
@@ -625,8 +625,8 @@ export const defaultPreviaPostos = [
     "empresa": "ACOFORTE",
     "produto": "VIGILANTE CONDUTOR",
     "escala": "12x36",
-    "valor_mensal": 33022.87,
-    "valor_dia": 1100.762,
+    "valor_mensal": 15446.61,
+    "valor_dia": 514.8870000000001,
     "escala_fixa": false
   },
   {
@@ -640,8 +640,8 @@ export const defaultPreviaPostos = [
     "empresa": "ACOFORTE",
     "produto": "VIGILANTE CONDUTOR",
     "escala": "12x36",
-    "valor_mensal": 33022.87,
-    "valor_dia": 1100.762,
+    "valor_mensal": 17576.27,
+    "valor_dia": 585.8756666666667,
     "escala_fixa": false
   },
   {
@@ -655,8 +655,8 @@ export const defaultPreviaPostos = [
     "empresa": "ACOFORTE",
     "produto": "VIGILANTE CONDUTOR",
     "escala": "12x36",
-    "valor_mensal": 13029.75,
-    "valor_dia": 434.325,
+    "valor_mensal": 11551.68,
+    "valor_dia": 412.56,
     "escala_fixa": false
   },
   {
@@ -685,8 +685,8 @@ export const defaultPreviaPostos = [
     "empresa": "ACOFORTE",
     "produto": "VIGILANTE CONDUTOR",
     "escala": "12X36",
-    "valor_mensal": 16511.44,
-    "valor_dia": 550.381,
+    "valor_mensal": 15446.61,
+    "valor_dia": 514.8870000000001,
     "escala_fixa": false
   },
   {
@@ -700,8 +700,8 @@ export const defaultPreviaPostos = [
     "empresa": "ACOFORTE",
     "produto": "VIGILANTE CONDUTOR",
     "escala": "12X36",
-    "valor_mensal": 16511.44,
-    "valor_dia": 550.381,
+    "valor_mensal": 17576.27,
+    "valor_dia": 585.8756666666667,
     "escala_fixa": false
   },
   {
@@ -715,8 +715,8 @@ export const defaultPreviaPostos = [
     "empresa": "ACOFORTE",
     "produto": "VIGILANTE CONDUTOR",
     "escala": "12X36",
-    "valor_mensal": 16511.44,
-    "valor_dia": 550.381,
+    "valor_mensal": 15446.61,
+    "valor_dia": 514.8870000000001,
     "escala_fixa": false
   },
   {
@@ -730,8 +730,8 @@ export const defaultPreviaPostos = [
     "empresa": "ACOFORTE",
     "produto": "VIGILANTE CONDUTOR",
     "escala": "12X36",
-    "valor_mensal": 16511.44,
-    "valor_dia": 550.381,
+    "valor_mensal": 17576.27,
+    "valor_dia": 585.8756666666667,
     "escala_fixa": false
   },
   {
@@ -745,8 +745,8 @@ export const defaultPreviaPostos = [
     "empresa": "ACOFORTE",
     "produto": "VIGILANTE CONDUTOR",
     "escala": "12X36",
-    "valor_mensal": 16511.44,
-    "valor_dia": 550.381,
+    "valor_mensal": 15446.61,
+    "valor_dia": 514.8870000000001,
     "escala_fixa": false
   },
   {
@@ -760,8 +760,8 @@ export const defaultPreviaPostos = [
     "empresa": "ACOFORTE",
     "produto": "VIGILANTE CONDUTOR",
     "escala": "12X36",
-    "valor_mensal": 16511.44,
-    "valor_dia": 550.381,
+    "valor_mensal": 17576.27,
+    "valor_dia": 585.8756666666667,
     "escala_fixa": false
   },
   {
