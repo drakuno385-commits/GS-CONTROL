@@ -197,7 +197,7 @@ export default function Medicao({ rawPresencas = [], currentUser }) {
   const [filtroBusca, setFiltroBusca] = useState('');
   const [dataInicio, setDataInicio] = useState('');
   const [dataFim, setDataFim] = useState('');
-  const [tipoCobranca, setTipoCobranca] = useState('executado'); // 'executado' ou 'cheio'
+  const [tipoCobranca, setTipoCobranca] = useState('cheio'); // 'executado' ou 'cheio'
   const [diasMesCalculo, setDiasMesCalculo] = useState(31);
 
   // Modais
@@ -393,22 +393,33 @@ export default function Medicao({ rawPresencas = [], currentUser }) {
       
       const valorTotalReal = diasTrabalhados * valorDia;
       
-      // O contrato cheio considera todos os postos do ficha presença
-      // Se não houver presença para esse posto (ex: arquivo de 1 cliente só), não cobra nada
+      // O contrato cheio sempre considera o posto inteiro pelo cadastro, independente da ficha
       const isPresente = diasTrabalhados > 0;
-      const valorTotalCheio = isPresente ? (valorMensal / 30) * diasDoMes : 0;
-      const valorTotal = tipoCobranca === 'cheio' ? valorTotalCheio : valorTotalReal;
+      const valorTotalCheio = (valorMensal / 30) * diasDoMes;
       
-      const diasExibicao = tipoCobranca === 'cheio' ? (isPresente ? diasDoMes : 0) : diasTrabalhados;
+      const km = kmsData[key];
+      const totalKm = km ? km.km * km.valor_km : 0;
+      
+      const valorTotal = (tipoCobranca === 'cheio' ? valorTotalCheio : valorTotalReal) + totalKm;
+      
+      const diasExibicao = tipoCobranca === 'cheio' ? diasDoMes : diasTrabalhados;
       
       const diferenca = valorTotalReal - valorMensal;
+      
+      let status_divergencia = 'OK';
+      if (clientesNaFicha.has(parseInt(posto.codcli, 10)) && !isPresente) {
+        status_divergencia = 'FALTA_NA_FICHA';
+      }
 
       return {
         ...posto,
         dias_trabalhados: diasExibicao,
         dias_trabalhados_reais: diasTrabalhados,
         total_colaboradores: presInfo.colaboradores.size,
-        valor_total: valorTotal, // Valor que será exibido e totalizado
+        valor_total: valorTotal,
+        total_km: totalKm,
+        km_info: km,
+        status_divergencia,
         valor_total_real: valorTotalReal, // O valor executado independentemente do tipo de cobrança
         diferenca_mensal: diferenca,
         detalhes: presInfo.detalhes
