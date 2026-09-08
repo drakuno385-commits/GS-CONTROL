@@ -249,6 +249,8 @@ export default function Medicao({ rawPresencas = [], currentUser }) {
     }
     return {};
   });
+  const [showKmModal, setShowKmModal] = useState(false);
+  const [kmForm, setKmForm] = useState({ key: "", km: "", valor_km: "" });
 
   useEffect(() => {
     localStorage.setItem("medicao_kms_v1", JSON.stringify(kmsData));
