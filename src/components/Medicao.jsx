@@ -208,6 +208,13 @@ export default function Medicao({ rawPresencas = [], currentUser }) {
   const [editingPosto, setEditingPosto] = useState(null);
   const [isNovoPosto, setIsNovoPosto] = useState(false);
 
+  // Helper para gerar chave ÚNICA por posto (evita que editar um posto 12x36 afete um 5x2 no mesmo local)
+  const getItemKey = (item) => {
+    if (!item) return '';
+    if (item.id) return `id_${item.id}`;
+    return `${item.codcli}_${item.codpos}_${item.turno}_${item.escala || '12x36'}`;
+  };
+
   // Condutor Override
   const [condutorOverride, setCondutorOverride] = useState(() => {
     const saved = localStorage.getItem("medicao_condutor_v1");
@@ -234,7 +241,7 @@ export default function Medicao({ rawPresencas = [], currentUser }) {
     localStorage.setItem("medicao_dias_override_v1", JSON.stringify(diasOverride));
   }, [diasOverride]);
 
-  // KMs
+  // KM Rodados
   const [kmsData, setKmsData] = useState(() => {
     const saved = localStorage.getItem("medicao_kms_v1");
     if (saved) {
@@ -242,8 +249,6 @@ export default function Medicao({ rawPresencas = [], currentUser }) {
     }
     return {};
   });
-  const [showKmModal, setShowKmModal] = useState(false);
-  const [kmForm, setKmForm] = useState({ key: "", km: "", valor_km: "" });
 
   useEffect(() => {
     localStorage.setItem("medicao_kms_v1", JSON.stringify(kmsData));
@@ -276,10 +281,15 @@ export default function Medicao({ rawPresencas = [], currentUser }) {
     if (!horInicio && horInicio !== 0) return 'DIURNO';
     try {
       const hStr = horInicio.toString().trim();
-      const hNum = parseInt(hStr, 10);
-      if (isNaN(hNum) || hNum === 0) return 'DIURNO';
-      if (hNum >= 500 && hNum <= 1200) return 'DIURNO';
-      return 'NOTURNO';
+      let hora = 0;
+      if (hStr.includes(':')) {
+        hora = parseInt(hStr.split(':')[0], 10);
+      } else if (hStr.length <= 2) {
+        hora = parseInt(hStr, 10);
+      } else if (hStr.length === 4) {
+        hora = parseInt(hStr.substring(0, 2), 10);
+      }
+      return (hora >= 18 || hora < 5) ? 'NOTURNO' : 'DIURNO';
     } catch (e) {
       return 'DIURNO';
     }
@@ -422,8 +432,9 @@ export default function Medicao({ rawPresencas = [], currentUser }) {
     const postosBaseKeys = new Set(postosBase.map(p => `${p.codcli}_${p.codpos}_${p.turno}`));
 
     const resultado = postosBase.map(posto => {
-      const key = `${posto.codcli}_${posto.codpos}_${posto.turno}`;
-      const presInfo = mapaPresencas.get(key) || { count: 0, colaboradores: new Set(), detalhes: [] };
+      const keyGroup = `${posto.codcli}_${posto.codpos}_${posto.turno}`;
+      const itemKey = getItemKey(posto);
+      const presInfo = mapaPresencas.get(keyGroup) || { count: 0, colaboradores: new Set(), detalhes: [] };
 
       const diasTrabalhados = presInfo.count;
       const valorDia = Number(posto.valor_dia || 0);
@@ -431,7 +442,8 @@ export default function Medicao({ rawPresencas = [], currentUser }) {
       
       // Override de Condutor – só troca valor se o posto NÃO for condutor de origem
       const jaECondutor = (posto.produto || '').toUpperCase().includes('CONDUTOR');
-      if (condutorOverride[key] && !jaECondutor) {
+      const isCondutorOverride = condutorOverride[itemKey] !== undefined ? condutorOverride[itemKey] : condutorOverride[keyGroup];
+      if (isCondutorOverride && !jaECondutor) {
         let totpos = 1;
         if (posto.empresa === 'REGIONAL') {
           if (posto.turno === 'DIURNO') {
@@ -452,12 +464,12 @@ export default function Medicao({ rawPresencas = [], currentUser }) {
       // Cenário Real Executado: Cobra integralmente o mês se houver ao menos 1 presenca na ficha, para nao quebrar 12x36
       const isPresente = diasTrabalhados > 0;
       
-      const override = diasOverride[key];
+      const override = diasOverride[itemKey] !== undefined ? diasOverride[itemKey] : diasOverride[keyGroup];
       const diasCalculoCheio = override !== undefined ? override : diasDoMes;
       const valorTotalCheio = override !== undefined ? (valorMensal / 30) * override : (posto.escala_fixa ? valorMensal : (valorMensal / 30) * diasCalculoCheio);
       const valorTotalReal = isPresente ? valorTotalCheio : 0;
       
-      const km = kmsData[key];
+      const km = kmsData[itemKey] || kmsData[keyGroup];
       const totalKm = km ? km.km * km.valor_km : 0;
       
       const valorTotal = (tipoCobranca === 'cheio' ? valorTotalCheio : valorTotalReal) + totalKm;
@@ -473,6 +485,7 @@ export default function Medicao({ rawPresencas = [], currentUser }) {
 
       return {
         ...posto,
+        itemKey,
         dias_trabalhados: diasExibicao,
         dias_trabalhados_reais: diasTrabalhados,
         total_colaboradores: presInfo.colaboradores.size,
@@ -1439,30 +1452,36 @@ export default function Medicao({ rawPresencas = [], currentUser }) {
                       </span>
                     </td>
                     <td style={{ padding: '12px 14px', color: '#cbd5e1' }}>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                        <span>{condutorOverride[`${item.codcli}_${item.codpos}_${item.turno}`] ? 'VIGILANTE CONDUTOR' : (item.produto || '-')}</span>
-                        <label 
-                          onClick={(e) => e.stopPropagation()}
-                          style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', fontSize: '10px', color: condutorOverride[`${item.codcli}_${item.codpos}_${item.turno}`] ? '#10b981' : '#94a3b8' }}>
-                          <input 
-                            type="checkbox"
-                            checked={!!condutorOverride[`${item.codcli}_${item.codpos}_${item.turno}`]}
-                            onChange={(e) => {
-                              e.stopPropagation();
-                              const key = `${item.codcli}_${item.codpos}_${item.turno}`;
-                              if (e.target.checked) {
-                                setCondutorOverride({...condutorOverride, [key]: true});
-                              } else {
-                                const nw = {...condutorOverride};
-                                delete nw[key];
-                                setCondutorOverride(nw);
-                              }
-                            }}
-                            style={{ width: '12px', height: '12px', accentColor: '#10b981' }}
-                          />
-                          + CONDUTOR
-                        </label>
-                      </div>
+                      {(() => {
+                        const rowKey = item.itemKey || getItemKey(item);
+                        const isCond = !!(condutorOverride[rowKey] !== undefined ? condutorOverride[rowKey] : condutorOverride[`${item.codcli}_${item.codpos}_${item.turno}`]);
+                        return (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            <span>{isCond ? 'VIGILANTE CONDUTOR' : (item.produto || '-')}</span>
+                            <label 
+                              onClick={(e) => e.stopPropagation()}
+                              style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', fontSize: '10px', color: isCond ? '#10b981' : '#94a3b8' }}>
+                              <input 
+                                type="checkbox"
+                                checked={isCond}
+                                onChange={(e) => {
+                                  e.stopPropagation();
+                                  if (e.target.checked) {
+                                    setCondutorOverride({...condutorOverride, [rowKey]: true});
+                                  } else {
+                                    const nw = {...condutorOverride};
+                                    delete nw[rowKey];
+                                    delete nw[`${item.codcli}_${item.codpos}_${item.turno}`];
+                                    setCondutorOverride(nw);
+                                  }
+                                }}
+                                style={{ width: '12px', height: '12px', accentColor: '#10b981' }}
+                              />
+                              + CONDUTOR
+                            </label>
+                          </div>
+                        );
+                      })()}
                     </td>
                     <td style={{ padding: '12px 14px', textAlign: 'center', fontSize: '11px' }}>
                       {item.status_divergencia === 'FALTA_NA_FICHA' && (
@@ -1490,40 +1509,47 @@ export default function Medicao({ rawPresencas = [], currentUser }) {
                       {formatMoney(item.valor_dia)}
                     </td>
                     <td style={{ padding: '12px 14px', textAlign: 'center' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
-                        <span style={{ 
-                          display: 'inline-block',
-                          minWidth: '28px',
-                          padding: '2px 8px',
-                          borderRadius: '12px',
-                          fontWeight: 'bold',
-                          fontSize: '12px',
-                          background: item.dias_trabalhados > 0 ? (diasOverride[`${item.codcli}_${item.codpos}_${item.turno}`] !== undefined ? 'rgba(139, 92, 246, 0.15)' : 'rgba(16, 185, 129, 0.15)') : 'rgba(239, 68, 68, 0.1)',
-                          color: item.dias_trabalhados > 0 ? (diasOverride[`${item.codcli}_${item.codpos}_${item.turno}`] !== undefined ? '#a78bfa' : '#34d399') : '#f87171'
-                        }}>
-                          {item.dias_trabalhados}
-                        </span>
-                        <button 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            const key = `${item.codcli}_${item.codpos}_${item.turno}`;
-                            const val = window.prompt('Digite a quantidade de dias para cobrar deste posto (ou deixe em branco para resetar o padrão):', diasOverride[key] !== undefined ? diasOverride[key] : '');
-                            if (val !== null) {
-                              if (val.trim() === '') {
-                                const newOverrides = {...diasOverride};
-                                delete newOverrides[key];
-                                setDiasOverride(newOverrides);
-                              } else {
-                                setDiasOverride({...diasOverride, [key]: parseInt(val, 10) || 0});
-                              }
-                            }
-                          }}
-                          style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '2px' }}
-                          title="Editar Dias Cobrados Manualmente"
-                        >
-                          <Edit2 size={12} color="#94a3b8" />
-                        </button>
-                      </div>
+                      {(() => {
+                        const rowKey = item.itemKey || getItemKey(item);
+                        const hasOverride = diasOverride[rowKey] !== undefined || diasOverride[`${item.codcli}_${item.codpos}_${item.turno}`] !== undefined;
+                        const currentOverrideVal = diasOverride[rowKey] !== undefined ? diasOverride[rowKey] : diasOverride[`${item.codcli}_${item.codpos}_${item.turno}`];
+                        return (
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                            <span style={{ 
+                              display: 'inline-block',
+                              minWidth: '28px',
+                              padding: '2px 8px',
+                              borderRadius: '12px',
+                              fontWeight: 'bold',
+                              fontSize: '12px',
+                              background: item.dias_trabalhados > 0 ? (hasOverride ? 'rgba(139, 92, 246, 0.15)' : 'rgba(16, 185, 129, 0.15)') : 'rgba(239, 68, 68, 0.1)',
+                              color: item.dias_trabalhados > 0 ? (hasOverride ? '#a78bfa' : '#34d399') : '#f87171'
+                            }}>
+                              {item.dias_trabalhados}
+                            </span>
+                            <button 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const val = window.prompt('Digite a quantidade de dias para cobrar deste posto (ou deixe em branco para resetar o padrão):', currentOverrideVal !== undefined ? currentOverrideVal : '');
+                                if (val !== null) {
+                                  if (val.trim() === '') {
+                                    const newOverrides = {...diasOverride};
+                                    delete newOverrides[rowKey];
+                                    delete newOverrides[`${item.codcli}_${item.codpos}_${item.turno}`];
+                                    setDiasOverride(newOverrides);
+                                  } else {
+                                    setDiasOverride({...diasOverride, [rowKey]: parseInt(val, 10) || 0});
+                                  }
+                                }
+                              }}
+                              style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '2px' }}
+                              title="Editar Dias Cobrados Manualmente"
+                            >
+                              <Edit2 size={12} color="#94a3b8" />
+                            </button>
+                          </div>
+                        );
+                      })()}
                     </td>
                     <td style={{ padding: '12px 14px', textAlign: 'right', fontWeight: 'bold', color: item.valor_total > 0 ? '#60a5fa' : '#94a3b8', fontFamily: 'monospace' }}>
                       {formatMoney(item.valor_total)}
