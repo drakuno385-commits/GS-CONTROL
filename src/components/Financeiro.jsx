@@ -4,25 +4,46 @@ import {
   DollarSign, PlusCircle, Clock, CheckCircle2, XCircle, FileText, 
   Building, Calendar, CreditCard, Shield, AlertTriangle, Filter, 
   Search, Download, Trash2, Eye, MessageSquare, Check, X, ArrowUpRight,
-  TrendingUp, TrendingDown, Layers, Percent, Tag, RefreshCw
+  TrendingUp, TrendingDown, Layers, Percent, Tag, RefreshCw, Plus, Sparkles
 } from 'lucide-react';
 import { 
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, 
-  Tooltip, Legend, PieChart, Pie, Cell 
+  Tooltip, Legend, PieChart, Pie, Cell, ComposedChart, Line 
 } from 'recharts';
 
 const EMPRESAS = ['AÇOFORTE', 'BELLS', 'LGA', 'REGIONAL', 'LÓGICA'];
-const DEPARTAMENTOS = [
+
+const DEPARTAMENTOS_PADRAO = [
   'Operacional',
-  'RH / Pessoal',
-  'Frota & Logística',
-  'Comercial & Vendas',
-  'TI & Sistemas',
-  'Diretoria & Adm',
-  'Suprimentos & Compras',
-  'Jurídico & Financeiro'
+  'RH',
+  'Frota',
+  'Comercial',
+  'TI',
+  'Diretoria',
+  'Suprimentos',
+  'Financeiro',
+  'Jurídico'
 ];
-const BANCOS = ['Itaú', 'Bradesco', 'Banco do Brasil', 'Santander', 'Caixa Econômica', 'Pix / Caixinha'];
+
+const BANCOS_PADRAO = [
+  'Itaú',
+  'Bradesco',
+  'Banco do Brasil',
+  'Santander',
+  'Caixa Econômica',
+  'Pix / Caixinha'
+];
+
+const FORMAS_PAGAMENTO = [
+  'Boleto',
+  'Pix',
+  'Transferência / TED',
+  'Cartão de Crédito',
+  'Débito Automático',
+  'Cheque',
+  'Dinheiro / Caixinha'
+];
+
 const PRIORIDADES = [
   { value: 'BAIXA', label: 'Baixa', color: '#10b981', bg: 'rgba(16, 185, 129, 0.15)' },
   { value: 'MÉDIA', label: 'Média', color: '#3b82f6', bg: 'rgba(59, 130, 246, 0.15)' },
@@ -43,12 +64,29 @@ const formatDate = (dateStr) => {
   return dateStr;
 };
 
-// Dados Iniciais Exemplo para popular se o localStorage estiver vazio
+// Helper para calcular a data da última parcela
+const calcularUltimoVencimento = (vencimentoInicialStr, numParcelas) => {
+  if (!vencimentoInicialStr) return '-';
+  try {
+    const [y, m, d] = vencimentoInicialStr.split('-').map(Number);
+    const n = Math.max(1, parseInt(numParcelas, 10) || 1);
+    if (!y || !m || !d) return vencimentoInicialStr;
+
+    const data = new Date(y, m - 1 + (n - 1), d);
+    const dia = String(data.getDate()).padStart(2, '0');
+    const mes = String(data.getMonth() + 1).padStart(2, '0');
+    const ano = data.getFullYear();
+    return `${dia}/${mes}/${ano}`;
+  } catch (e) {
+    return vencimentoInicialStr;
+  }
+};
+
 const DESPESAS_INICIAIS = [
   {
     id: 'fin_1001',
     empresa: 'AÇOFORTE',
-    departamento: 'Frota & Logística',
+    departamento: 'Frota',
     nome: 'Combustível da Frota de Viaturas - Quinzena',
     valor: 28450.00,
     parcelas: 1,
@@ -56,6 +94,7 @@ const DESPESAS_INICIAIS = [
     temOP: true,
     numeroOP: 'OP-2026-8841',
     banco: 'Itaú',
+    formaPagamento: 'Boleto',
     prioridade: 'ALTA',
     observacao: 'Fatura de abastecimento dos veículos da regional RMSP.',
     status: 'AGUARDANDO_APROVACAO',
@@ -75,6 +114,7 @@ const DESPESAS_INICIAIS = [
     temOP: true,
     numeroOP: 'OP-2026-9012',
     banco: 'Bradesco',
+    formaPagamento: 'Transferência / TED',
     prioridade: 'CRÍTICA',
     observacao: 'Conserto de nobreaks e câmeras do posto Centro Operacional Gopouva.',
     status: 'AGUARDANDO_APROVACAO',
@@ -86,7 +126,7 @@ const DESPESAS_INICIAIS = [
   {
     id: 'fin_1003',
     empresa: 'REGIONAL',
-    departamento: 'RH / Pessoal',
+    departamento: 'RH',
     nome: 'Compra de Uniformes e EPIs para Vigilantes',
     valor: 45800.00,
     parcelas: 3,
@@ -94,6 +134,7 @@ const DESPESAS_INICIAIS = [
     temOP: false,
     numeroOP: '',
     banco: 'Banco do Brasil',
+    formaPagamento: 'Boleto',
     prioridade: 'MÉDIA',
     observacao: 'Lote de coturnos, coletes e jaquetas para os novos postos.',
     status: 'APROVADA',
@@ -105,7 +146,7 @@ const DESPESAS_INICIAIS = [
   {
     id: 'fin_1004',
     empresa: 'LGA',
-    departamento: 'TI & Sistemas',
+    departamento: 'TI',
     nome: 'Licenciamento de Software de Monitoramento e Nuvem',
     valor: 8900.00,
     parcelas: 1,
@@ -113,6 +154,7 @@ const DESPESAS_INICIAIS = [
     temOP: true,
     numeroOP: 'OP-2026-7734',
     banco: 'Santander',
+    formaPagamento: 'Pix',
     prioridade: 'BAIXA',
     observacao: 'Renovação anual de servidores de banco de dados.',
     status: 'APROVADA',
@@ -124,7 +166,7 @@ const DESPESAS_INICIAIS = [
   {
     id: 'fin_1005',
     empresa: 'LÓGICA',
-    departamento: 'Suprimentos & Compras',
+    departamento: 'Suprimentos',
     nome: 'Material de Escritório e Limpeza Geral',
     valor: 3450.00,
     parcelas: 1,
@@ -132,6 +174,7 @@ const DESPESAS_INICIAIS = [
     temOP: false,
     numeroOP: '',
     banco: 'Pix / Caixinha',
+    formaPagamento: 'Pix',
     prioridade: 'BAIXA',
     observacao: 'Abastecimento dos insumos do departamento administrativo.',
     status: 'RECUSADA',
@@ -143,7 +186,34 @@ const DESPESAS_INICIAIS = [
 ];
 
 export default function Financeiro({ currentUser }) {
-  // Estado Principal de Despesas (persistido no localStorage)
+  // Estado de Departamentos Customizados
+  const [departamentos, setDepartamentos] = useState(() => {
+    const saved = localStorage.getItem('acoweb_financeiro_deptos');
+    if (saved) {
+      try { return JSON.parse(saved); } catch(e){}
+    }
+    return DEPARTAMENTOS_PADRAO;
+  });
+
+  // Estado de Bancos Customizados
+  const [bancos, setBancos] = useState(() => {
+    const saved = localStorage.getItem('acoweb_financeiro_bancos');
+    if (saved) {
+      try { return JSON.parse(saved); } catch(e){}
+    }
+    return BANCOS_PADRAO;
+  });
+
+  // Salvar customizações de Departamentos e Bancos no localStorage
+  useEffect(() => {
+    localStorage.setItem('acoweb_financeiro_deptos', JSON.stringify(departamentos));
+  }, [departamentos]);
+
+  useEffect(() => {
+    localStorage.setItem('acoweb_financeiro_bancos', JSON.stringify(bancos));
+  }, [bancos]);
+
+  // Estado Principal de Despesas
   const [despesas, setDespesas] = useState(() => {
     const saved = localStorage.getItem('acoweb_financeiro_despesas_v1');
     if (saved) {
@@ -155,7 +225,7 @@ export default function Financeiro({ currentUser }) {
     return DESPESAS_INICIAIS;
   });
 
-  // Salvar alterações no localStorage
+  // Salvar despesas no localStorage
   useEffect(() => {
     try {
       localStorage.setItem('acoweb_financeiro_despesas_v1', JSON.stringify(despesas));
@@ -167,14 +237,22 @@ export default function Financeiro({ currentUser }) {
   // Aba Ativa ('nova', 'pendentes', 'aprovadas', 'recusadas', 'relatorio')
   const [activeTab, setActiveTab] = useState('pendentes');
 
-  // Filtros Globais da Tela
+  // Filtros Globais da Tabela
   const [filtroEmpresa, setFiltroEmpresa] = useState('');
   const [filtroDepartamento, setFiltroDepartamento] = useState('');
   const [filtroBusca, setFiltroBusca] = useState('');
-  const [filtroStatusPagamento, setFiltroStatusPagamento] = useState('TODOS'); // 'TODOS', 'PENDENTE_PAGAMENTO', 'PAGO'
+  const [filtroStatusPagamento, setFiltroStatusPagamento] = useState('TODOS');
+  const [filtroFormaPagamento, setFiltroFormaPagamento] = useState('');
+
+  // Modais de Cadastro Rápido de Novo Departamento e Novo Banco
+  const [showNovoDeptoModal, setShowNovoDeptoModal] = useState(false);
+  const [novoDeptoInput, setNovoDeptoInput] = useState('');
+
+  const [showNovoBancoModal, setShowNovoBancoModal] = useState(false);
+  const [novoBancoInput, setNovoBancoInput] = useState('');
 
   // Modal de Aprovação / Reprovação
-  const [modalAprovacao, setModalAprovacao] = useState(null); // { despesa, acao: 'APROVAR' | 'REPROVAR' }
+  const [modalAprovacao, setModalAprovacao] = useState(null);
   const [obsAprovacaoInput, setObsAprovacaoInput] = useState('');
 
   // Formulário de Nova Despesa
@@ -188,9 +266,40 @@ export default function Financeiro({ currentUser }) {
     temOP: false,
     numeroOP: '',
     banco: 'Itaú',
+    formaPagamento: 'Boleto',
     prioridade: 'MÉDIA',
     observacao: ''
   });
+
+  // Adicionar Novo Departamento Rápido
+  const handleAdicionarDepto = (e) => {
+    e.preventDefault();
+    const nome = novoDeptoInput.trim();
+    if (!nome) return;
+    if (departamentos.some(d => d.toLowerCase() === nome.toLowerCase())) {
+      alert('Este departamento já existe na lista.');
+      return;
+    }
+    setDepartamentos(prev => [...prev, nome]);
+    setFormNovaDespesa(prev => ({ ...prev, departamento: nome }));
+    setNovoDeptoInput('');
+    setShowNovoDeptoModal(false);
+  };
+
+  // Adicionar Novo Banco Rápido
+  const handleAdicionarBanco = (e) => {
+    e.preventDefault();
+    const nome = novoBancoInput.trim();
+    if (!nome) return;
+    if (bancos.some(b => b.toLowerCase() === nome.toLowerCase())) {
+      alert('Este banco já existe na lista.');
+      return;
+    }
+    setBancos(prev => [...prev, nome]);
+    setFormNovaDespesa(prev => ({ ...prev, banco: nome }));
+    setNovoBancoInput('');
+    setShowNovoBancoModal(false);
+  };
 
   // Handler de envio do formulário de nova despesa
   const handleCadastrarDespesa = (e) => {
@@ -199,17 +308,20 @@ export default function Financeiro({ currentUser }) {
     if (!formNovaDespesa.valor || Number(formNovaDespesa.valor) <= 0) return alert('Por favor, informe um valor válido para a despesa.');
     if (formNovaDespesa.temOP && !formNovaDespesa.numeroOP.trim()) return alert('Por favor, informe o Número da OP.');
 
+    const numParc = Math.max(1, parseInt(formNovaDespesa.parcelas, 10) || 1);
+
     const nova = {
       id: `fin_${Date.now()}_${Math.floor(Math.random()*1000)}`,
       empresa: formNovaDespesa.empresa,
       departamento: formNovaDespesa.departamento,
       nome: formNovaDespesa.nome.trim(),
       valor: parseFloat(formNovaDespesa.valor) || 0,
-      parcelas: parseInt(formNovaDespesa.parcelas, 10) || 1,
+      parcelas: numParc,
       vencimento: formNovaDespesa.vencimento,
       temOP: formNovaDespesa.temOP,
       numeroOP: formNovaDespesa.temOP ? formNovaDespesa.numeroOP.trim() : '',
       banco: formNovaDespesa.banco,
+      formaPagamento: formNovaDespesa.formaPagamento,
       prioridade: formNovaDespesa.prioridade,
       observacao: formNovaDespesa.observacao.trim(),
       status: 'AGUARDANDO_APROVACAO',
@@ -225,14 +337,15 @@ export default function Financeiro({ currentUser }) {
     // Resetar formulário
     setFormNovaDespesa({
       empresa: 'AÇOFORTE',
-      departamento: 'Operacional',
+      departamento: departamentos[0] || 'Operacional',
       nome: '',
       valor: '',
       parcelas: '1',
       vencimento: new Date().toISOString().slice(0, 10),
       temOP: false,
       numeroOP: '',
-      banco: 'Itaú',
+      banco: bancos[0] || 'Itaú',
+      formaPagamento: 'Boleto',
       prioridade: 'MÉDIA',
       observacao: ''
     });
@@ -284,7 +397,7 @@ export default function Financeiro({ currentUser }) {
     }
   };
 
-  // Contadores e Totais das Abas
+  // Estatísticas Globais das Abas
   const estatisticas = useMemo(() => {
     const pendentes = despesas.filter(d => d.status === 'AGUARDANDO_APROVACAO');
     const aprovadas = despesas.filter(d => d.status === 'APROVADA');
@@ -318,41 +431,39 @@ export default function Financeiro({ currentUser }) {
   // Lista Filtrada para a Aba Ativa
   const listaExibicao = useMemo(() => {
     return despesas.filter(d => {
-      // Filtro de Aba
       if (activeTab === 'pendentes' && d.status !== 'AGUARDANDO_APROVACAO') return false;
       if (activeTab === 'aprovadas' && d.status !== 'APROVADA') return false;
       if (activeTab === 'recusadas' && d.status !== 'RECUSADA') return false;
 
-      // Filtro de Status de Pagamento (na aba aprovadas)
       if (activeTab === 'aprovadas' && filtroStatusPagamento !== 'TODOS') {
         if (d.statusPagamento !== filtroStatusPagamento) return false;
       }
 
-      // Filtro Empresa
       if (filtroEmpresa && d.empresa !== filtroEmpresa) return false;
-      // Filtro Departamento
       if (filtroDepartamento && d.departamento !== filtroDepartamento) return false;
-      // Filtro Busca Textual
+      if (filtroFormaPagamento && d.formaPagamento !== filtroFormaPagamento) return false;
+      
       if (filtroBusca) {
         const term = filtroBusca.toLowerCase();
         const matchNome = (d.nome || '').toLowerCase().includes(term);
         const matchOP = (d.numeroOP || '').toLowerCase().includes(term);
         const matchObs = (d.observacao || '').toLowerCase().includes(term);
         const matchEmpresa = (d.empresa || '').toLowerCase().includes(term);
-        if (!matchNome && !matchOP && !matchObs && !matchEmpresa) return false;
+        const matchDepto = (d.departamento || '').toLowerCase().includes(term);
+        if (!matchNome && !matchOP && !matchObs && !matchEmpresa && !matchDepto) return false;
       }
 
       return true;
     });
-  }, [despesas, activeTab, filtroEmpresa, filtroDepartamento, filtroBusca, filtroStatusPagamento]);
+  }, [despesas, activeTab, filtroEmpresa, filtroDepartamento, filtroFormaPagamento, filtroBusca, filtroStatusPagamento]);
 
-  // Dados para o Relatório Mensal Comparativo
+  // Relatório Mensal Comparativo
   const dadosRelatorioMensal = useMemo(() => {
     const mapMeses = {};
 
     despesas.forEach(d => {
-      if (d.status !== 'APROVADA') return; // Considera aprovadas
-      const mesChave = (d.vencimento || d.dataCriacao || '').substring(0, 7); // YYYY-MM
+      if (d.status !== 'APROVADA') return;
+      const mesChave = (d.vencimento || d.dataCriacao || '').substring(0, 7);
       if (!mesChave) return;
 
       if (!mapMeses[mesChave]) {
@@ -383,26 +494,61 @@ export default function Financeiro({ currentUser }) {
       mapEmpresa[emp].total += d.valor;
     });
 
+    // Totais por Departamento
+    const mapDepto = {};
+    departamentos.forEach(dep => { mapDepto[dep] = { departamento: dep, pago: 0, pendente: 0, total: 0 }; });
+
+    despesas.forEach(d => {
+      if (d.status !== 'APROVADA') return;
+      const dep = d.departamento || 'OUTROS';
+      if (!mapDepto[dep]) mapDepto[dep] = { departamento: dep, pago: 0, pendente: 0, total: 0 };
+
+      if (d.statusPagamento === 'PAGO') mapDepto[dep].pago += d.valor;
+      else mapDepto[dep].pendente += d.valor;
+      mapDepto[dep].total += d.valor;
+    });
+
     return {
       meses: listaMeses,
-      empresas: Object.values(mapEmpresa)
+      empresas: Object.values(mapEmpresa),
+      departamentos: Object.values(mapDepto).filter(d => d.total > 0)
     };
-  }, [despesas]);
+  }, [despesas, departamentos]);
 
-  // Exportar CSV da aba ativa
-  const exportarCSV = () => {
-    const headers = ['ID', 'Empresa', 'Departamento', 'Nome Despesa', 'Valor (R$)', 'Parcelas', 'Vencimento', 'Tem OP', 'Num OP', 'Banco', 'Prioridade', 'Status Aprovação', 'Status Pagamento', 'Data Pagamento', 'Obs Cadastro', 'Obs Análise'];
-    const rows = listaExibicao.map(item => [
+  // Função Geradora de CSV por Filtro Específico
+  const exportarCSVGenerico = (filtroTipo) => {
+    let dadosFiltrados = despesas;
+    let nomeArquivo = 'relatorio_financeiro';
+
+    if (filtroTipo === 'PAGAS') {
+      dadosFiltrados = despesas.filter(d => d.status === 'APROVADA' && d.statusPagamento === 'PAGO');
+      nomeArquivo = 'despesas_pagas_quitadas';
+    } else if (filtroTipo === 'PENDENTES_PAGAMENTO') {
+      dadosFiltrados = despesas.filter(d => d.status === 'APROVADA' && d.statusPagamento === 'PENDENTE_PAGAMENTO');
+      nomeArquivo = 'despesas_pendentes_pagamento';
+    } else if (filtroTipo === 'AGUARDANDO_APROVACAO') {
+      dadosFiltrados = despesas.filter(d => d.status === 'AGUARDANDO_APROVACAO');
+      nomeArquivo = 'despesas_aguardando_aprovacao';
+    } else if (filtroTipo === 'RECUSADAS') {
+      dadosFiltrados = despesas.filter(d => d.status === 'RECUSADA');
+      nomeArquivo = 'despesas_recusadas';
+    }
+
+    const headers = ['ID', 'Empresa', 'Departamento', 'Descrição Despesa', 'Valor (R$)', 'Parcelas', 'Vencimento', 'Último Vencimento Est.', 'Tem OP', 'Num OP', 'Banco', 'Forma Pagamento', 'Prioridade', 'Status Aprovação', 'Status Pagamento', 'Data Pagamento', 'Obs Cadastro', 'Obs Análise'];
+    
+    const rows = dadosFiltrados.map(item => [
       item.id,
-      `"${item.empresa}"`,
-      `"${item.departamento}"`,
-      `"${item.nome}"`,
+      `"${item.empresa || ''}"`,
+      `"${item.departamento || ''}"`,
+      `"${item.nome || ''}"`,
       item.valor.toFixed(2),
       item.parcelas,
       item.vencimento,
+      calcularUltimoVencimento(item.vencimento, item.parcelas),
       item.temOP ? 'SIM' : 'NÃO',
       `"${item.numeroOP || ''}"`,
-      `"${item.banco}"`,
+      `"${item.banco || ''}"`,
+      `"${item.formaPagamento || ''}"`,
       item.prioridade,
       item.status,
       item.statusPagamento,
@@ -415,7 +561,7 @@ export default function Financeiro({ currentUser }) {
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
     link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `financeiro_despesas_${activeTab}_${new Date().toISOString().slice(0, 10)}.csv`);
+    link.setAttribute('download', `${nomeArquivo}_${new Date().toISOString().slice(0, 10)}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -424,7 +570,7 @@ export default function Financeiro({ currentUser }) {
   return (
     <div style={{ color: '#f8fafc', padding: '24px', maxWidth: '1600px', margin: '0 auto', fontFamily: 'Inter, system-ui, sans-serif' }}>
       
-      {/* CABEÇALHO DA TELA FINANCEIRO */}
+      {/* CABEÇALHO PRINCIPAL DA TELA FINANCEIRO */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -433,10 +579,10 @@ export default function Financeiro({ currentUser }) {
             </div>
             <div>
               <h1 style={{ fontSize: '24px', fontWeight: 800, color: '#f8fafc', letterSpacing: '-0.02em', margin: 0 }}>
-                Módulo Financeiro & Contas a Pagar
+                Módulo Financeiro & Fluxo de Caixa
               </h1>
               <p style={{ fontSize: '13px', color: '#94a3b8', margin: '2px 0 0 0' }}>
-                Gestão de despesas, fluxo de aprovação e relatório de quitação das empresas do grupo
+                Acompanhamento de despesas das empresas: <strong>AÇOFORTE, BELLS, LGA, REGIONAL e LÓGICA</strong>
               </p>
             </div>
           </div>
@@ -640,7 +786,7 @@ export default function Financeiro({ currentUser }) {
 
       {/* ABA 1: FORMULÁRIO DE NOVO LANÇAMENTO */}
       {activeTab === 'nova' && (
-        <div style={{ background: 'rgba(30, 41, 59, 0.5)', padding: '28px', borderRadius: '16px', border: '1px solid rgba(255, 255, 255, 0.08)', maxWidth: '900px', margin: '0 auto' }}>
+        <div style={{ background: 'rgba(30, 41, 59, 0.5)', padding: '28px', borderRadius: '16px', border: '1px solid rgba(255, 255, 255, 0.08)', maxWidth: '950px', margin: '0 auto' }}>
           <h2 style={{ fontSize: '18px', fontWeight: 700, color: '#f8fafc', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
             <PlusCircle size={20} color="#a78bfa" />
             Cadastrar Nova Despesa
@@ -656,24 +802,34 @@ export default function Financeiro({ currentUser }) {
               <select
                 value={formNovaDespesa.empresa}
                 onChange={(e) => setFormNovaDespesa({ ...formNovaDespesa, empresa: e.target.value })}
-                style={{ width: '100%', padding: '10px 14px', background: '#0f172a', border: '1px solid #334155', borderRadius: '8px', color: '#fff', fontSize: '13px', fontWeight: 600 }}
+                style={{ width: '100%', padding: '10px 14px', background: '#0f172a', border: '1px solid #334155', borderRadius: '8px', color: '#fff', fontSize: '13px', fontWeight: 700 }}
               >
                 {EMPRESAS.map(emp => <option key={emp} value={emp}>{emp}</option>)}
               </select>
             </div>
 
-            {/* Departamento */}
+            {/* Departamento com Botão + */}
             <div>
               <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#94a3b8', marginBottom: '6px' }}>
-                Departamento *
+                Departamento (Único por Seleção) *
               </label>
-              <select
-                value={formNovaDespesa.departamento}
-                onChange={(e) => setFormNovaDespesa({ ...formNovaDespesa, departamento: e.target.value })}
-                style={{ width: '100%', padding: '10px 14px', background: '#0f172a', border: '1px solid #334155', borderRadius: '8px', color: '#fff', fontSize: '13px' }}
-              >
-                {DEPARTAMENTOS.map(dep => <option key={dep} value={dep}>{dep}</option>)}
-              </select>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <select
+                  value={formNovaDespesa.departamento}
+                  onChange={(e) => setFormNovaDespesa({ ...formNovaDespesa, departamento: e.target.value })}
+                  style={{ width: '100%', padding: '10px 14px', background: '#0f172a', border: '1px solid #334155', borderRadius: '8px', color: '#fff', fontSize: '13px' }}
+                >
+                  {departamentos.map(dep => <option key={dep} value={dep}>{dep}</option>)}
+                </select>
+                <button
+                  type="button"
+                  onClick={() => setShowNovoDeptoModal(true)}
+                  style={{ padding: '10px 12px', background: 'rgba(59, 130, 246, 0.2)', color: '#60a5fa', border: '1px solid rgba(59, 130, 246, 0.4)', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  title="Cadastrar Novo Departamento"
+                >
+                  <Plus size={18} />
+                </button>
+              </div>
             </div>
 
             {/* Nome / Descrição da Despesa */}
@@ -683,7 +839,7 @@ export default function Financeiro({ currentUser }) {
               </label>
               <input
                 type="text"
-                placeholder="Ex: Aquisição de Combustível da Frota - Quinzena Setembro"
+                placeholder="Ex: Abastecimento de Frota de Viaturas - Quinzena Setembro"
                 value={formNovaDespesa.nome}
                 onChange={(e) => setFormNovaDespesa({ ...formNovaDespesa, nome: e.target.value })}
                 style={{ width: '100%', padding: '10px 14px', background: '#0f172a', border: '1px solid #334155', borderRadius: '8px', color: '#fff', fontSize: '13px' }}
@@ -706,24 +862,25 @@ export default function Financeiro({ currentUser }) {
               />
             </div>
 
-            {/* Parcelas */}
+            {/* Parcelas Manuais */}
             <div>
               <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#94a3b8', marginBottom: '6px' }}>
-                Número de Parcelas *
+                Quantidade de Parcelas (Manual) *
               </label>
-              <select
+              <input
+                type="number"
+                min="1"
+                max="120"
                 value={formNovaDespesa.parcelas}
                 onChange={(e) => setFormNovaDespesa({ ...formNovaDespesa, parcelas: e.target.value })}
-                style={{ width: '100%', padding: '10px 14px', background: '#0f172a', border: '1px solid #334155', borderRadius: '8px', color: '#fff', fontSize: '13px' }}
-              >
-                {[1,2,3,4,5,6,10,12,24,36].map(n => <option key={n} value={n}>{n}x</option>)}
-              </select>
+                style={{ width: '100%', padding: '10px 14px', background: '#0f172a', border: '1px solid #334155', borderRadius: '8px', color: '#fff', fontSize: '14px', fontWeight: 700 }}
+              />
             </div>
 
-            {/* Data de Vencimento */}
+            {/* Vencimento Inicial + Cálculo do Último Mês */}
             <div>
               <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#94a3b8', marginBottom: '6px' }}>
-                Data de Vencimento *
+                Data de Vencimento da 1ª Parcela *
               </label>
               <input
                 type="date"
@@ -731,19 +888,51 @@ export default function Financeiro({ currentUser }) {
                 onChange={(e) => setFormNovaDespesa({ ...formNovaDespesa, vencimento: e.target.value })}
                 style={{ width: '100%', padding: '10px 14px', background: '#0f172a', border: '1px solid #334155', borderRadius: '8px', color: '#fff', fontSize: '13px', colorScheme: 'dark' }}
               />
+              
+              {/* Badge Dinâmica da Última Parcela */}
+              {Number(formNovaDespesa.parcelas) > 1 && (
+                <div style={{ marginTop: '6px', fontSize: '11px', color: '#a78bfa', background: 'rgba(139, 92, 246, 0.15)', padding: '4px 8px', borderRadius: '6px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                  <Calendar size={12} />
+                  <span>Última Parcela em: <strong>{calcularUltimoVencimento(formNovaDespesa.vencimento, formNovaDespesa.parcelas)}</strong></span>
+                </div>
+              )}
             </div>
 
-            {/* Banco Pagador */}
+            {/* Banco Pagador com Botão + */}
             <div>
               <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#94a3b8', marginBottom: '6px' }}>
                 Banco Pagador *
               </label>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <select
+                  value={formNovaDespesa.banco}
+                  onChange={(e) => setFormNovaDespesa({ ...formNovaDespesa, banco: e.target.value })}
+                  style={{ width: '100%', padding: '10px 14px', background: '#0f172a', border: '1px solid #334155', borderRadius: '8px', color: '#fff', fontSize: '13px' }}
+                >
+                  {bancos.map(b => <option key={b} value={b}>{b}</option>)}
+                </select>
+                <button
+                  type="button"
+                  onClick={() => setShowNovoBancoModal(true)}
+                  style={{ padding: '10px 12px', background: 'rgba(59, 130, 246, 0.2)', color: '#60a5fa', border: '1px solid rgba(59, 130, 246, 0.4)', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  title="Cadastrar Novo Banco"
+                >
+                  <Plus size={18} />
+                </button>
+              </div>
+            </div>
+
+            {/* Forma de Pagamento */}
+            <div>
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#94a3b8', marginBottom: '6px' }}>
+                Forma de Pagamento *
+              </label>
               <select
-                value={formNovaDespesa.banco}
-                onChange={(e) => setFormNovaDespesa({ ...formNovaDespesa, banco: e.target.value })}
-                style={{ width: '100%', padding: '10px 14px', background: '#0f172a', border: '1px solid #334155', borderRadius: '8px', color: '#fff', fontSize: '13px' }}
+                value={formNovaDespesa.formaPagamento}
+                onChange={(e) => setFormNovaDespesa({ ...formNovaDespesa, formaPagamento: e.target.value })}
+                style={{ width: '100%', padding: '10px 14px', background: '#0f172a', border: '1px solid #334155', borderRadius: '8px', color: '#fff', fontSize: '13px', fontWeight: 600 }}
               >
-                {BANCOS.map(b => <option key={b} value={b}>{b}</option>)}
+                {FORMAS_PAGAMENTO.map(fp => <option key={fp} value={fp}>{fp}</option>)}
               </select>
             </div>
 
@@ -850,7 +1039,7 @@ export default function Financeiro({ currentUser }) {
             <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
               
               {/* Campo Busca */}
-              <div style={{ position: 'relative', minWidth: '200px' }}>
+              <div style={{ position: 'relative', minWidth: '180px' }}>
                 <Search size={14} color="#94a3b8" style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)' }} />
                 <input 
                   type="text"
@@ -878,7 +1067,17 @@ export default function Financeiro({ currentUser }) {
                 style={{ padding: '8px 12px', background: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '8px', color: '#f8fafc', fontSize: '12px' }}
               >
                 <option value="">Todos os Departamentos</option>
-                {DEPARTAMENTOS.map(d => <option key={d} value={d}>{d}</option>)}
+                {departamentos.map(d => <option key={d} value={d}>{d}</option>)}
+              </select>
+
+              {/* Filtro Forma de Pagamento */}
+              <select
+                value={filtroFormaPagamento}
+                onChange={(e) => setFiltroFormaPagamento(e.target.value)}
+                style={{ padding: '8px 12px', background: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '8px', color: '#f8fafc', fontSize: '12px' }}
+              >
+                <option value="">Todas as Formas Pagto</option>
+                {FORMAS_PAGAMENTO.map(fp => <option key={fp} value={fp}>{fp}</option>)}
               </select>
 
               {/* Filtro Status Pagamento (Apenas na aba Aprovadas) */}
@@ -894,9 +1093,9 @@ export default function Financeiro({ currentUser }) {
                 </select>
               )}
 
-              {/* Exportar CSV */}
+              {/* Exportar CSV da Lista Atual */}
               <button
-                onClick={exportarCSV}
+                onClick={() => exportarCSVGenerico(activeTab === 'pendentes' ? 'AGUARDANDO_APROVACAO' : (activeTab === 'aprovadas' ? 'PAGAS' : 'RECUSADAS'))}
                 style={{ padding: '8px 12px', background: 'rgba(51, 65, 85, 0.6)', color: '#cbd5e1', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', fontSize: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
               >
                 <Download size={14} /> CSV
@@ -921,8 +1120,9 @@ export default function Financeiro({ currentUser }) {
                     <th style={{ padding: '12px 14px' }}>Departamento</th>
                     <th style={{ padding: '12px 14px' }}>Descrição da Despesa</th>
                     <th style={{ padding: '12px 14px', textAlign: 'right' }}>Valor (R$)</th>
-                    <th style={{ padding: '12px 14px' }}>OP / Banco</th>
-                    <th style={{ padding: '12px 14px' }}>Vencimento</th>
+                    <th style={{ padding: '12px 14px' }}>OP / Banco / Forma</th>
+                    <th style={{ padding: '12px 14px' }}>1ª Parcela</th>
+                    <th style={{ padding: '12px 14px' }}>Última Parcela</th>
                     
                     {activeTab === 'aprovadas' && (
                       <th style={{ padding: '12px 14px', textAlign: 'center' }}>Status Pagamento</th>
@@ -968,7 +1168,7 @@ export default function Financeiro({ currentUser }) {
                         </td>
 
                         {/* Descrição + Observação */}
-                        <td style={{ padding: '12px 14px', maxWidth: '320px' }}>
+                        <td style={{ padding: '12px 14px', maxWidth: '300px' }}>
                           <div style={{ fontWeight: 600, color: '#f8fafc' }}>{item.nome}</div>
                           {item.observacao && (
                             <div style={{ fontSize: '11px', color: '#64748b', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -988,11 +1188,11 @@ export default function Financeiro({ currentUser }) {
                             {formatMoney(item.valor)}
                           </div>
                           <div style={{ fontSize: '10px', color: '#64748b' }}>
-                            {item.parcelas > 1 ? `${item.parcelas}x parcelas` : 'À vista (1x)'}
+                            {item.parcelas > 1 ? `${item.parcelas}x parcelas` : '1x (À vista)'}
                           </div>
                         </td>
 
-                        {/* OP / Banco */}
+                        {/* OP / Banco / Forma Pagamento */}
                         <td style={{ padding: '12px 14px', fontSize: '11px' }}>
                           {item.temOP ? (
                             <span style={{ color: '#38bdf8', fontWeight: 600, display: 'block' }}>OP: {item.numeroOP}</span>
@@ -1000,11 +1200,19 @@ export default function Financeiro({ currentUser }) {
                             <span style={{ color: '#64748b', display: 'block' }}>Sem OP</span>
                           )}
                           <span style={{ color: '#cbd5e1' }}>{item.banco}</span>
+                          {item.formaPagamento && (
+                            <span style={{ color: '#a78bfa', display: 'block', fontSize: '10px' }}>• {item.formaPagamento}</span>
+                          )}
                         </td>
 
-                        {/* Vencimento */}
+                        {/* 1ª Parcela (Vencimento Inicial) */}
                         <td style={{ padding: '12px 14px', color: '#cbd5e1', fontSize: '12px' }}>
                           {formatDate(item.vencimento)}
+                        </td>
+
+                        {/* Última Parcela */}
+                        <td style={{ padding: '12px 14px', color: '#a78bfa', fontSize: '12px', fontWeight: 600 }}>
+                          {item.parcelas > 1 ? calcularUltimoVencimento(item.vencimento, item.parcelas) : '-'}
                         </td>
 
                         {/* Status Pagamento (Só na aba Aprovadas) */}
@@ -1015,7 +1223,6 @@ export default function Financeiro({ currentUser }) {
                               style={{
                                 padding: '6px 12px',
                                 borderRadius: '20px',
-                                border: 'none',
                                 fontSize: '11px',
                                 fontWeight: 700,
                                 cursor: 'pointer',
@@ -1024,7 +1231,7 @@ export default function Financeiro({ currentUser }) {
                                 color: item.statusPagamento === 'PAGO' ? '#34d399' : '#fbbf24',
                                 border: item.statusPagamento === 'PAGO' ? '1px solid rgba(16, 185, 129, 0.4)' : '1px solid rgba(245, 158, 11, 0.4)'
                               }}
-                              title="Clique para alterar status de pagamento"
+                              title="Clique para alternar o status de pagamento"
                             >
                               {item.statusPagamento === 'PAGO' ? '✓ PAGO' : '⏳ Pendente de Pagamento'}
                             </button>
@@ -1077,14 +1284,43 @@ export default function Financeiro({ currentUser }) {
         </div>
       )}
 
-      {/* ABA 5: RELATÓRIO MENSAL (PAGO VS PENDENTE) */}
+      {/* ABA 5: RELATÓRIO MENSAL E OPÇÕES DE EXPORTAÇÃO CSV DEDICADAS */}
       {activeTab === 'relatorio' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
           
+          {/* BARRA DE EXPORTAÇÃO CSV ESPECIAL */}
+          <div style={{ background: 'rgba(30, 41, 59, 0.5)', padding: '20px', borderRadius: '16px', border: '1px solid rgba(59, 130, 246, 0.2)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
+            <div>
+              <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#f8fafc', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Download size={20} color="#38bdf8" />
+                Exportação de Relatórios de Pagamentos em CSV
+              </h3>
+              <span style={{ fontSize: '12px', color: '#94a3b8' }}>
+                Baixe planilhas separadas de despesas pagas e contas pendentes
+              </span>
+            </div>
+
+            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+              <button
+                onClick={() => exportarCSVGenerico('PAGAS')}
+                style={{ padding: '10px 16px', background: 'rgba(16, 185, 129, 0.2)', color: '#34d399', border: '1px solid rgba(16, 185, 129, 0.4)', borderRadius: '10px', fontSize: '13px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
+              >
+                <CheckCircle2 size={16} /> Exportar Apenas PAGAS (CSV)
+              </button>
+
+              <button
+                onClick={() => exportarCSVGenerico('PENDENTES_PAGAMENTO')}
+                style={{ padding: '10px 16px', background: 'rgba(245, 158, 11, 0.2)', color: '#fbbf24', border: '1px solid rgba(245, 158, 11, 0.4)', borderRadius: '10px', fontSize: '13px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
+              >
+                <Clock size={16} /> Exportar Apenas PENDENTES (CSV)
+              </button>
+            </div>
+          </div>
+
           {/* Gráfico Comparativo Mês a Mês */}
           <div style={{ background: 'rgba(30, 41, 59, 0.5)', padding: '24px', borderRadius: '16px', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
             <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#f8fafc', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <BarChart size={18} color="#60a5fa" opacity={1} />
+              <BarChart size={18} color="#60a5fa" />
               Relatório Comparativo Mensal — Valor Pago vs Pendente
             </h3>
 
@@ -1103,44 +1339,127 @@ export default function Financeiro({ currentUser }) {
             </div>
           </div>
 
-          {/* Resumo Consolidado por Empresa */}
-          <div style={{ background: 'rgba(30, 41, 59, 0.5)', padding: '24px', borderRadius: '16px', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
-            <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#f8fafc', marginBottom: '16px' }}>
-              Consolidado por Empresa do Grupo
-            </h3>
-
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', textAlign: 'left' }}>
-                <thead>
-                  <tr style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.1)', color: '#94a3b8', fontSize: '11px', textTransform: 'uppercase' }}>
-                    <th style={{ padding: '12px 14px' }}>Empresa</th>
-                    <th style={{ padding: '12px 14px', textAlign: 'right' }}>Total Pago (R$)</th>
-                    <th style={{ padding: '12px 14px', textAlign: 'right' }}>Pendente Pagamento (R$)</th>
-                    <th style={{ padding: '12px 14px', textAlign: 'right' }}>Total Aprovado (R$)</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {dadosRelatorioMensal.empresas.map((emp, idx) => (
-                    <tr key={emp.empresa} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.04)', background: idx % 2 === 0 ? 'transparent' : 'rgba(255, 255, 255, 0.01)' }}>
-                      <td style={{ padding: '12px 14px', fontWeight: 700, color: '#f8fafc' }}>
-                        {emp.empresa}
-                      </td>
-                      <td style={{ padding: '12px 14px', textAlign: 'right', fontWeight: 700, color: '#34d399', fontFamily: 'monospace' }}>
-                        {formatMoney(emp.pago)}
-                      </td>
-                      <td style={{ padding: '12px 14px', textAlign: 'right', fontWeight: 700, color: '#fbbf24', fontFamily: 'monospace' }}>
-                        {formatMoney(emp.pendente)}
-                      </td>
-                      <td style={{ padding: '12px 14px', textAlign: 'right', fontWeight: 800, color: '#60a5fa', fontFamily: 'monospace' }}>
-                        {formatMoney(emp.total)}
-                      </td>
+          {/* Resumos Consolidados (Empresas & Departamentos) */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(480px, 1fr))', gap: '20px' }}>
+            
+            {/* Consolidado por Empresa */}
+            <div style={{ background: 'rgba(30, 41, 59, 0.5)', padding: '20px', borderRadius: '16px', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
+              <h3 style={{ fontSize: '15px', fontWeight: 700, color: '#f8fafc', marginBottom: '14px' }}>
+                Resumo por Empresa do Grupo
+              </h3>
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', textAlign: 'left' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.1)', color: '#94a3b8', fontSize: '10px', textTransform: 'uppercase' }}>
+                      <th style={{ padding: '8px 10px' }}>Empresa</th>
+                      <th style={{ padding: '8px 10px', textAlign: 'right' }}>Pago (R$)</th>
+                      <th style={{ padding: '8px 10px', textAlign: 'right' }}>Pendente (R$)</th>
+                      <th style={{ padding: '8px 10px', textAlign: 'right' }}>Total (R$)</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {dadosRelatorioMensal.empresas.map(emp => (
+                      <tr key={emp.empresa} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.04)' }}>
+                        <td style={{ padding: '8px 10px', fontWeight: 700, color: '#f8fafc' }}>{emp.empresa}</td>
+                        <td style={{ padding: '8px 10px', textAlign: 'right', color: '#34d399', fontWeight: 700 }}>{formatMoney(emp.pago)}</td>
+                        <td style={{ padding: '8px 10px', textAlign: 'right', color: '#fbbf24', fontWeight: 700 }}>{formatMoney(emp.pendente)}</td>
+                        <td style={{ padding: '8px 10px', textAlign: 'right', color: '#60a5fa', fontWeight: 800 }}>{formatMoney(emp.total)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
+
+            {/* Consolidado por Departamento */}
+            <div style={{ background: 'rgba(30, 41, 59, 0.5)', padding: '20px', borderRadius: '16px', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
+              <h3 style={{ fontSize: '15px', fontWeight: 700, color: '#f8fafc', marginBottom: '14px' }}>
+                Resumo por Departamento
+              </h3>
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', textAlign: 'left' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.1)', color: '#94a3b8', fontSize: '10px', textTransform: 'uppercase' }}>
+                      <th style={{ padding: '8px 10px' }}>Departamento</th>
+                      <th style={{ padding: '8px 10px', textAlign: 'right' }}>Pago (R$)</th>
+                      <th style={{ padding: '8px 10px', textAlign: 'right' }}>Pendente (R$)</th>
+                      <th style={{ padding: '8px 10px', textAlign: 'right' }}>Total (R$)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {dadosRelatorioMensal.departamentos.map(dep => (
+                      <tr key={dep.departamento} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.04)' }}>
+                        <td style={{ padding: '8px 10px', fontWeight: 700, color: '#f8fafc' }}>{dep.departamento}</td>
+                        <td style={{ padding: '8px 10px', textAlign: 'right', color: '#34d399', fontWeight: 700 }}>{formatMoney(dep.pago)}</td>
+                        <td style={{ padding: '8px 10px', textAlign: 'right', color: '#fbbf24', fontWeight: 700 }}>{formatMoney(dep.pendente)}</td>
+                        <td style={{ padding: '8px 10px', textAlign: 'right', color: '#60a5fa', fontWeight: 800 }}>{formatMoney(dep.total)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
           </div>
 
+        </div>
+      )}
+
+      {/* MODAL CADASTRAR NOVO DEPARTAMENTO (+) */}
+      {showNovoDeptoModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: '16px' }}>
+          <div style={{ background: '#0f172a', border: '1px solid #334155', borderRadius: '16px', padding: '24px', maxWidth: '400px', width: '100%' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#f8fafc', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Plus size={18} color="#60a5fa" />
+                Cadastrar Novo Departamento
+              </h3>
+              <button onClick={() => setShowNovoDeptoModal(false)} style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer' }}><X size={20} /></button>
+            </div>
+            <form onSubmit={handleAdicionarDepto}>
+              <input
+                type="text"
+                placeholder="Ex: Auditoria, Marketing, Engenharia..."
+                value={novoDeptoInput}
+                onChange={(e) => setNovoDeptoInput(e.target.value)}
+                style={{ width: '100%', padding: '10px', background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', color: '#fff', fontSize: '13px', marginBottom: '16px' }}
+                autoFocus
+              />
+              <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+                <button type="button" onClick={() => setShowNovoDeptoModal(false)} style={{ padding: '8px 14px', background: 'rgba(51, 65, 85, 0.6)', color: '#cbd5e1', border: 'none', borderRadius: '8px', fontSize: '12px' }}>Cancelar</button>
+                <button type="submit" style={{ padding: '8px 16px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '12px', fontWeight: 700 }}>Cadastrar</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL CADASTRAR NOVO BANCO (+) */}
+      {showNovoBancoModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: '16px' }}>
+          <div style={{ background: '#0f172a', border: '1px solid #334155', borderRadius: '16px', padding: '24px', maxWidth: '400px', width: '100%' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#f8fafc', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Plus size={18} color="#60a5fa" />
+                Cadastrar Novo Banco
+              </h3>
+              <button onClick={() => setShowNovoBancoModal(false)} style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer' }}><X size={20} /></button>
+            </div>
+            <form onSubmit={handleAdicionarBanco}>
+              <input
+                type="text"
+                placeholder="Ex: BTG Pactual, SBD, Safra, Sicoob..."
+                value={novoBancoInput}
+                onChange={(e) => setNovoBancoInput(e.target.value)}
+                style={{ width: '100%', padding: '10px', background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', color: '#fff', fontSize: '13px', marginBottom: '16px' }}
+                autoFocus
+              />
+              <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+                <button type="button" onClick={() => setShowNovoBancoModal(false)} style={{ padding: '8px 14px', background: 'rgba(51, 65, 85, 0.6)', color: '#cbd5e1', border: 'none', borderRadius: '8px', fontSize: '12px' }}>Cancelar</button>
+                <button type="submit" style={{ padding: '8px 16px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '12px', fontWeight: 700 }}>Cadastrar</button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
 
