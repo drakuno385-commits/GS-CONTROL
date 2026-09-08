@@ -184,48 +184,8 @@ export default function Medicao({ rawPresencas = [], currentUser }) {
     return defaultPreviaPostos;
   });
 
-  // Dados da Ficha de Presença carregada na tela de medição (ou herdada do global)
+  // Dados da Ficha de Presença (reimportada a cada uso, NÃO persiste)
   const [presencasLocais, setPresencasLocais] = useState([]);
-
-  // Carregar presencas do IndexedDB ao montar
-  useEffect(() => {
-    const openDB = () => {
-      return new Promise((resolve, reject) => {
-        const req = indexedDB.open("medicao_db", 1);
-        req.onupgradeneeded = () => { req.result.createObjectStore("presencas"); };
-        req.onsuccess = () => resolve(req.result);
-        req.onerror = () => reject(req.error);
-      });
-    };
-    openDB().then(db => {
-      const tx = db.transaction("presencas", "readonly");
-      const store = tx.objectStore("presencas");
-      const getReq = store.get("ficha_v1");
-      getReq.onsuccess = () => {
-        if (getReq.result && Array.isArray(getReq.result)) {
-          setPresencasLocais(getReq.result);
-        }
-      };
-    }).catch(() => {});
-  }, []);
-
-  // Salvar presencas no IndexedDB sempre que mudar
-  useEffect(() => {
-    if (presencasLocais.length === 0) return;
-    const openDB = () => {
-      return new Promise((resolve, reject) => {
-        const req = indexedDB.open("medicao_db", 1);
-        req.onupgradeneeded = () => { req.result.createObjectStore("presencas"); };
-        req.onsuccess = () => resolve(req.result);
-        req.onerror = () => reject(req.error);
-      });
-    };
-    openDB().then(db => {
-      const tx = db.transaction("presencas", "readwrite");
-      const store = tx.objectStore("presencas");
-      store.put(presencasLocais, "ficha_v1");
-    }).catch(e => console.warn("Erro ao salvar ficha no IndexedDB:", e));
-  }, [presencasLocais]);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadStats, setUploadStats] = useState(null);
 
@@ -289,9 +249,20 @@ export default function Medicao({ rawPresencas = [], currentUser }) {
     localStorage.setItem("medicao_kms_v1", JSON.stringify(kmsData));
   }, [kmsData]);
 
-  // Salvar base no localStorage
+  // Salvar base no localStorage (CRÍTICO - nunca pode perder)
   useEffect(() => {
-    localStorage.setItem('medicao_postos_db_v3', JSON.stringify(postosBase));
+    try {
+      const json = JSON.stringify(postosBase);
+      localStorage.setItem('medicao_postos_db_v3', json);
+      // Verificação: confirma que gravou corretamente
+      const check = localStorage.getItem('medicao_postos_db_v3');
+      if (!check || check.length < 10) {
+        console.error('ERRO CRÍTICO: Falha ao salvar cadastro de postos!');
+      }
+    } catch(e) {
+      console.error('ERRO CRÍTICO ao salvar cadastro de postos:', e);
+      alert('⚠️ ATENÇÃO: Não foi possível salvar as alterações do cadastro de postos. O armazenamento do navegador pode estar cheio. Limpe o cache e tente novamente.');
+    }
   }, [postosBase]);
 
   // Se o usuário já tiver presencas no estado global e não tiver subido local
