@@ -208,6 +208,19 @@ export default function Medicao({ rawPresencas = [], currentUser }) {
   const [editingPosto, setEditingPosto] = useState(null);
   const [isNovoPosto, setIsNovoPosto] = useState(false);
 
+  // Condutor Override
+  const [condutorOverride, setCondutorOverride] = useState(() => {
+    const saved = localStorage.getItem("medicao_condutor_v1");
+    if (saved) {
+      try { return JSON.parse(saved); } catch (e) { }
+    }
+    return {};
+  });
+
+  useEffect(() => {
+    localStorage.setItem("medicao_condutor_v1", JSON.stringify(condutorOverride));
+  }, [condutorOverride]);
+
   // Dias Override
   const [diasOverride, setDiasOverride] = useState(() => {
     const saved = localStorage.getItem("medicao_dias_override_v1");
@@ -403,7 +416,26 @@ export default function Medicao({ rawPresencas = [], currentUser }) {
 
       const diasTrabalhados = presInfo.count;
       const valorDia = Number(posto.valor_dia || 0);
-      const valorMensal = Number(posto.valor_mensal || 0);
+      let valorMensal = Number(posto.valor_mensal || 0);
+      
+      // Override de Condutor
+      if (condutorOverride[key]) {
+        let totpos = 1;
+        if (posto.empresa === 'REGIONAL') {
+          if (posto.turno === 'DIURNO') {
+             totpos = Math.round(valorMensal / 12792.15) || 1;
+             valorMensal = totpos * 15717.00;
+          } else {
+             totpos = Math.round(valorMensal / 14138.79) || 1;
+             valorMensal = totpos * 16661.57;
+          }
+        } else if (posto.empresa === 'ACOFORTE') {
+          if (posto.turno === 'DIURNO') valorMensal = 15446.61;
+          else valorMensal = 17576.27;
+        } else if (posto.empresa === 'BELLS') {
+          // Fallback se marcarem porteiro como condutor (improvável)
+        }
+      }
       
       // Cenário Real Executado: Cobra integralmente o mês se houver ao menos 1 presenca na ficha, para nao quebrar 12x36
       const isPresente = diasTrabalhados > 0;
@@ -1395,7 +1427,28 @@ export default function Medicao({ rawPresencas = [], currentUser }) {
                       </span>
                     </td>
                     <td style={{ padding: '12px 14px', color: '#cbd5e1' }}>
-                      {item.produto || '-'}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <span>{condutorOverride[`${item.codcli}_${item.codpos}_${item.turno}`] ? 'VIGILANTE CONDUTOR' : (item.produto || '-')}</span>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', fontSize: '10px', color: condutorOverride[`${item.codcli}_${item.codpos}_${item.turno}`] ? '#10b981' : '#94a3b8' }}>
+                          <input 
+                            type="checkbox"
+                            checked={!!condutorOverride[`${item.codcli}_${item.codpos}_${item.turno}`]}
+                            onChange={(e) => {
+                              e.stopPropagation();
+                              const key = `${item.codcli}_${item.codpos}_${item.turno}`;
+                              if (e.target.checked) {
+                                setCondutorOverride({...condutorOverride, [key]: true});
+                              } else {
+                                const nw = {...condutorOverride};
+                                delete nw[key];
+                                setCondutorOverride(nw);
+                              }
+                            }}
+                            style={{ width: '12px', height: '12px', accentColor: '#10b981' }}
+                          />
+                          + CONDUTOR
+                        </label>
+                      </div>
                     </td>
                     <td style={{ padding: '12px 14px', textAlign: 'center', fontSize: '11px' }}>
                       {item.status_divergencia === 'FALTA_NA_FICHA' && (
