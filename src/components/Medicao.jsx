@@ -432,8 +432,9 @@ export default function Medicao({ rawPresencas = [], currentUser }) {
       const valorDia = Number(posto.valor_dia || 0);
       let valorMensal = Number(posto.valor_mensal || 0);
       
-      // Override de Condutor
-      if (condutorOverride[key]) {
+      // Override de Condutor – só troca valor se o posto NÃO for condutor de origem
+      const jaECondutor = (posto.produto || '').toUpperCase().includes('CONDUTOR');
+      if (condutorOverride[key] && !jaECondutor) {
         let totpos = 1;
         if (posto.empresa === 'REGIONAL') {
           if (posto.turno === 'DIURNO') {
