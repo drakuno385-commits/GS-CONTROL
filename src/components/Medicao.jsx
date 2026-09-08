@@ -1429,7 +1429,9 @@ export default function Medicao({ rawPresencas = [], currentUser }) {
                     <td style={{ padding: '12px 14px', color: '#cbd5e1' }}>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                         <span>{condutorOverride[`${item.codcli}_${item.codpos}_${item.turno}`] ? 'VIGILANTE CONDUTOR' : (item.produto || '-')}</span>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', fontSize: '10px', color: condutorOverride[`${item.codcli}_${item.codpos}_${item.turno}`] ? '#10b981' : '#94a3b8' }}>
+                        <label 
+                          onClick={(e) => e.stopPropagation()}
+                          style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', fontSize: '10px', color: condutorOverride[`${item.codcli}_${item.codpos}_${item.turno}`] ? '#10b981' : '#94a3b8' }}>
                           <input 
                             type="checkbox"
                             checked={!!condutorOverride[`${item.codcli}_${item.codpos}_${item.turno}`]}
