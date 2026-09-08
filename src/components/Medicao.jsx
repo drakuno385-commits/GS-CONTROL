@@ -217,7 +217,7 @@ export default function Medicao({ rawPresencas = [], currentUser }) {
 
   // Condutor Override
   const [condutorOverride, setCondutorOverride] = useState(() => {
-    const saved = localStorage.getItem("medicao_condutor_v1");
+    const saved = localStorage.getItem("medicao_condutor_v2");
     if (saved) {
       try { return JSON.parse(saved); } catch (e) { }
     }
@@ -225,12 +225,12 @@ export default function Medicao({ rawPresencas = [], currentUser }) {
   });
 
   useEffect(() => {
-    localStorage.setItem("medicao_condutor_v1", JSON.stringify(condutorOverride));
+    localStorage.setItem("medicao_condutor_v2", JSON.stringify(condutorOverride));
   }, [condutorOverride]);
 
   // Dias Override
   const [diasOverride, setDiasOverride] = useState(() => {
-    const saved = localStorage.getItem("medicao_dias_override_v1");
+    const saved = localStorage.getItem("medicao_dias_override_v2");
     if (saved) {
       try { return JSON.parse(saved); } catch (e) { }
     }
@@ -238,12 +238,12 @@ export default function Medicao({ rawPresencas = [], currentUser }) {
   });
 
   useEffect(() => {
-    localStorage.setItem("medicao_dias_override_v1", JSON.stringify(diasOverride));
+    localStorage.setItem("medicao_dias_override_v2", JSON.stringify(diasOverride));
   }, [diasOverride]);
 
   // KM Rodados
   const [kmsData, setKmsData] = useState(() => {
-    const saved = localStorage.getItem("medicao_kms_v1");
+    const saved = localStorage.getItem("medicao_kms_v2");
     if (saved) {
       try { return JSON.parse(saved); } catch (e) { }
     }
@@ -253,7 +253,7 @@ export default function Medicao({ rawPresencas = [], currentUser }) {
   const [kmForm, setKmForm] = useState({ key: "", km: "", valor_km: "" });
 
   useEffect(() => {
-    localStorage.setItem("medicao_kms_v1", JSON.stringify(kmsData));
+    localStorage.setItem("medicao_kms_v2", JSON.stringify(kmsData));
   }, [kmsData]);
 
   // Salvar base no localStorage (CRÍTICO - nunca pode perder)
@@ -444,7 +444,7 @@ export default function Medicao({ rawPresencas = [], currentUser }) {
       
       // Override de Condutor – só troca valor se o posto NÃO for condutor de origem
       const jaECondutor = (posto.produto || '').toUpperCase().includes('CONDUTOR');
-      const isCondutorOverride = condutorOverride[itemKey] !== undefined ? condutorOverride[itemKey] : condutorOverride[keyGroup];
+      const isCondutorOverride = !!condutorOverride[itemKey];
       if (isCondutorOverride && !jaECondutor) {
         let totpos = 1;
         if (posto.empresa === 'REGIONAL') {
@@ -466,12 +466,17 @@ export default function Medicao({ rawPresencas = [], currentUser }) {
       // Cenário Real Executado: Cobra integralmente o mês se houver ao menos 1 presenca na ficha, para nao quebrar 12x36
       const isPresente = diasTrabalhados > 0;
       
-      const override = diasOverride[itemKey] !== undefined ? diasOverride[itemKey] : diasOverride[keyGroup];
-      const diasCalculoCheio = override !== undefined ? override : diasDoMes;
-      const valorTotalCheio = override !== undefined ? (valorMensal / 30) * override : (posto.escala_fixa ? valorMensal : (valorMensal / 30) * diasCalculoCheio);
+      const override = diasOverride[itemKey];
+      const diasCalculoCheio = override !== undefined ? override : (posto.escala === '5x2' || posto.escala_fixa ? 30 : diasDoMes);
+      
+      // Sem override manual, o contrato mensal é o valor exato contratado (sem multiplicador 31/30 indevido)
+      const valorTotalCheio = override !== undefined 
+        ? (valorMensal / 30) * override 
+        : valorMensal;
+
       const valorTotalReal = isPresente ? valorTotalCheio : 0;
       
-      const km = kmsData[itemKey] || kmsData[keyGroup];
+      const km = kmsData[itemKey];
       const totalKm = km ? km.km * km.valor_km : 0;
       
       const valorTotal = (tipoCobranca === 'cheio' ? valorTotalCheio : valorTotalReal) + totalKm;
