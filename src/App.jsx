@@ -14,6 +14,7 @@ import Monitoramento from './components/Monitoramento';
 import RelatorioVisitas from './components/RelatorioVisitas';
 import Usuarios from './components/Usuarios';
 import Medicao from './components/Medicao';
+import Financeiro from './components/Financeiro';
 import { ErrorBoundary } from './components/ErrorBoundary';
 
 const fixDatabaseAccents = (str) => {
@@ -92,7 +93,7 @@ const hasAccess = (user, screen) => {
   if (!user) return false;
   if (user.role === 'SUPERVISOR' && screen !== 'app_supervisor') return false;
   if (user.role === 'MASTER') return true;
-  if (screen === 'medicao') return true;
+  if (screen === 'medicao' || screen === 'financeiro') return true;
   if (!user.allowed_screens || user.allowed_screens.length === 0) return true;
   return user.allowed_screens.includes(screen);
 };
@@ -1639,6 +1640,12 @@ const App = () => {
                   <span>Medição de Serviços</span>
                 </a>
               )}
+              {hasAccess(currentUser, 'financeiro') && (
+                <a className={`nav-item ${activeMenu === 'financeiro' ? 'active' : ''}`} onClick={() => setActiveMenu('financeiro')}>
+                  <DollarSign size={20} />
+                  <span>Financeiro & DRE</span>
+                </a>
+              )}
               {hasAccess(currentUser, 'monitoramento') && (
                 <a className={`nav-item ${activeMenu === 'monitoramento' ? 'active' : ''}`} onClick={() => setActiveMenu('monitoramento')}>
                   <MapPin size={20} />
@@ -1656,19 +1663,49 @@ const App = () => {
           )}
         </nav>
         
-        <div style={{ marginTop: 'auto', paddingTop: '20px', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
-          <div style={{ padding: '0 16px', color: '#94a3b8', fontSize: '13px', marginBottom: '12px' }}>
-            Olá, <strong style={{color: '#fff'}}>{currentUser.username}</strong> ({currentUser.role})
+        {/* FOOTER USER / LOGOUT */}
+        <div style={{ padding: '16px', borderTop: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '8px', borderRadius: '10px', background: 'rgba(255,255,255,0.03)' }}>
+            <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', color: '#fff', fontSize: '14px' }}>
+              {(currentUser.nome || currentUser.login || 'U').substring(0, 2).toUpperCase()}
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
+              <span style={{ fontSize: '13px', fontWeight: 600, color: '#f8fafc', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {currentUser.nome || currentUser.login}
+              </span>
+              <span style={{ fontSize: '10px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                {currentUser.role}
+              </span>
+            </div>
           </div>
-          <a className="nav-item" onClick={handleLogout} style={{ color: '#ef4444' }}>
-            <LogOut size={20} />
+
+          <button 
+            onClick={handleLogout}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              width: '100%',
+              padding: '10px',
+              borderRadius: '10px',
+              background: 'rgba(239, 68, 68, 0.1)',
+              color: '#f87171',
+              border: '1px solid rgba(239, 68, 68, 0.2)',
+              fontSize: '13px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              transition: 'all 0.2s'
+            }}
+          >
+            <LogOut size={16} />
             <span>Sair do Sistema</span>
-          </a>
+          </button>
         </div>
       </aside>
 
       <main className="main-content">
-        <AnimatePresence mode="sync">
+        <AnimatePresence mode="wait">
           <motion.div
             key={activeMenu}
             initial={{ opacity: 0, y: 10 }}
@@ -1676,7 +1713,7 @@ const App = () => {
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.15 }}
           >
-        {activeMenu !== 'medicao' && (
+        {activeMenu !== 'medicao' && activeMenu !== 'financeiro' && (
         <header className="header" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <div style={{ display: 'flex', width: '100%', justifyContent: 'space-between', alignItems: 'center' }}>
             <h1>Painel de Controle</h1>
@@ -1689,120 +1726,73 @@ const App = () => {
                     <label style={{ color: '#cbd5e1', fontSize: '13px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>De:</label>
                     <input 
                       type="date" 
-                      value={filters.dataInicio || ''}
+                      value={filters.dataInicio || ''} 
                       onChange={(e) => setAllFilters({ ...allFilters, [activeMenu]: { ...filters, dataInicio: e.target.value } })}
-                      style={{ 
-                        background: 'rgba(15, 23, 42, 0.6)', 
-                        border: '1px solid rgba(148, 163, 184, 0.2)', 
-                        color: '#f8fafc', 
-                        padding: '6px 12px', 
-                        borderRadius: '8px',
-                        outline: 'none',
-                        colorScheme: 'dark',
-                        fontSize: '14px',
-                        cursor: 'pointer'
-                      }}
+                      style={{ background: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', padding: '6px 12px', borderRadius: '8px', fontSize: '13px' }}
                     />
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                     <label style={{ color: '#cbd5e1', fontSize: '13px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Até:</label>
                     <input 
                       type="date" 
-                      value={filters.dataFim || ''}
+                      value={filters.dataFim || ''} 
                       onChange={(e) => setAllFilters({ ...allFilters, [activeMenu]: { ...filters, dataFim: e.target.value } })}
-                      style={{ 
-                        background: 'rgba(15, 23, 42, 0.6)', 
-                        border: '1px solid rgba(148, 163, 184, 0.2)', 
-                        color: '#f8fafc', 
-                        padding: '6px 12px', 
-                        borderRadius: '8px',
-                        outline: 'none',
-                        colorScheme: 'dark',
-                        fontSize: '14px',
-                        cursor: 'pointer'
-                      }}
+                      style={{ background: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', padding: '6px 12px', borderRadius: '8px', fontSize: '13px' }}
                     />
                   </div>
                 </>
               ) : (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <label style={{ color: '#cbd5e1', fontSize: '13px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Mês Ref:</label>
+                  <label style={{ color: '#cbd5e1', fontSize: '13px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Mês/Ano:</label>
                   <input 
                     type="month" 
-                    value={filters.dataInicio ? filters.dataInicio.substring(0, 7) : ''}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      if (!val) {
-                        setAllFilters({ ...allFilters, [activeMenu]: { ...filters, dataInicio: '', dataFim: '' } });
-                      } else {
-                        const [year, month] = val.split('-');
-                        const lastDay = new Date(year, month, 0).getDate();
-                        setAllFilters({ 
-                          ...allFilters, 
-                          [activeMenu]: {
-                            ...filters,
-                            dataInicio: `${val}-01`, 
-                            dataFim: `${val}-${lastDay}` 
-                          }
-                        });
-                      }
-                    }}
-                    style={{ 
-                      background: 'rgba(15, 23, 42, 0.6)', 
-                      border: '1px solid rgba(148, 163, 184, 0.2)', 
-                      color: '#f8fafc', 
-                      padding: '6px 12px', 
-                      borderRadius: '8px',
-                      outline: 'none',
-                      colorScheme: 'dark',
-                      fontSize: '14px',
-                      transition: 'all 0.2s',
-                      cursor: 'pointer'
-                    }} 
-                    onMouseOver={(e) => e.target.style.borderColor = 'rgba(148, 163, 184, 0.5)'}
-                    onMouseOut={(e) => e.target.style.borderColor = 'rgba(148, 163, 184, 0.2)'}
+                    value={filters.mesAno || ''} 
+                    onChange={(e) => setAllFilters({ ...allFilters, [activeMenu]: { ...filters, mesAno: e.target.value } })}
+                    style={{ background: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', padding: '6px 12px', borderRadius: '8px', fontSize: '13px' }}
                   />
                 </div>
               )}
 
+              {(filters.dataInicio || filters.dataFim || filters.mesAno) && (
+                <button 
+                  onClick={() => {
+                    if (activeMenu === 'rh') {
+                      setAllFilters({ ...allFilters, [activeMenu]: { ...filters, dataInicio: '', dataFim: '' } });
+                    } else {
+                      setAllFilters({ 
+                        ...allFilters, 
+                        [activeMenu]: { 
+                          ...filters, 
+                          mesAno: ''
+                        } 
+                      });
+                    }
+                  }}
+                  style={{ background: 'rgba(239, 68, 68, 0.15)', color: '#f87171', border: 'none', padding: '6px 10px', borderRadius: '6px', fontSize: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                >
+                  <X size={14} /> Limpar Datas
+                </button>
+              )}
+
               {(activeMenu === 'rh' || activeMenu === 'atestados' || activeMenu === 'disciplina') && (
-                <>
-                  <div style={{ width: '1px', height: '24px', background: 'rgba(255,255,255,0.1)' }}></div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <label style={{ color: '#cbd5e1', fontSize: '13px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                      {activeMenu === 'disciplina' ? 'Área:' : 'Cliente:'}
-                    </label>
-                    <select 
-                      value={filters.cliente || ''}
-                      onChange={(e) => {
-                        setAllFilters({ 
-                          ...allFilters, 
-                          [activeMenu]: { ...filters, cliente: e.target.value } 
-                        });
-                      }}
-                      style={{ 
-                        background: 'rgba(15, 23, 42, 0.6)', 
-                        border: '1px solid rgba(148, 163, 184, 0.2)', 
-                        color: '#f8fafc', 
-                        padding: '6px 12px', 
-                        borderRadius: '8px',
-                        outline: 'none',
-                        maxWidth: '220px',
-                        fontSize: '14px',
-                        transition: 'all 0.2s',
-                        cursor: 'pointer',
-                        appearance: 'auto'
-                      }}
-                      onMouseOver={(e) => e.target.style.borderColor = 'rgba(148, 163, 184, 0.5)'}
-                      onMouseOut={(e) => e.target.style.borderColor = 'rgba(148, 163, 184, 0.2)'}
-                    >
-                      <option value="">Todos os {activeMenu === 'disciplina' ? 'Setores' : 'Clientes'}</option>
-                      {activeMenu === 'rh' && uniqueClientesRH.map(c => <option key={c} value={c}>{c}</option>)}
-                      {activeMenu === 'atestados' && uniqueClientesAtestados.map(c => <option key={c} value={c}>{c}</option>)}
-                      {activeMenu === 'disciplina' && uniqueAreasDisciplina.map(c => <option key={c} value={c}>{c}</option>)}
-                    </select>
-                  </div>
-                </>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', borderLeft: '1px solid rgba(255,255,255,0.1)', paddingLeft: '16px' }}>
+                  <label style={{ color: '#cbd5e1', fontSize: '13px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                    {activeMenu === 'disciplina' ? 'Área:' : 'Cliente:'}
+                  </label>
+                  <select 
+                    value={filters.cliente || ''} 
+                    onChange={(e) => setAllFilters({ 
+                      ...allFilters, 
+                      [activeMenu]: { ...filters, cliente: e.target.value } 
+                    })}
+                    style={{ background: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', padding: '6px 12px', borderRadius: '8px', fontSize: '13px', maxWidth: '200px' }}
+                  >
+                    <option value="">Todos os {activeMenu === 'disciplina' ? 'Setores' : 'Clientes'}</option>
+                    {activeMenu === 'rh' && uniqueClientesRH.map(c => <option key={c} value={c}>{c}</option>)}
+                    {activeMenu === 'atestados' && uniqueClientesAtestados.map(c => <option key={c} value={c}>{c}</option>)}
+                    {activeMenu === 'disciplina' && uniqueAreasDisciplina.map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
               )}
             </div>
 
@@ -1828,6 +1818,11 @@ const App = () => {
         {activeMenu === 'medicao' && (
           <ErrorBoundary>
             <Medicao rawPresencas={rawPresencas} currentUser={currentUser} />
+          </ErrorBoundary>
+        )}
+        {activeMenu === 'financeiro' && (
+          <ErrorBoundary>
+            <Financeiro currentUser={currentUser} />
           </ErrorBoundary>
         )}
                 </motion.div>
