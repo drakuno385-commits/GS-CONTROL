@@ -177,7 +177,7 @@ function PendenteRow({ item, onCadastrar, onVerDetalhes }) {
 export default function Medicao({ rawPresencas = [], currentUser }) {
   // Base de postos cadastrados (Prévia)
   const [postosBase, setPostosBase] = useState(() => {
-    const saved = localStorage.getItem('medicao_postos_db_v2');
+    const saved = localStorage.getItem('medicao_postos_db_v3');
     if (saved) {
       try { return JSON.parse(saved); } catch (e) { }
     }
@@ -224,7 +224,7 @@ export default function Medicao({ rawPresencas = [], currentUser }) {
 
   // Salvar base no localStorage
   useEffect(() => {
-    localStorage.setItem('medicao_postos_db_v2', JSON.stringify(postosBase));
+    localStorage.setItem('medicao_postos_db_v3', JSON.stringify(postosBase));
   }, [postosBase]);
 
   // Se o usuário já tiver presencas no estado global e não tiver subido local
