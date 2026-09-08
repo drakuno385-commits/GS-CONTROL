@@ -421,9 +421,13 @@ export default function Medicao({ rawPresencas = [], currentUser }) {
     // 1.5 Identificar a quantidade de dias do mês (30 ou 31) baseando-se nas datas presentes na ficha
     const diasDoMes = diasMesCalculo;
 
-    // 2. Filtrar apenas registros de trabalho efetivo
+    // 2. Filtrar apenas registros de trabalho efetivo (ignorando registros de Reserva Técnica interna)
     const presTrabalhadas = presFiltradas.filter(p => {
       const sit = (p.sithoje || '').toString().toUpperCase().trim();
+      const cli = (p.cliente || '').toString().toUpperCase().trim();
+      const pos = (p.posto || '').toString().toUpperCase().trim();
+      
+      if (cli.includes('RESERVA') || pos.includes('RESERVA')) return false;
       return SITUACOES_TRABALHO.some(st => sit.includes(st));
     });
 
@@ -528,6 +532,12 @@ export default function Medicao({ rawPresencas = [], currentUser }) {
       if (!postosBaseKeys.has(key)) {
         // Extrair dados do primeiro registro de presença para preencher informações do posto
         const primeiro = presInfo.detalhes[0] || {};
+        const cli = (primeiro.cliente || '').toString().toUpperCase();
+        const pos = (primeiro.posto || '').toString().toUpperCase();
+
+        // Ignorar Reserva Técnica (banco de reserva interno, não é posto faturável de cliente)
+        if (cli.includes('RESERVA') || pos.includes('RESERVA')) return;
+
         resultado.push({
           id: `auto_${key}`,
           codcli: parseInt(primeiro.codcli, 10) || 0,
