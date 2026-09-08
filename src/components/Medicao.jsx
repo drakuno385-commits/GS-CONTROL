@@ -208,6 +208,19 @@ export default function Medicao({ rawPresencas = [], currentUser }) {
   const [editingPosto, setEditingPosto] = useState(null);
   const [isNovoPosto, setIsNovoPosto] = useState(false);
 
+  // Dias Override
+  const [diasOverride, setDiasOverride] = useState(() => {
+    const saved = localStorage.getItem("medicao_dias_override_v1");
+    if (saved) {
+      try { return JSON.parse(saved); } catch (e) { }
+    }
+    return {};
+  });
+
+  useEffect(() => {
+    localStorage.setItem("medicao_dias_override_v1", JSON.stringify(diasOverride));
+  }, [diasOverride]);
+
   // KMs
   const [kmsData, setKmsData] = useState(() => {
     const saved = localStorage.getItem("medicao_kms_v1");
@@ -394,7 +407,10 @@ export default function Medicao({ rawPresencas = [], currentUser }) {
       
       // Cenário Real Executado: Cobra integralmente o mês se houver ao menos 1 presenca na ficha, para nao quebrar 12x36
       const isPresente = diasTrabalhados > 0;
-      const valorTotalCheio = posto.escala_fixa ? valorMensal : (valorMensal / 30) * diasDoMes;
+      
+      const override = diasOverride[key];
+      const diasCalculoCheio = override !== undefined ? override : diasDoMes;
+      const valorTotalCheio = posto.escala_fixa ? valorMensal : (valorMensal / 30) * diasCalculoCheio;
       const valorTotalReal = isPresente ? valorTotalCheio : 0;
       
       const km = kmsData[key];
@@ -402,7 +418,7 @@ export default function Medicao({ rawPresencas = [], currentUser }) {
       
       const valorTotal = (tipoCobranca === 'cheio' ? valorTotalCheio : valorTotalReal) + totalKm;
       
-      const diasExibicao = tipoCobranca === 'cheio' ? diasDoMes : diasTrabalhados;
+      const diasExibicao = tipoCobranca === 'cheio' ? diasCalculoCheio : (override !== undefined ? override : diasTrabalhados);
       
       const diferenca = valorTotalReal - valorMensal;
       
@@ -490,7 +506,7 @@ export default function Medicao({ rawPresencas = [], currentUser }) {
 
     medicaoFiltrada.forEach(item => {
       valorMedicao += Number(item.valor_total || 0);
-      valorContratado += item.escala_fixa ? Number(item.valor_mensal || 0) : (Number(item.valor_mensal || 0) / 30) * diasMesCalculo;
+      valorContratado += item.escala_fixa ? Number(item.valor_mensal || 0) : (Number(item.valor_mensal || 0) / 30) * item.dias_trabalhados;
       totalDias += item.dias_trabalhados;
       if (item.dias_trabalhados > 0) postosComTrabalho += 1;
       if (item._nao_cadastrado) postosSemCadastro += 1;
@@ -574,7 +590,7 @@ export default function Medicao({ rawPresencas = [], currentUser }) {
         'Valor Diária (R$)': Number(item.valor_dia || 0).toFixed(3).replace('.', ','),
         'Dias Trabalhados': item.dias_trabalhados,
         [`Valor Medição ${tipoCobranca === 'cheio' ? 'CHEIO' : 'EXECUTADO'} (R$)`]: Number(item.valor_total || 0).toFixed(2).replace('.', ','),
-        'Valor Mensal Contratado (R$)': (item.escala_fixa ? Number(item.valor_mensal || 0) : ((Number(item.valor_mensal || 0) / 30) * diasMesCalculo)).toFixed(2).replace('.', ','),
+        'Valor Mensal Contratado (R$)': (item.escala_fixa ? Number(item.valor_mensal || 0) : ((Number(item.valor_mensal || 0) / 30) * item.dias_trabalhados)).toFixed(2).replace('.', ','),
         'Diferença (R$)': Number(item.diferenca_mensal || 0).toFixed(2).replace('.', ','),
         'Status Cadastro': item._nao_cadastrado ? 'NÃO CADASTRADO' : 'CADASTRADO'
       }));
@@ -1406,24 +1422,46 @@ export default function Medicao({ rawPresencas = [], currentUser }) {
                       {formatMoney(item.valor_dia)}
                     </td>
                     <td style={{ padding: '12px 14px', textAlign: 'center' }}>
-                      <span style={{ 
-                        display: 'inline-block',
-                        minWidth: '28px',
-                        padding: '2px 8px',
-                        borderRadius: '12px',
-                        fontWeight: 'bold',
-                        fontSize: '12px',
-                        background: item.dias_trabalhados > 0 ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.1)',
-                        color: item.dias_trabalhados > 0 ? '#34d399' : '#f87171'
-                      }}>
-                        {item.dias_trabalhados}
-                      </span>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                        <span style={{ 
+                          display: 'inline-block',
+                          minWidth: '28px',
+                          padding: '2px 8px',
+                          borderRadius: '12px',
+                          fontWeight: 'bold',
+                          fontSize: '12px',
+                          background: item.dias_trabalhados > 0 ? (diasOverride[`${item.codcli}_${item.codpos}_${item.turno}`] !== undefined ? 'rgba(139, 92, 246, 0.15)' : 'rgba(16, 185, 129, 0.15)') : 'rgba(239, 68, 68, 0.1)',
+                          color: item.dias_trabalhados > 0 ? (diasOverride[`${item.codcli}_${item.codpos}_${item.turno}`] !== undefined ? '#a78bfa' : '#34d399') : '#f87171'
+                        }}>
+                          {item.dias_trabalhados}
+                        </span>
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const key = `${item.codcli}_${item.codpos}_${item.turno}`;
+                            const val = window.prompt('Digite a quantidade de dias para cobrar deste posto (ou deixe em branco para resetar o padrão):', diasOverride[key] !== undefined ? diasOverride[key] : '');
+                            if (val !== null) {
+                              if (val.trim() === '') {
+                                const newOverrides = {...diasOverride};
+                                delete newOverrides[key];
+                                setDiasOverride(newOverrides);
+                              } else {
+                                setDiasOverride({...diasOverride, [key]: parseInt(val, 10) || 0});
+                              }
+                            }
+                          }}
+                          style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '2px' }}
+                          title="Editar Dias Cobrados Manualmente"
+                        >
+                          <Edit2 size={12} color="#94a3b8" />
+                        </button>
+                      </div>
                     </td>
                     <td style={{ padding: '12px 14px', textAlign: 'right', fontWeight: 'bold', color: item.valor_total > 0 ? '#60a5fa' : '#94a3b8', fontFamily: 'monospace' }}>
                       {formatMoney(item.valor_total)}
                     </td>
                     <td style={{ padding: '12px 14px', textAlign: 'right', color: '#94a3b8', fontFamily: 'monospace' }}>
-                      {formatMoney(item.escala_fixa ? Number(item.valor_mensal) : (Number(item.valor_mensal) / 30) * diasMesCalculo)}
+                      {formatMoney(item.escala_fixa ? Number(item.valor_mensal) : (Number(item.valor_mensal) / 30) * item.dias_trabalhados)}
                     </td>
                     <td style={{ padding: '12px 14px', textAlign: 'center' }}>
                       <button 
