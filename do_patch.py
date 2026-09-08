@@ -1,29 +1,30 @@
 
-const fs = require("fs");
-let code = fs.readFileSync("src/components/Medicao.jsx", "utf8");
+import re
+
+with open("src/components/Medicao.jsx", "r", encoding="utf-8") as f:
+    code = f.read()
 
 code = code.replace(
     "const [showPendentes, setShowPendentes] = useState(false);",
     "const [showPendentes, setShowPendentes] = useState(false);\n  const [editandoPosto, setEditandoPosto] = useState(null);"
-);
+)
 
-let idx = code.indexOf("<Eye size={16} />");
-if (idx > -1) {
-    let end_idx = code.indexOf("</button>", idx) + 9;
-    let btn = `
+idx = code.find("<Eye size={16} color=\"#3b82f6\" />")
+if idx != -1:
+    end_idx = code.find("</button>", idx) + 9
+    btn = """
                       <button 
                         onClick={(e) => { e.stopPropagation(); setEditandoPosto(item); }}
-                        style={{ background: "#10b98120", border: "1px solid #10b981", color: "#10b981", cursor: "pointer", padding: "4px 8px", marginLeft: "8px", borderRadius: "4px", fontSize: "11px" }}
-                        title="Editar Valores"
+                        style={{ background: "transparent", border: "none", cursor: "pointer", padding: "4px", marginLeft: "8px" }}
+                        title="Editar Posto"
                       >
-                        <Edit2 size={12} /> Editar
-                      </button>`;
-    code = code.slice(0, end_idx) + btn + code.slice(end_idx);
-}
+                        <Edit2 size={16} color="#10b981" />
+                      </button>"""
+    code = code[:end_idx] + btn + code[end_idx:]
 
-code = code.replace("Eye, ChevronRight", "Eye, ChevronRight, Edit2, X");
+code = code.replace("Eye, AlertCircle", "Eye, AlertCircle, Edit2")
 
-let modal = `
+modal = """
       {/* MODAL EDITAR POSTO */}
       {editandoPosto && (
         <div style={{
@@ -48,7 +49,7 @@ let modal = `
                 <label style={{ color: "#94a3b8", fontSize: "12px", fontWeight: 600 }}>NOME DO POSTO</label>
                 <input 
                   type="text" 
-                  value={editandoPosto.posto || ""} 
+                  value={editandoPosto.posto} 
                   onChange={e => setEditandoPosto({...editandoPosto, posto: e.target.value})}
                   style={{ background: "#0f172a", border: "1px solid #334155", borderRadius: "8px", padding: "10px", color: "#f8fafc" }}
                 />
@@ -56,10 +57,10 @@ let modal = `
               
               <div style={{ display: "flex", gap: "16px" }}>
                 <div style={{ display: "flex", flexDirection: "column", gap: "8px", flex: 1 }}>
-                  <label style={{ color: "#94a3b8", fontSize: "12px", fontWeight: 600 }}>PRODUTO/FUNCAO</label>
+                  <label style={{ color: "#94a3b8", fontSize: "12px", fontWeight: 600 }}>PRODUTO/FUNÇÃO</label>
                   <input 
                     type="text" 
-                    value={editandoPosto.produto || ""} 
+                    value={editandoPosto.produto} 
                     onChange={e => setEditandoPosto({...editandoPosto, produto: e.target.value})}
                     style={{ background: "#0f172a", border: "1px solid #334155", borderRadius: "8px", padding: "10px", color: "#f8fafc" }}
                   />
@@ -68,7 +69,7 @@ let modal = `
                   <label style={{ color: "#94a3b8", fontSize: "12px", fontWeight: 600 }}>ESCALA</label>
                   <input 
                     type="text" 
-                    value={editandoPosto.escala || ""} 
+                    value={editandoPosto.escala} 
                     onChange={e => setEditandoPosto({...editandoPosto, escala: e.target.value})}
                     style={{ background: "#0f172a", border: "1px solid #334155", borderRadius: "8px", padding: "10px", color: "#f8fafc" }}
                   />
@@ -81,8 +82,8 @@ let modal = `
                   <input 
                     type="number" 
                     step="0.01"
-                    value={editandoPosto.valor_mensal || ""} 
-                    onChange={e => setEditandoPosto({...editandoPosto, valor_mensal: parseFloat(e.target.value) || 0})}
+                    value={editandoPosto.valor_mensal} 
+                    onChange={e => setEditandoPosto({...editandoPosto, valor_mensal: float(e.target.value) if e.target.value else 0})}
                     style={{ background: "#0f172a", border: "1px solid #334155", borderRadius: "8px", padding: "10px", color: "#f8fafc" }}
                   />
                 </div>
@@ -91,11 +92,11 @@ let modal = `
               <div style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "8px" }}>
                 <input 
                   type="checkbox" 
-                  checked={editandoPosto.escala_fixa || false}
+                  checked={editandoPosto.escala_fixa or False}
                   onChange={e => setEditandoPosto({...editandoPosto, escala_fixa: e.target.checked})}
                   style={{ width: "16px", height: "16px", accentColor: "#3b82f6" }}
                 />
-                <label style={{ color: "#e2e8f0", fontSize: "14px" }}>Escala Fixa (Nao multiplicar pelos Dias do Mes)</label>
+                <label style={{ color: "#e2e8f0", fontSize: "14px" }}>Escala Fixa (Não multiplicar pelos Dias do Mês)</label>
               </div>
             </div>
             
@@ -127,26 +128,30 @@ let modal = `
                 }}
                 style={{ background: "#3b82f6", border: "none", color: "#fff", padding: "10px 20px", borderRadius: "8px", cursor: "pointer", fontWeight: 600 }}
               >
-                Salvar Alteracoes
+                Salvar Alterações
               </button>
             </div>
           </div>
         </div>
       )}
-`;
+"""
 
-code = code.replace("{/* MODAL 1: Detalhamento Analítico dos Colaboradores do Posto */}", modal + "\n\n      {/* MODAL 1: Detalhamento Analítico dos Colaboradores do Posto */}");
+# Replace `float(...) if ...` which is Python with standard JS parseFloat in the modal template
+modal = modal.replace("float(e.target.value) if e.target.value else 0", "parseFloat(e.target.value) || 0")
+modal = modal.replace("or False", "|| false")
 
+code = code.replace("{/* MODAL LANÇAR KM */}", modal + "\n      {/* MODAL LANÇAR KM */}")
+
+# Fix "Cenario Real" math
 code = code.replace(
-    "const valorTotalReal = diasTrabalhados * valorDia;",
-    "// Cenario Real: Cobra integralmente se houver presenca na ficha, ao inves de fatiar pela metade em escalas 12x36\n      const isPresente = diasTrabalhados > 0;\n      const valorTotalReal = isPresente ? (posto.escala_fixa ? valorMensal : (valorMensal / 30) * diasDoMes) : 0;"
-);
+    "const valorTotalReal = diasTrabalhados * valorDia;\n      \n      // O contrato cheio sempre considera o posto inteiro pelo cadastro, independente da ficha\n      const isPresente = diasTrabalhados > 0;",
+    """// Cenário Real: O valor é o contrato proporcional à ficha, porém se a ficha apontou presenças (isPresente), assumimos o contrato integral para não quebrar a matemática da escala 12x36 (onde 15 dias trabalhados = mês cheio).
+      const isPresente = diasTrabalhados > 0;
+      const valorTotalReal = isPresente ? (posto.escala_fixa ? valorMensal : (valorMensal / 30) * diasDoMes) : 0;"""
+)
 
-code = code.replace(
-    "const isPresente = diasTrabalhados > 0;\n      const valorTotalCheio",
-    "const valorTotalCheio"
-);
+with open("src/components/Medicao.jsx", "w", encoding="utf-8") as f:
+    f.write(code)
 
-fs.writeFileSync("src/components/Medicao.jsx", code);
-console.log("patched");
+print("patched")
 

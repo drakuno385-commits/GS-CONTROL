@@ -204,6 +204,7 @@ export default function Medicao({ rawPresencas = [], currentUser }) {
   const [detalhePosto, setDetalhePosto] = useState(null);
   const [showGerenciarPostos, setShowGerenciarPostos] = useState(false);
   const [showPendentes, setShowPendentes] = useState(false);
+  const [editandoPosto, setEditandoPosto] = useState(null);
   const [editingPosto, setEditingPosto] = useState(null);
   const [isNovoPosto, setIsNovoPosto] = useState(false);
 
@@ -391,11 +392,10 @@ export default function Medicao({ rawPresencas = [], currentUser }) {
       const valorDia = Number(posto.valor_dia || 0);
       const valorMensal = Number(posto.valor_mensal || 0);
       
-      const valorTotalReal = diasTrabalhados * valorDia;
-      
-      // O contrato cheio sempre considera o posto inteiro pelo cadastro, independente da ficha
+      // Cenário Real Executado: Cobra integralmente o mês se houver ao menos 1 presenca na ficha, para nao quebrar 12x36
       const isPresente = diasTrabalhados > 0;
       const valorTotalCheio = posto.escala_fixa ? valorMensal : (valorMensal / 30) * diasDoMes;
+      const valorTotalReal = isPresente ? valorTotalCheio : 0;
       
       const km = kmsData[key];
       const totalKm = km ? km.km * km.valor_km : 0;
@@ -1842,6 +1842,15 @@ export default function Medicao({ rawPresencas = [], currentUser }) {
                         onChange={(e) => setEditingPosto({ ...editingPosto, valor_mensal: e.target.value })}
                         style={{ width: '100%', padding: '6px', background: '#1e293b', border: '1px solid #475569', borderRadius: '6px', color: '#fff' }}
                       />
+                    </div>
+                    <div style={{ gridColumn: 'span 4', display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
+                      <input 
+                        type="checkbox" 
+                        checked={editingPosto.escala_fixa || false}
+                        onChange={(e) => setEditingPosto({ ...editingPosto, escala_fixa: e.target.checked })}
+                        style={{ width: '16px', height: '16px', accentColor: '#3b82f6' }}
+                      />
+                      <label style={{ fontSize: '12px', color: '#e2e8f0' }}>Escala Fixa (Não multiplicar pelos Dias do Mês. Útil para 5x2)</label>
                     </div>
                   </div>
                   <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '12px' }}>
