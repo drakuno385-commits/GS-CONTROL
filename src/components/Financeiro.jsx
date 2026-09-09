@@ -1685,16 +1685,22 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
 
   const handleZerarBase = () => {
     if (!window.confirm("🔴 ATENÇÃO: Tem certeza que deseja excluir TODOS os dados de movimentação do financeiro (Despesas, Bancos, Entradas, Extrato)? Isso zerará o sistema para a produção.")) return;
-    
-    localStorage.removeItem('acoweb_financeiro_despesas_v5');
-    localStorage.removeItem('acoweb_bancos_saldo_v2');
-    localStorage.removeItem('acoweb_entradas_recursos_v2');
-    localStorage.removeItem('acoweb_historico_bancario_v2');
+    // Limpa o state para evitar que o useEffect re-salve dados antes do reload
+    setDespesas([]);
+    setBancosComSaldo([]);
+    setEntradasRecursos([]);
+    setHistoricoMovimentacoes([]);
+
+    // Força a substituição no localStorage
+    localStorage.setItem('acoweb_financeiro_despesas_v5', '[]');
+    localStorage.setItem('acoweb_bancos_saldo_v2', '[]');
+    localStorage.setItem('acoweb_entradas_recursos_v2', '[]');
+    localStorage.setItem('acoweb_historico_bancario_v2', '[]');
     localStorage.removeItem('acoweb_financeiro_deptos');
     localStorage.removeItem('acoweb_financeiro_bancos');
     
     alert("Base do Financeiro limpa com sucesso! O sistema será recarregado.");
-    window.location.reload();
+    setTimeout(() => window.location.reload(), 300);
   };
 
   return (
