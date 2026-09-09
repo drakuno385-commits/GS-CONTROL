@@ -5,7 +5,7 @@ import {
   Building, Calendar, CreditCard, Shield, AlertTriangle, Filter, 
   Search, Download, Trash2, Eye, MessageSquare, Check, X, ArrowUpRight,
   TrendingUp, TrendingDown, Layers, Percent, Tag, RefreshCw, Plus, Sparkles,
-  Archive, Landmark, CheckCheck, RotateCcw, ArrowRight
+  Archive, Landmark, CheckCheck, RotateCcw, ArrowRight, Edit2, Send, AlertOctagon
 } from 'lucide-react';
 import { 
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, 
@@ -134,14 +134,14 @@ const DESPESAS_INICIAIS = [
     nome: 'Combustível da Frota de Viaturas - Quinzena',
     valor: 28450.00,
     parcelas: 1,
-    vencimento: '2026-09-15',
+    vencimento: '2026-09-25',
     temOP: true,
     numeroOP: 'OP-2026-8841',
     banco: 'Itaú',
     formaPagamento: 'Boleto',
     prioridade: 'ALTA',
     observacao: 'Fatura de abastecimento dos veículos da regional RMSP.',
-    status: 'AGUARDANDO_APROVACAO',
+    status: 'CADASTRADA',
     statusPagamento: 'PENDENTE_PAGAMENTO',
     dataPagamento: null,
     dataConciliacao: null,
@@ -163,7 +163,7 @@ const DESPESAS_INICIAIS = [
     formaPagamento: 'Transferência / TED',
     prioridade: 'CRÍTICA',
     observacao: 'Conserto de nobreaks e câmeras do posto Centro Operacional Gopouva.',
-    status: 'AGUARDANDO_APROVACAO',
+    status: 'CADASTRADA',
     statusPagamento: 'PENDENTE_PAGAMENTO',
     dataPagamento: null,
     dataConciliacao: null,
@@ -172,25 +172,47 @@ const DESPESAS_INICIAIS = [
     dataCriacao: '2026-09-02'
   },
   {
+    id: 'fin_1008',
+    empresa: 'REGIONAL',
+    departamento: 'Suprimentos',
+    nome: 'Compra Urgente de EPIs e Equipamentos de Segurança',
+    valor: 19800.00,
+    parcelas: 1,
+    vencimento: '2026-09-01',
+    temOP: true,
+    numeroOP: 'OP-2026-5510',
+    banco: 'Banco do Brasil',
+    formaPagamento: 'Boleto',
+    prioridade: 'CRÍTICA',
+    observacao: 'Lote emergencial de equipamentos para novos vigilantes.',
+    status: 'LANCADA',
+    statusPagamento: 'PENDENTE_PAGAMENTO',
+    dataPagamento: null,
+    dataConciliacao: null,
+    dataArquivamento: null,
+    obsAprovacao: 'Lançado para pagamento urgente.',
+    dataCriacao: '2026-08-20'
+  },
+  {
     id: 'fin_1003',
     empresa: 'REGIONAL',
     departamento: 'RH',
-    nome: 'Compra de Uniformes e EPIs para Vigilantes',
+    nome: 'Compra de Uniformes e Coturnos para Vigilantes',
     valor: 45800.00,
     parcelas: 3,
-    vencimento: '2026-09-10',
+    vencimento: '2026-09-18',
     temOP: false,
     numeroOP: '',
     banco: 'Banco do Brasil',
     formaPagamento: 'Boleto',
     prioridade: 'MÉDIA',
     observacao: 'Lote de coturnos, coletes e jaquetas para os novos postos.',
-    status: 'APROVADA',
+    status: 'LANCADA',
     statusPagamento: 'PENDENTE_PAGAMENTO',
     dataPagamento: null,
     dataConciliacao: null,
     dataArquivamento: null,
-    obsAprovacao: 'Aprovado conforme orçamento validado pela diretoria.',
+    obsAprovacao: 'Aprovado e lançado para pagamento.',
     dataCriacao: '2026-08-28'
   },
   {
@@ -207,7 +229,7 @@ const DESPESAS_INICIAIS = [
     formaPagamento: 'Pix',
     prioridade: 'BAIXA',
     observacao: 'Renovação anual de servidores de banco de dados.',
-    status: 'APROVADA',
+    status: 'LANCADA',
     statusPagamento: 'PAGO',
     dataPagamento: '2026-09-05',
     dataConciliacao: null,
@@ -251,7 +273,7 @@ const DESPESAS_INICIAIS = [
     formaPagamento: 'Transferência / TED',
     prioridade: 'MÉDIA',
     observacao: 'Auditoria técnica e revisão de procedimentos operacionais dos postos.',
-    status: 'APROVADA',
+    status: 'LANCADA',
     statusPagamento: 'PENDENTE_CONCILIACAO',
     dataPagamento: '2026-08-30',
     dataConciliacao: '2026-09-01',
@@ -273,7 +295,7 @@ const DESPESAS_INICIAIS = [
     formaPagamento: 'Pix',
     prioridade: 'BAIXA',
     observacao: 'Emolumentos de registro em cartório de notas.',
-    status: 'APROVADA',
+    status: 'LANCADA',
     statusPagamento: 'ARQUIVADO',
     dataPagamento: '2026-08-15',
     dataConciliacao: '2026-08-17',
@@ -311,21 +333,13 @@ export default function Financeiro({ currentUser }) {
     localStorage.setItem('acoweb_financeiro_bancos', JSON.stringify(bancos));
   }, [bancos]);
 
-  // Estado Principal de Despesas (versão 2 para conciliação e arquivo)
+  // Estado Principal de Despesas (versão 3 para cadastradas, lançadas e situações de vencimento)
   const [despesas, setDespesas] = useState(() => {
-    const saved = localStorage.getItem('acoweb_financeiro_despesas_v2');
+    const saved = localStorage.getItem('acoweb_financeiro_despesas_v3');
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      } catch(e){}
-    }
-    // Tentar fallback da v1 se existir
-    const savedV1 = localStorage.getItem('acoweb_financeiro_despesas_v1');
-    if (savedV1) {
-      try {
-        const parsedV1 = JSON.parse(savedV1);
-        if (Array.isArray(parsedV1) && parsedV1.length > 0) return parsedV1;
       } catch(e){}
     }
     return DESPESAS_INICIAIS;
@@ -334,14 +348,14 @@ export default function Financeiro({ currentUser }) {
   // Salvar despesas no localStorage
   useEffect(() => {
     try {
-      localStorage.setItem('acoweb_financeiro_despesas_v2', JSON.stringify(despesas));
+      localStorage.setItem('acoweb_financeiro_despesas_v3', JSON.stringify(despesas));
     } catch(e) {
       console.error('Erro ao salvar despesas no localStorage:', e);
     }
   }, [despesas]);
 
-  // Aba Ativa ('nova', 'pendentes', 'aprovadas', 'recusadas', 'relatorio')
-  const [activeTab, setActiveTab] = useState('pendentes');
+  // Aba Ativa (Primeira aba padrão: 'cadastradas')
+  const [activeTab, setActiveTab] = useState('cadastradas');
 
   // Filtros Globais da Tabela
   const [filtroEmpresa, setFiltroEmpresa] = useState('');
@@ -349,6 +363,10 @@ export default function Financeiro({ currentUser }) {
   const [filtroBusca, setFiltroBusca] = useState('');
   const [filtroStatusPagamento, setFiltroStatusPagamento] = useState('TODOS');
   const [filtroFormaPagamento, setFiltroFormaPagamento] = useState('');
+
+  // Modal de Edição de Valor da Despesa
+  const [modalEditarValor, setModalEditarValor] = useState(null);
+  const [novoValorInput, setNovoValorInput] = useState('');
 
   // Modais de Cadastro Rápido de Novo Departamento e Novo Banco
   const [showNovoDeptoModal, setShowNovoDeptoModal] = useState(false);
@@ -407,7 +425,42 @@ export default function Financeiro({ currentUser }) {
     setShowNovoBancoModal(false);
   };
 
-  // Handler de envio do formulário de nova despesa
+  // Salvar Novo Valor Editado
+  const handleSalvarNovoValor = (e) => {
+    e.preventDefault();
+    if (!modalEditarValor) return;
+    const num = parseFloat(novoValorInput);
+    if (isNaN(num) || num <= 0) {
+      alert('Por favor, digite um valor numérico válido.');
+      return;
+    }
+    setDespesas(prev => prev.map(d => {
+      if (d.id === modalEditarValor.id) {
+        return { ...d, valor: num };
+      }
+      return d;
+    }));
+    alert('✅ Valor da despesa atualizado com sucesso!');
+    setModalEditarValor(null);
+    setNovoValorInput('');
+  };
+
+  // Enviar Despesa da 1ª Aba (Cadastradas) para a 2ª Aba (Lançadas p/ Pagamento)
+  const handleEnviarParaPagamento = (id) => {
+    setDespesas(prev => prev.map(d => {
+      if (d.id === id) {
+        return {
+          ...d,
+          status: 'LANCADA',
+          statusPagamento: 'PENDENTE_PAGAMENTO'
+        };
+      }
+      return d;
+    }));
+    alert('🚀 Despesa enviada para a aba "Lançadas" para pagamento e liquidação!');
+  };
+
+  // Handler de envio do formulário de nova despesa (Cria na 1ª Aba - Cadastradas)
   const handleCadastrarDespesa = (e) => {
     e.preventDefault();
     if (!formNovaDespesa.nome.trim()) return alert('Por favor, informe a descrição/nome da despesa.');
@@ -430,15 +483,17 @@ export default function Financeiro({ currentUser }) {
       formaPagamento: formNovaDespesa.formaPagamento,
       prioridade: formNovaDespesa.prioridade,
       observacao: formNovaDespesa.observacao.trim(),
-      status: 'AGUARDANDO_APROVACAO',
+      status: 'CADASTRADA',
       statusPagamento: 'PENDENTE_PAGAMENTO',
       dataPagamento: null,
+      dataConciliacao: null,
+      dataArquivamento: null,
       obsAprovacao: '',
       dataCriacao: new Date().toISOString().slice(0, 10)
     };
 
     setDespesas(prev => [nova, ...prev]);
-    alert('✅ Despesa cadastrada com sucesso e enviada para Aprovação!');
+    alert('✅ Despesa cadastrada com sucesso na aba "Despesas Cadastradas"! Você pode ajustar o valor e enviar para pagamento.');
 
     // Resetar formulário
     setFormNovaDespesa({
@@ -456,8 +511,8 @@ export default function Financeiro({ currentUser }) {
       observacao: ''
     });
 
-    // Mudar para a aba de pendentes
-    setActiveTab('pendentes');
+    // Mudar para a 1ª aba (Despesas Cadastradas)
+    setActiveTab('cadastradas');
   };
 
   // Confirmar Aprovação ou Reprovação
@@ -469,14 +524,14 @@ export default function Financeiro({ currentUser }) {
       if (d.id === despesa.id) {
         return {
           ...d,
-          status: acao === 'APROVAR' ? 'APROVADA' : 'RECUSADA',
+          status: acao === 'APROVAR' ? 'LANCADA' : 'RECUSADA',
           obsAprovacao: obsAprovacaoInput.trim()
         };
       }
       return d;
     }));
 
-    alert(`Despesa ${acao === 'APROVAR' ? 'APROVADA' : 'RECUSADA'} com sucesso!`);
+    alert(`Despesa ${acao === 'APROVAR' ? 'Aprovada e Lançada' : 'Reprovada'} com sucesso!`);
     setModalAprovacao(null);
     setObsAprovacaoInput('');
   };
@@ -514,68 +569,110 @@ export default function Financeiro({ currentUser }) {
     }
   };
 
-  // Estatísticas Globais das Abas
+  // Helper para identificar a Situação Financeira do Item (Vencida, A Vencer, Pago, etc.)
+  const getSituacaoItem = (item) => {
+    const hoje = new Date().toISOString().slice(0, 10);
+    if (item.status === 'RECUSADA') {
+      return { code: 'RECUSADA', label: 'Reprovada / Não Paga', color: '#f87171', bg: 'rgba(239, 68, 68, 0.15)', border: 'rgba(239, 68, 68, 0.4)' };
+    }
+    if (item.statusPagamento === 'PAGO') {
+      return { code: 'PAGO', label: '✓ Pago', color: '#34d399', bg: 'rgba(16, 185, 129, 0.15)', border: 'rgba(16, 185, 129, 0.4)' };
+    }
+    if (item.statusPagamento === 'PENDENTE_CONCILIACAO') {
+      return { code: 'PENDENTE_CONCILIACAO', label: '🏦 Pendente Conciliação', color: '#60a5fa', bg: 'rgba(59, 130, 246, 0.15)', border: 'rgba(59, 130, 246, 0.4)' };
+    }
+    if (item.statusPagamento === 'ARQUIVADO') {
+      return { code: 'ARQUIVADO', label: '📦 Arquivada', color: '#94a3b8', bg: 'rgba(148, 163, 184, 0.15)', border: 'rgba(148, 163, 184, 0.4)' };
+    }
+
+    // Para contas em aberto:
+    if (item.vencimento && item.vencimento < hoje) {
+      return { code: 'VENCIDA', label: '🚨 VENCIDA', color: '#ef4444', bg: 'rgba(239, 68, 68, 0.25)', border: '#f87171' };
+    }
+    return { code: 'A_VENCER', label: '⏳ A Vencer', color: '#fbbf24', bg: 'rgba(245, 158, 11, 0.15)', border: 'rgba(245, 158, 11, 0.4)' };
+  };
+
+  // Estatísticas Globais das Abas e Situações Financeiras
   const estatisticas = useMemo(() => {
-    const pendentes = despesas.filter(d => d.status === 'AGUARDANDO_APROVACAO');
-    const aprovadas = despesas.filter(d => d.status === 'APROVADA');
+    const hoje = new Date().toISOString().slice(0, 10);
+
+    const cadastradas = despesas.filter(d => (d.status === 'CADASTRADA' || d.status === 'AGUARDANDO_APROVACAO') && d.status !== 'RECUSADA');
+    const lancadas = despesas.filter(d => (d.status === 'LANCADA' || d.status === 'APROVADA') && d.status !== 'RECUSADA');
     const recusadas = despesas.filter(d => d.status === 'RECUSADA');
 
-    const valorPendentes = pendentes.reduce((a, b) => a + b.valor, 0);
-    const valorAprovadas = aprovadas.reduce((a, b) => a + b.valor, 0);
-    const valorRecusadas = recusadas.reduce((a, b) => a + b.valor, 0);
+    // Situações de Pagamento Globais
+    const pagas = despesas.filter(d => d.statusPagamento === 'PAGO');
+    const emAberto = despesas.filter(d => d.status !== 'RECUSADA' && (!d.statusPagamento || d.statusPagamento === 'PENDENTE_PAGAMENTO'));
 
-    const pendentesPagamento = aprovadas.filter(d => (d.statusPagamento || 'PENDENTE_PAGAMENTO') === 'PENDENTE_PAGAMENTO');
-    const pagas = aprovadas.filter(d => d.statusPagamento === 'PAGO');
-    const conciliacao = aprovadas.filter(d => d.statusPagamento === 'PENDENTE_CONCILIACAO');
-    const arquivadas = aprovadas.filter(d => d.statusPagamento === 'ARQUIVADO');
+    // Vencidas vs A Vencer
+    const vencidas = emAberto.filter(d => d.vencimento && d.vencimento < hoje);
+    const aVencer = emAberto.filter(d => !d.vencimento || d.vencimento >= hoje);
 
-    const valorPendentesPagamento = pendentesPagamento.reduce((a, b) => a + b.valor, 0);
-    const valorPagas = pagas.reduce((a, b) => a + b.valor, 0);
-    const valorConciliacao = conciliacao.reduce((a, b) => a + b.valor, 0);
-    const valorArquivadas = arquivadas.reduce((a, b) => a + b.valor, 0);
+    const conciliacao = despesas.filter(d => d.statusPagamento === 'PENDENTE_CONCILIACAO');
+    const arquivadas = despesas.filter(d => d.statusPagamento === 'ARQUIVADO');
 
     return {
       totalGeral: despesas.length,
-      countPendentes: pendentes.length,
-      valorPendentes,
-      countAprovadas: aprovadas.length,
-      valorAprovadas,
+      countCadastradas: cadastradas.length,
+      valorCadastradas: cadastradas.reduce((a, b) => a + b.valor, 0),
+      countLancadas: lancadas.length,
+      valorLancadas: lancadas.reduce((a, b) => a + b.valor, 0),
       countRecusadas: recusadas.length,
-      valorRecusadas,
-      countPendentesPagamento: pendentesPagamento.length,
-      valorPendentesPagamento,
+      valorRecusadas: recusadas.reduce((a, b) => a + b.valor, 0),
+
+      // 4 Situações Requisitadas:
       countPagas: pagas.length,
-      valorPagas,
+      valorPagas: pagas.reduce((a, b) => a + b.valor, 0),
+      countEmAberto: emAberto.length,
+      valorEmAberto: emAberto.reduce((a, b) => a + b.valor, 0),
+      countVencidas: vencidas.length,
+      valorVencidas: vencidas.reduce((a, b) => a + b.valor, 0),
+      countAVencer: aVencer.length,
+      valorAVencer: aVencer.reduce((a, b) => a + b.valor, 0),
+
       countConciliacao: conciliacao.length,
-      valorConciliacao,
+      valorConciliacao: conciliacao.reduce((a, b) => a + b.valor, 0),
       countArquivadas: arquivadas.length,
-      valorArquivadas
+      valorArquivadas: arquivadas.reduce((a, b) => a + b.valor, 0)
     };
   }, [despesas]);
 
   // Lista Filtrada para a Aba Ativa
   const listaExibicao = useMemo(() => {
+    const hoje = new Date().toISOString().slice(0, 10);
+
     return despesas.filter(d => {
-      if (activeTab === 'pendentes' && d.status !== 'AGUARDANDO_APROVACAO') return false;
+      // 1ª Aba: Despesas Cadastradas
+      if (activeTab === 'cadastradas') {
+        if (d.status !== 'CADASTRADA' && d.status !== 'AGUARDANDO_APROVACAO') return false;
+      }
       
-      if (activeTab === 'aprovadas') {
-        if (d.status !== 'APROVADA') return false;
-        // Na aba de aprovadas, mostrar apenas PENDENTE_PAGAMENTO e PAGO (a não ser que filtroStatusPagamento force)
-        if (filtroStatusPagamento === 'TODOS' && (d.statusPagamento === 'PENDENTE_CONCILIACAO' || d.statusPagamento === 'ARQUIVADO')) return false;
+      // 2ª Aba: Despesas Lançadas (confirmação de pagamento)
+      if (activeTab === 'lancadas') {
+        if (d.status !== 'LANCADA' && d.status !== 'APROVADA') return false;
       }
       
       if (activeTab === 'conciliacao') {
-        if (d.status !== 'APROVADA' || d.statusPagamento !== 'PENDENTE_CONCILIACAO') return false;
+        if (d.statusPagamento !== 'PENDENTE_CONCILIACAO') return false;
       }
 
       if (activeTab === 'arquivadas') {
-        if (d.status !== 'APROVADA' || d.statusPagamento !== 'ARQUIVADO') return false;
+        if (d.statusPagamento !== 'ARQUIVADO') return false;
       }
 
-      if (activeTab === 'recusadas' && d.status !== 'RECUSADA') return false;
+      if (activeTab === 'recusadas') {
+        if (d.status !== 'RECUSADA') return false;
+      }
 
-      if ((activeTab === 'aprovadas' || activeTab === 'conciliacao' || activeTab === 'arquivadas') && filtroStatusPagamento !== 'TODOS') {
-        if (d.statusPagamento !== filtroStatusPagamento) return false;
+      // Filtro de Situação/Status de Pagamento (Selecione VENCIDA, A_VENCER, PAGO, etc.)
+      if (filtroStatusPagamento !== 'TODOS') {
+        if (filtroStatusPagamento === 'VENCIDA') {
+          if (d.statusPagamento === 'PAGO' || d.statusPagamento === 'PENDENTE_CONCILIACAO' || d.statusPagamento === 'ARQUIVADO' || !d.vencimento || d.vencimento >= hoje) return false;
+        } else if (filtroStatusPagamento === 'A_VENCER') {
+          if (d.statusPagamento === 'PAGO' || d.statusPagamento === 'PENDENTE_CONCILIACAO' || d.statusPagamento === 'ARQUIVADO' || (d.vencimento && d.vencimento < hoje)) return false;
+        } else if (d.statusPagamento !== filtroStatusPagamento) {
+          return false;
+        }
       }
 
       if (filtroEmpresa && d.empresa !== filtroEmpresa) return false;
@@ -759,140 +856,143 @@ export default function Financeiro({ currentUser }) {
         </button>
       </div>
 
-      {/* CARDS RESUMO / KPIS FINANCEIROS */}
+      {/* CARDS RESUMO / KPIS DAS 4 SITUAÇÕES FINANCEIRAS */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '24px' }}>
         
-        {/* Total Pendente Aprovação */}
-        <div style={{ background: 'rgba(30, 41, 59, 0.5)', padding: '16px', borderRadius: '14px', border: '1px solid rgba(245, 158, 11, 0.2)' }}>
+        {/* Situação 1: CONTAS VENCIDAS (ALERTA EM VERMELHO) */}
+        <div style={{ background: 'rgba(239, 68, 68, 0.12)', padding: '16px', borderRadius: '14px', border: '1px solid rgba(239, 68, 68, 0.35)', boxShadow: estatisticas.countVencidas > 0 ? '0 0 15px rgba(239, 68, 68, 0.2)' : 'none' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-            <span style={{ fontSize: '12px', color: '#94a3b8', fontWeight: 600 }}>Aguardando Aprovação</span>
+            <span style={{ fontSize: '12px', color: '#f87171', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>🚨 Vencidas (Atraso)</span>
+            <AlertOctagon size={18} color="#ef4444" />
+          </div>
+          <div style={{ fontSize: '20px', fontWeight: 800, color: '#f87171' }}>
+            {formatMoney(estatisticas.valorVencidas)}
+          </div>
+          <div style={{ fontSize: '11px', color: '#fca5a5', marginTop: '4px', fontWeight: 600 }}>
+            {estatisticas.countVencidas} contas em atraso
+          </div>
+        </div>
+
+        {/* Situação 2: CONTAS A VENCER */}
+        <div style={{ background: 'rgba(245, 158, 11, 0.1)', padding: '16px', borderRadius: '14px', border: '1px solid rgba(245, 158, 11, 0.3)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+            <span style={{ fontSize: '12px', color: '#fbbf24', fontWeight: 700 }}>⏳ A Vencer (No Prazo)</span>
             <Clock size={18} color="#f59e0b" />
           </div>
           <div style={{ fontSize: '18px', fontWeight: 800, color: '#fbbf24' }}>
-            {formatMoney(estatisticas.valorPendentes)}
+            {formatMoney(estatisticas.valorAVencer)}
           </div>
           <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '4px' }}>
-            {estatisticas.countPendentes} lançamentos em análise
+            {estatisticas.countAVencer} contas a vencer
           </div>
         </div>
 
-        {/* Total Aprovadas Pendentes de Pagamento */}
-        <div style={{ background: 'rgba(30, 41, 59, 0.5)', padding: '16px', borderRadius: '14px', border: '1px solid rgba(245, 158, 11, 0.2)' }}>
+        {/* Situação 3: TOTAL EM ABERTO */}
+        <div style={{ background: 'rgba(30, 41, 59, 0.5)', padding: '16px', borderRadius: '14px', border: '1px solid rgba(59, 130, 246, 0.2)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-            <span style={{ fontSize: '12px', color: '#94a3b8', fontWeight: 600 }}>Aprovadas (A Pagar)</span>
-            <CreditCard size={18} color="#fbbf24" />
+            <span style={{ fontSize: '12px', color: '#94a3b8', fontWeight: 600 }}>💳 Total em Aberto</span>
+            <CreditCard size={18} color="#60a5fa" />
           </div>
-          <div style={{ fontSize: '18px', fontWeight: 800, color: '#fbbf24' }}>
-            {formatMoney(estatisticas.valorPendentesPagamento)}
+          <div style={{ fontSize: '18px', fontWeight: 800, color: '#60a5fa' }}>
+            {formatMoney(estatisticas.valorEmAberto)}
           </div>
           <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '4px' }}>
-            {estatisticas.countPendentesPagamento} contas pendentes
+            {estatisticas.countEmAberto} contas a pagar
           </div>
         </div>
 
-        {/* Total Pago */}
-        <div style={{ background: 'rgba(30, 41, 59, 0.5)', padding: '16px', borderRadius: '14px', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+        {/* Situação 4: TOTAL PAGO (QUITADO) */}
+        <div style={{ background: 'rgba(16, 185, 129, 0.1)', padding: '16px', borderRadius: '14px', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-            <span style={{ fontSize: '12px', color: '#94a3b8', fontWeight: 600 }}>Pagas (Liquidadas)</span>
+            <span style={{ fontSize: '12px', color: '#34d399', fontWeight: 700 }}>✓ Pagos (Quitadas)</span>
             <CheckCircle2 size={18} color="#34d399" />
           </div>
           <div style={{ fontSize: '18px', fontWeight: 800, color: '#34d399' }}>
             {formatMoney(estatisticas.valorPagas)}
           </div>
           <div style={{ fontSize: '11px', color: '#34d399', marginTop: '4px', fontWeight: 600 }}>
-            {estatisticas.countPagas} despesas pagas
+            {estatisticas.countPagas} despesas liquidadas
           </div>
         </div>
 
-        {/* Total Pendente de Conciliação */}
-        <div style={{ background: 'rgba(30, 41, 59, 0.5)', padding: '16px', borderRadius: '14px', border: '1px solid rgba(59, 130, 246, 0.2)' }}>
+        {/* DESPESAS CADASTRADAS (RASCUNHOS DA 1ª ABA) */}
+        <div style={{ background: 'rgba(30, 41, 59, 0.5)', padding: '16px', borderRadius: '14px', border: '1px solid rgba(139, 92, 246, 0.2)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-            <span style={{ fontSize: '12px', color: '#94a3b8', fontWeight: 600 }}>Pendente Conciliação</span>
-            <Landmark size={18} color="#60a5fa" />
+            <span style={{ fontSize: '12px', color: '#94a3b8', fontWeight: 600 }}>Despesas Cadastradas</span>
+            <FileText size={18} color="#a78bfa" />
           </div>
-          <div style={{ fontSize: '18px', fontWeight: 800, color: '#60a5fa' }}>
-            {formatMoney(estatisticas.valorConciliacao)}
+          <div style={{ fontSize: '18px', fontWeight: 800, color: '#c084fc' }}>
+            {formatMoney(estatisticas.valorCadastradas)}
           </div>
           <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '4px' }}>
-            {estatisticas.countConciliacao} para conciliar
+            {estatisticas.countCadastradas} para enviar a pagamento
           </div>
         </div>
 
-        {/* Total Arquivadas */}
-        <div style={{ background: 'rgba(30, 41, 59, 0.5)', padding: '16px', borderRadius: '14px', border: '1px solid rgba(148, 163, 184, 0.2)' }}>
+        {/* CONCILIAÇÃO & ARQUIVADAS */}
+        <div style={{ background: 'rgba(30, 41, 59, 0.5)', padding: '16px', borderRadius: '14px', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-            <span style={{ fontSize: '12px', color: '#94a3b8', fontWeight: 600 }}>Arquivadas (Histórico)</span>
-            <Archive size={18} color="#94a3b8" />
+            <span style={{ fontSize: '12px', color: '#94a3b8', fontWeight: 600 }}>Conciliação / Arquivo</span>
+            <Landmark size={18} color="#94a3b8" />
           </div>
-          <div style={{ fontSize: '18px', fontWeight: 800, color: '#94a3b8' }}>
-            {formatMoney(estatisticas.valorArquivadas)}
+          <div style={{ fontSize: '18px', fontWeight: 800, color: '#cbd5e1' }}>
+            {formatMoney(estatisticas.valorConciliacao + estatisticas.valorArquivadas)}
           </div>
           <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '4px' }}>
-            {estatisticas.countArquivadas} conciliadas e salvas
-          </div>
-        </div>
-
-        {/* Total Recusadas */}
-        <div style={{ background: 'rgba(30, 41, 59, 0.5)', padding: '16px', borderRadius: '14px', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-            <span style={{ fontSize: '12px', color: '#94a3b8', fontWeight: 600 }}>Recusadas</span>
-            <XCircle size={18} color="#f87171" />
-          </div>
-          <div style={{ fontSize: '18px', fontWeight: 800, color: '#f87171' }}>
-            {formatMoney(estatisticas.valorRecusadas)}
-          </div>
-          <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '4px' }}>
-            {estatisticas.countRecusadas} reprovadas
+            {estatisticas.countConciliacao} em conciliação / {estatisticas.countArquivadas} arquivadas
           </div>
         </div>
 
       </div>
 
-      {/* BARRA DE NAVEGAÇÃO ENTRE ABAS */}
+      {/* BARRA DE NAVEGAÇÃO ENTRE ABAS - 1ª ABA: CADASTRADAS, 2ª ABA: LANÇADAS */}
       <div style={{ display: 'flex', gap: '8px', borderBottom: '1px solid rgba(255, 255, 255, 0.1)', marginBottom: '24px', overflowX: 'auto', paddingBottom: '4px' }}>
         
+        {/* 1ª ABA: DESPESAS CADASTRADAS */}
         <button
-          onClick={() => setActiveTab('pendentes')}
+          onClick={() => setActiveTab('cadastradas')}
           style={{
             display: 'flex',
             alignItems: 'center',
             gap: '8px',
-            padding: '10px 16px',
+            padding: '10px 18px',
             borderRadius: '8px 8px 0 0',
             border: 'none',
-            background: activeTab === 'pendentes' ? 'rgba(245, 158, 11, 0.15)' : 'transparent',
-            color: activeTab === 'pendentes' ? '#fbbf24' : '#94a3b8',
-            fontWeight: 700,
+            background: activeTab === 'cadastradas' ? 'rgba(139, 92, 246, 0.2)' : 'transparent',
+            color: activeTab === 'cadastradas' ? '#c084fc' : '#94a3b8',
+            fontWeight: 800,
             fontSize: '13px',
             cursor: 'pointer',
-            borderBottom: activeTab === 'pendentes' ? '2px solid #fbbf24' : 'none'
+            borderBottom: activeTab === 'cadastradas' ? '3px solid #a78bfa' : 'none'
           }}
         >
-          <Clock size={16} />
-          <span>Aguardando Aprovação ({estatisticas.countPendentes})</span>
+          <FileText size={16} />
+          <span>1. Despesas Cadastradas ({estatisticas.countCadastradas})</span>
         </button>
 
+        {/* 2ª ABA: DESPESAS LANÇADAS */}
         <button
-          onClick={() => setActiveTab('aprovadas')}
+          onClick={() => setActiveTab('lancadas')}
           style={{
             display: 'flex',
             alignItems: 'center',
             gap: '8px',
-            padding: '10px 16px',
+            padding: '10px 18px',
             borderRadius: '8px 8px 0 0',
             border: 'none',
-            background: activeTab === 'aprovadas' ? 'rgba(16, 185, 129, 0.15)' : 'transparent',
-            color: activeTab === 'aprovadas' ? '#34d399' : '#94a3b8',
-            fontWeight: 700,
+            background: activeTab === 'lancadas' ? 'rgba(59, 130, 246, 0.2)' : 'transparent',
+            color: activeTab === 'lancadas' ? '#60a5fa' : '#94a3b8',
+            fontWeight: 800,
             fontSize: '13px',
             cursor: 'pointer',
-            borderBottom: activeTab === 'aprovadas' ? '2px solid #34d399' : 'none'
+            borderBottom: activeTab === 'lancadas' ? '3px solid #60a5fa' : 'none'
           }}
         >
-          <CheckCircle2 size={16} />
-          <span>Aprovadas ({estatisticas.countAprovadas})</span>
+          <Send size={16} />
+          <span>2. Lançadas p/ Pagamento ({estatisticas.countLancadas})</span>
         </button>
 
+        {/* ABA: CONCILIAÇÃO */}
         <button
           onClick={() => setActiveTab('conciliacao')}
           style={{
@@ -902,18 +1002,19 @@ export default function Financeiro({ currentUser }) {
             padding: '10px 16px',
             borderRadius: '8px 8px 0 0',
             border: 'none',
-            background: activeTab === 'conciliacao' ? 'rgba(59, 130, 246, 0.15)' : 'transparent',
-            color: activeTab === 'conciliacao' ? '#60a5fa' : '#94a3b8',
+            background: activeTab === 'conciliacao' ? 'rgba(16, 185, 129, 0.15)' : 'transparent',
+            color: activeTab === 'conciliacao' ? '#34d399' : '#94a3b8',
             fontWeight: 700,
             fontSize: '13px',
             cursor: 'pointer',
-            borderBottom: activeTab === 'conciliacao' ? '2px solid #60a5fa' : 'none'
+            borderBottom: activeTab === 'conciliacao' ? '2px solid #34d399' : 'none'
           }}
         >
           <Landmark size={16} />
           <span>Pendente de Conciliação ({estatisticas.countConciliacao})</span>
         </button>
 
+        {/* ABA: ARQUIVADAS */}
         <button
           onClick={() => setActiveTab('arquivadas')}
           style={{
@@ -935,6 +1036,7 @@ export default function Financeiro({ currentUser }) {
           <span>Arquivadas ({estatisticas.countArquivadas})</span>
         </button>
 
+        {/* ABA: RECUSADAS */}
         <button
           onClick={() => setActiveTab('recusadas')}
           style={{
@@ -956,6 +1058,7 @@ export default function Financeiro({ currentUser }) {
           <span>Recusadas ({estatisticas.countRecusadas})</span>
         </button>
 
+        {/* ABA: RELATÓRIO MENSAL */}
         <button
           onClick={() => setActiveTab('relatorio')}
           style={{
@@ -977,6 +1080,7 @@ export default function Financeiro({ currentUser }) {
           <span>Relatório Mensal</span>
         </button>
 
+        {/* ABA: CADASTRAR NOVA DESPESA */}
         <button
           onClick={() => setActiveTab('nova')}
           style={{
@@ -986,27 +1090,27 @@ export default function Financeiro({ currentUser }) {
             padding: '10px 16px',
             borderRadius: '8px 8px 0 0',
             border: 'none',
-            background: activeTab === 'nova' ? 'rgba(139, 92, 246, 0.15)' : 'transparent',
-            color: activeTab === 'nova' ? '#a78bfa' : '#94a3b8',
+            background: activeTab === 'nova' ? 'rgba(59, 130, 246, 0.15)' : 'transparent',
+            color: activeTab === 'nova' ? '#60a5fa' : '#94a3b8',
             fontWeight: 700,
             fontSize: '13px',
             cursor: 'pointer',
-            borderBottom: activeTab === 'nova' ? '2px solid #a78bfa' : 'none',
+            borderBottom: activeTab === 'nova' ? '2px solid #60a5fa' : 'none',
             marginLeft: 'auto'
           }}
         >
           <PlusCircle size={16} />
-          <span>Nova Despesa</span>
+          <span>+ Cadastrar Despesa</span>
         </button>
 
       </div>
 
-      {/* ABA 1: FORMULÁRIO DE NOVO LANÇAMENTO */}
+      {/* CADASTRO DE NOVAR DESPESAS (ABA FORMULÁRIO) */}
       {activeTab === 'nova' && (
         <div style={{ background: 'rgba(30, 41, 59, 0.5)', padding: '28px', borderRadius: '16px', border: '1px solid rgba(255, 255, 255, 0.08)', maxWidth: '950px', margin: '0 auto' }}>
           <h2 style={{ fontSize: '18px', fontWeight: 700, color: '#f8fafc', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
             <PlusCircle size={20} color="#a78bfa" />
-            Cadastrar Nova Despesa
+            Cadastrar Nova Despesa no Sistema
           </h2>
 
           <form onSubmit={handleCadastrarDespesa} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
@@ -1217,17 +1321,17 @@ export default function Financeiro({ currentUser }) {
                 style={{
                   width: '100%',
                   padding: '14px',
-                  background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
+                  background: 'linear-gradient(135deg, #a78bfa, #7c3aed)',
                   color: '#fff',
                   border: 'none',
                   borderRadius: '10px',
                   fontSize: '15px',
                   fontWeight: 700,
                   cursor: 'pointer',
-                  boxShadow: '0 4px 14px rgba(59, 130, 246, 0.3)'
+                  boxShadow: '0 4px 14px rgba(139, 92, 246, 0.4)'
                 }}
               >
-                Enviar Despesa para Aprovação ➔
+                Salvar em Despesas Cadastradas ➔
               </button>
             </div>
 
@@ -1235,23 +1339,23 @@ export default function Financeiro({ currentUser }) {
         </div>
       )}
 
-      {/* ABAS: TABELA DE DESPESAS (PENDENTES / APROVADAS / CONCILIAÇÃO / ARQUIVADAS / RECUSADAS) */}
-      {(activeTab === 'pendentes' || activeTab === 'aprovadas' || activeTab === 'conciliacao' || activeTab === 'arquivadas' || activeTab === 'recusadas') && (
+      {/* ABAS: TABELA DE DESPESAS (CADASTRADAS / LANÇADAS / CONCILIAÇÃO / ARQUIVADAS / RECUSADAS) */}
+      {(activeTab === 'cadastradas' || activeTab === 'lancadas' || activeTab === 'conciliacao' || activeTab === 'arquivadas' || activeTab === 'recusadas') && (
         <div style={{ background: 'rgba(30, 41, 59, 0.5)', padding: '24px', borderRadius: '16px', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
           
           {/* BARRA DE FILTROS E EXPORTAÇÃO */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '16px' }}>
             <div>
               <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#f8fafc', margin: 0 }}>
-                {activeTab === 'pendentes' && 'Despesas Aguardando Aprovação'}
-                {activeTab === 'aprovadas' && 'Despesas Aprovadas (Contas a Pagar & Pagas)'}
+                {activeTab === 'cadastradas' && '1. Despesas Cadastradas (Aguardando Envio p/ Pagamento)'}
+                {activeTab === 'lancadas' && '2. Despesas Lançadas (Confirmação de Pagamento)'}
                 {activeTab === 'conciliacao' && 'Despesas Pendentes de Conciliação Bancária'}
                 {activeTab === 'arquivadas' && 'Histórico de Despesas Arquivadas & Conciliadas'}
                 {activeTab === 'recusadas' && 'Despesas Recusadas / Reprovadas'}
                 {` (${listaExibicao.length})`}
               </h3>
               <span style={{ fontSize: '12px', color: '#94a3b8' }}>
-                Total listado: {formatMoney(listaExibicao.reduce((a,b) => a + b.valor, 0))}
+                Total na visualização: {formatMoney(listaExibicao.reduce((a,b) => a + b.valor, 0))}
               </span>
             </div>
 
@@ -1299,26 +1403,26 @@ export default function Financeiro({ currentUser }) {
                 {FORMAS_PAGAMENTO.map(fp => <option key={fp} value={fp}>{fp}</option>)}
               </select>
 
-              {/* Filtro Status Pagamento */}
-              {(activeTab === 'aprovadas' || activeTab === 'conciliacao' || activeTab === 'arquivadas') && (
-                <select
-                  value={filtroStatusPagamento}
-                  onChange={(e) => setFiltroStatusPagamento(e.target.value)}
-                  style={{ padding: '8px 12px', background: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(59, 130, 246, 0.3)', borderRadius: '8px', color: '#60a5fa', fontSize: '12px', fontWeight: 600 }}
-                >
-                  <option value="TODOS">Todos os Status do Fluxo</option>
-                  <option value="PENDENTE_PAGAMENTO">Pendente de Pagamento</option>
-                  <option value="PAGO">Pago / Quitado</option>
-                  <option value="PENDENTE_CONCILIACAO">Pendente de Conciliação</option>
-                  <option value="ARQUIVADO">Arquivada</option>
-                </select>
-              )}
+              {/* Filtro Situações Financeiras */}
+              <select
+                value={filtroStatusPagamento}
+                onChange={(e) => setFiltroStatusPagamento(e.target.value)}
+                style={{ padding: '8px 12px', background: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(59, 130, 246, 0.3)', borderRadius: '8px', color: '#60a5fa', fontSize: '12px', fontWeight: 600 }}
+              >
+                <option value="TODOS">Todas as Situações</option>
+                <option value="VENCIDA">🚨 Vencidas (Atrasadas)</option>
+                <option value="A_VENCER">⏳ A Vencer (No Prazo)</option>
+                <option value="PAGO">✓ Pagas (Quitadas)</option>
+                <option value="PENDENTE_PAGAMENTO">💳 Em Aberto</option>
+                <option value="PENDENTE_CONCILIACAO">🏦 Pendente Conciliação</option>
+                <option value="ARQUIVADO">📦 Arquivadas</option>
+              </select>
 
-              {/* Exportar CSV da Lista Atual */}
+              {/* Exportar CSV */}
               <button
                 onClick={() => exportarCSVGenerico(
-                  activeTab === 'pendentes' ? 'AGUARDANDO_APROVACAO' : 
-                  (activeTab === 'aprovadas' ? 'PAGAS' : 
+                  activeTab === 'cadastradas' ? 'AGUARDANDO_APROVACAO' : 
+                  (activeTab === 'lancadas' ? 'PAGAS' : 
                   (activeTab === 'conciliacao' ? 'PENDENTES_CONCILIACAO' : 
                   (activeTab === 'arquivadas' ? 'ARQUIVADAS' : 'RECUSADAS')))
                 )}
@@ -1334,7 +1438,7 @@ export default function Financeiro({ currentUser }) {
           {listaExibicao.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '48px', color: '#64748b' }}>
               <Clock size={36} style={{ opacity: 0.5, marginBottom: '12px' }} />
-              <p style={{ margin: 0, fontSize: '14px' }}>Nenhuma despesa encontrada nesta categoria ou filtro.</p>
+              <p style={{ margin: 0, fontSize: '14px' }}>Nenhuma despesa encontrada nesta aba ou filtro.</p>
             </div>
           ) : (
             <div style={{ overflowX: 'auto' }}>
@@ -1347,19 +1451,16 @@ export default function Financeiro({ currentUser }) {
                     <th style={{ padding: '12px 14px' }}>Descrição da Despesa</th>
                     <th style={{ padding: '12px 14px', textAlign: 'right' }}>Valor (R$)</th>
                     <th style={{ padding: '12px 14px' }}>OP / Banco / Forma</th>
-                    <th style={{ padding: '12px 14px' }}>1ª Parcela</th>
-                    <th style={{ padding: '12px 14px' }}>Última Parcela</th>
-                    
-                    {activeTab !== 'pendentes' && activeTab !== 'recusadas' && (
-                      <th style={{ padding: '12px 14px', textAlign: 'center' }}>Status & Fluxo de Conciliação</th>
-                    )}
+                    <th style={{ padding: '12px 14px' }}>Vencimento</th>
+                    <th style={{ padding: '12px 14px', textAlign: 'center' }}>Situação</th>
 
-                    <th style={{ padding: '12px 14px', textAlign: 'center' }}>Ações / Análise</th>
+                    <th style={{ padding: '12px 14px', textAlign: 'center' }}>Ações & Confirmação</th>
                   </tr>
                 </thead>
                 <tbody>
                   {listaExibicao.map((item, idx) => {
                     const prioObj = PRIORIDADES.find(p => p.value === item.prioridade) || PRIORIDADES[1];
+                    const sit = getSituacaoItem(item);
                     const stPag = item.statusPagamento || 'PENDENTE_PAGAMENTO';
                     const configSt = CONFIG_STATUS_PAGAMENTO[stPag] || CONFIG_STATUS_PAGAMENTO.PENDENTE_PAGAMENTO;
 
@@ -1368,7 +1469,7 @@ export default function Financeiro({ currentUser }) {
                         key={item.id}
                         style={{ 
                           borderBottom: '1px solid rgba(255, 255, 255, 0.04)',
-                          background: idx % 2 === 0 ? 'transparent' : 'rgba(255, 255, 255, 0.01)'
+                          background: sit.code === 'VENCIDA' ? 'rgba(239, 68, 68, 0.04)' : (idx % 2 === 0 ? 'transparent' : 'rgba(255, 255, 255, 0.01)')
                         }}
                       >
                         {/* Prioridade Badge */}
@@ -1404,18 +1505,32 @@ export default function Financeiro({ currentUser }) {
                             </div>
                           )}
                           {item.obsAprovacao && (
-                            <div style={{ fontSize: '11px', color: item.status === 'APROVADA' ? '#34d399' : '#f87171', marginTop: '2px', fontStyle: 'italic' }}>
-                              Obs Análise: "{item.obsAprovacao}"
+                            <div style={{ fontSize: '11px', color: item.status === 'RECUSADA' ? '#f87171' : '#34d399', marginTop: '2px', fontStyle: 'italic' }}>
+                              Obs: "{item.obsAprovacao}"
                             </div>
                           )}
                         </td>
 
-                        {/* Valor & Parcelas */}
+                        {/* Valor (Com opção de Editar na 1ª Aba Cadastradas) */}
                         <td style={{ padding: '12px 14px', textAlign: 'right', fontFamily: 'monospace' }}>
-                          <div style={{ fontWeight: 700, color: '#60a5fa', fontSize: '14px' }}>
-                            {formatMoney(item.valor)}
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '6px' }}>
+                            <div style={{ fontWeight: 800, color: '#60a5fa', fontSize: '14px' }}>
+                              {formatMoney(item.valor)}
+                            </div>
+                            {/* Botão de Editar Valor (Principalmente na 1ª Aba) */}
+                            <button
+                              onClick={() => {
+                                setModalEditarValor(item);
+                                setNovoValorInput(String(item.valor));
+                              }}
+                              style={{ background: 'rgba(59, 130, 246, 0.15)', border: '1px solid rgba(59, 130, 246, 0.3)', color: '#60a5fa', borderRadius: '4px', padding: '3px 6px', cursor: 'pointer', fontSize: '10px', display: 'inline-flex', alignItems: 'center', gap: '2px' }}
+                              title="Editar o valor desta despesa"
+                            >
+                              <Edit2 size={10} />
+                              <span>Editar</span>
+                            </button>
                           </div>
-                          <div style={{ fontSize: '10px', color: '#64748b' }}>
+                          <div style={{ fontSize: '10px', color: '#64748b', marginTop: '2px' }}>
                             {item.parcelas > 1 ? `${item.parcelas}x parcelas` : '1x (À vista)'}
                           </div>
                         </td>
@@ -1433,103 +1548,91 @@ export default function Financeiro({ currentUser }) {
                           )}
                         </td>
 
-                        {/* 1ª Parcela (Vencimento Inicial) */}
+                        {/* Vencimento */}
                         <td style={{ padding: '12px 14px', color: '#cbd5e1', fontSize: '12px' }}>
-                          {formatDate(item.vencimento)}
+                          <div>{formatDate(item.vencimento)}</div>
+                          {item.parcelas > 1 && (
+                            <div style={{ fontSize: '10px', color: '#a78bfa' }}>Fim: {calcularUltimoVencimento(item.vencimento, item.parcelas)}</div>
+                          )}
                         </td>
 
-                        {/* Última Parcela */}
-                        <td style={{ padding: '12px 14px', color: '#a78bfa', fontSize: '12px', fontWeight: 600 }}>
-                          {item.parcelas > 1 ? calcularUltimoVencimento(item.vencimento, item.parcelas) : '-'}
-                        </td>
-
-                        {/* Coluna Status & Fluxo de Conciliação */}
-                        {activeTab !== 'pendentes' && activeTab !== 'recusadas' && (
-                          <td style={{ padding: '12px 14px', textAlign: 'center', minWidth: '180px' }}>
-                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
-                              
-                              {/* Badge de Status Atual */}
-                              <span style={{
-                                padding: '4px 10px',
-                                borderRadius: '16px',
-                                fontSize: '11px',
-                                fontWeight: 700,
-                                background: configSt.bg,
-                                color: configSt.color,
-                                border: `1px solid ${configSt.border}`,
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '4px'
-                              }}>
-                                {configSt.badge}
-                              </span>
-
-                              {/* Botão de Avançar Fluxo */}
-                              <button
-                                onClick={() => handleAvancarStatusPagamento(item.id)}
-                                style={{
-                                  padding: '4px 10px',
-                                  borderRadius: '6px',
-                                  fontSize: '10px',
-                                  fontWeight: 700,
-                                  background: 'rgba(255, 255, 255, 0.05)',
-                                  color: '#cbd5e1',
-                                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                                  cursor: 'pointer',
-                                  marginTop: '2px',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  gap: '4px'
-                                }}
-                                title={`Clique para avançar para ${configSt.proximoBadge}`}
-                              >
-                                <span>{configSt.proximoBadge}</span>
-                                <ArrowRight size={10} />
-                              </button>
-
-                              {/* Datas do Fluxo */}
-                              {item.dataPagamento && (
-                                <span style={{ fontSize: '10px', color: '#64748b' }}>
-                                  Pago: {formatDate(item.dataPagamento)}
-                                </span>
-                              )}
-                              {item.dataConciliacao && (
-                                <span style={{ fontSize: '10px', color: '#60a5fa' }}>
-                                  Conciliado: {formatDate(item.dataConciliacao)}
-                                </span>
-                              )}
-                              {item.dataArquivamento && (
-                                <span style={{ fontSize: '10px', color: '#94a3b8' }}>
-                                  Arquivado: {formatDate(item.dataArquivamento)}
-                                </span>
-                              )}
-
-                            </div>
-                          </td>
-                        )}
-
-                        {/* Botões de Ação */}
+                        {/* Badge de Situação Financeira (VENCIDA, A VENCER, PAGO) */}
                         <td style={{ padding: '12px 14px', textAlign: 'center' }}>
-                          {activeTab === 'pendentes' && (
-                            <div style={{ display: 'flex', gap: '6px', justifyContent: 'center' }}>
+                          <span style={{
+                            padding: '4px 10px',
+                            borderRadius: '16px',
+                            fontSize: '11px',
+                            fontWeight: 800,
+                            background: sit.bg,
+                            color: sit.color,
+                            border: `1px solid ${sit.border || 'transparent'}`,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px'
+                          }}>
+                            {sit.label}
+                          </span>
+                        </td>
+
+                        {/* Coluna Ações Específicas por Aba */}
+                        <td style={{ padding: '12px 14px', textAlign: 'center' }}>
+                          
+                          {/* AÇÕES NA 1ª ABA: DESPESAS CADASTRADAS */}
+                          {activeTab === 'cadastradas' && (
+                            <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', alignItems: 'center' }}>
                               <button
-                                onClick={() => setModalAprovacao({ despesa: item, acao: 'APROVAR' })}
-                                style={{ padding: '6px 10px', background: '#10b981', color: '#fff', border: 'none', borderRadius: '6px', fontSize: '11px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                                onClick={() => handleEnviarParaPagamento(item.id)}
+                                style={{ padding: '6px 12px', background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)', color: '#fff', border: 'none', borderRadius: '6px', fontSize: '11px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', boxShadow: '0 2px 8px rgba(59, 130, 246, 0.3)' }}
+                                title="Enviar para a aba Lançadas para autorização e liquidação de pagamento"
                               >
-                                <Check size={12} /> Aprovar
+                                <Send size={12} /> Enviar p/ Pagamentos
                               </button>
+
                               <button
-                                onClick={() => setModalAprovacao({ despesa: item, acao: 'REPROVAR' })}
-                                style={{ padding: '6px 10px', background: '#ef4444', color: '#fff', border: 'none', borderRadius: '6px', fontSize: '11px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                                onClick={() => handleExcluirDespesa(item.id)}
+                                style={{ background: 'transparent', border: 'none', color: '#64748b', cursor: 'pointer', padding: '4px' }}
+                                title="Excluir despesa"
                               >
-                                <X size={12} /> Reprovar
+                                <Trash2 size={14} color="#f87171" />
                               </button>
                             </div>
                           )}
 
-                          {activeTab !== 'pendentes' && (
+                          {/* AÇÕES NA 2ª ABA: DESPESAS LANÇADAS (CONFIRMAÇÃO DE PAGAMENTO) */}
+                          {activeTab === 'lancadas' && (
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
+                              {item.statusPagamento !== 'PAGO' ? (
+                                <div style={{ display: 'flex', gap: '6px' }}>
+                                  <button
+                                    onClick={() => handleMudarStatusPagamento(item.id, 'PAGO')}
+                                    style={{ padding: '6px 12px', background: '#10b981', color: '#fff', border: 'none', borderRadius: '6px', fontSize: '11px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                                    title="Confirmar pagamento da despesa"
+                                  >
+                                    <Check size={12} /> Confirmar PAGO
+                                  </button>
+                                  <button
+                                    onClick={() => setModalAprovacao({ despesa: item, acao: 'REPROVAR' })}
+                                    style={{ padding: '6px 10px', background: '#ef4444', color: '#fff', border: 'none', borderRadius: '6px', fontSize: '11px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                                    title="Reprovar ou marcar como Não Pago"
+                                  >
+                                    <X size={12} /> Reprovar
+                                  </button>
+                                </div>
+                              ) : (
+                                <button
+                                  onClick={() => handleAvancarStatusPagamento(item.id)}
+                                  style={{ padding: '5px 10px', background: 'rgba(59, 130, 246, 0.2)', color: '#60a5fa', border: '1px solid rgba(59, 130, 246, 0.4)', borderRadius: '6px', fontSize: '11px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                                >
+                                  <span>🏦 Enviar p/ Conciliação</span>
+                                  <ArrowRight size={10} />
+                                </button>
+                              )}
+                            </div>
+                          )}
+
+                          {/* AÇÕES NAS OUTRAS ABAS (CONCILIAÇÃO / ARQUIVADAS / RECUSADAS) */}
+                          {activeTab !== 'cadastradas' && activeTab !== 'lancadas' && (
                             <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', alignItems: 'center' }}>
-                              {/* Seletor Manual de Status se o usuário quiser forçar qualquer estado */}
                               <select
                                 value={stPag}
                                 onChange={(e) => handleMudarStatusPagamento(item.id, e.target.value)}
@@ -1551,6 +1654,7 @@ export default function Financeiro({ currentUser }) {
                               </button>
                             </div>
                           )}
+
                         </td>
 
                       </tr>
@@ -1814,6 +1918,62 @@ export default function Financeiro({ currentUser }) {
                 Confirmar {modalAprovacao.acao === 'APROVAR' ? 'Aprovação' : 'Reprovação'}
               </button>
             </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* MODAL DE EDIÇÃO DE VALOR DA DESPESA */}
+      {modalEditarValor && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: '16px' }}>
+          <div style={{ background: '#0f172a', border: '1px solid #334155', borderRadius: '16px', padding: '24px', maxWidth: '420px', width: '100%', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.5)' }}>
+            
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#60a5fa', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Edit2 size={18} />
+                Editar Valor da Despesa
+              </h3>
+              <button onClick={() => setModalEditarValor(null)} style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer' }}><X size={20} /></button>
+            </div>
+
+            <div style={{ background: 'rgba(30, 41, 59, 0.5)', padding: '12px', borderRadius: '10px', marginBottom: '16px', fontSize: '12px' }}>
+              <div style={{ fontWeight: 700, color: '#f8fafc' }}>{modalEditarValor.nome}</div>
+              <div style={{ color: '#94a3b8', marginTop: '2px' }}>Empresa: <strong>{modalEditarValor.empresa}</strong> ({modalEditarValor.departamento})</div>
+              <div style={{ color: '#a78bfa', fontWeight: 600, marginTop: '2px' }}>Valor Atual: {formatMoney(modalEditarValor.valor)}</div>
+            </div>
+
+            <form onSubmit={handleSalvarNovoValor}>
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#94a3b8', marginBottom: '6px' }}>
+                  Novo Valor Total (R$) *
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0.01"
+                  value={novoValorInput}
+                  onChange={(e) => setNovoValorInput(e.target.value)}
+                  style={{ width: '100%', padding: '12px', background: '#1e293b', border: '1px solid #3b82f6', borderRadius: '8px', color: '#fff', fontSize: '16px', fontWeight: 800 }}
+                  autoFocus
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+                <button
+                  type="button"
+                  onClick={() => setModalEditarValor(null)}
+                  style={{ padding: '10px 16px', background: 'rgba(51, 65, 85, 0.6)', color: '#cbd5e1', border: 'none', borderRadius: '8px', fontSize: '12px', cursor: 'pointer' }}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  style={{ padding: '10px 20px', background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}
+                >
+                  Salvar Novo Valor
+                </button>
+              </div>
+            </form>
 
           </div>
         </div>
