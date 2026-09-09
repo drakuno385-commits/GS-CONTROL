@@ -484,14 +484,31 @@ export default function Financeiro({ currentUser }) {
     }
   }, [despesas]);
 
-  // Aba Ativa
-  const [activeTab, setActiveTab] = useState('cadastradas');
+  // Identificação do Usuário para Isolamento de Filtros e Visualização por Perfil
+  const userId = currentUser?.id || currentUser?.username || currentUser?.email || 'usuario_padrao';
+  const filterStorageKey = `acoweb_financeiro_filtros_${userId}`;
+  const tabStorageKey = `acoweb_financeiro_tab_${userId}`;
+
+  // Aba Ativa (Salva por Usuário)
+  const [activeTab, setActiveTab] = useState(() => {
+    try {
+      const saved = localStorage.getItem(tabStorageKey);
+      if (saved) return saved;
+    } catch(e){}
+    return 'cadastradas';
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(tabStorageKey, activeTab);
+    } catch(e){}
+  }, [activeTab, tabStorageKey]);
 
   // Sub-aba na tela de Relatório Mensal ('fluxo' ou 'consulta')
   const [subTabRelatorio, setSubTabRelatorio] = useState('fluxo');
 
-  // Filtros Independentes por Aba (Garante que os filtros de uma aba NUNCA interfiram na outra)
-  const [filtrosPorAba, setFiltrosPorAba] = useState({
+  // Filtros Independentes por Aba e por Usuário (Nenhum usuário afeta a tela do outro)
+  const FILTROS_ESTRUTURA_PADRAO = {
     cadastradas: { empresa: '', departamento: '', busca: '', formaPagamento: '', statusPagamento: 'TODOS', mes: '' },
     aguardando: { empresa: '', departamento: '', busca: '', formaPagamento: '', statusPagamento: 'TODOS', mes: '' },
     aprovadas: { empresa: '', departamento: '', busca: '', formaPagamento: '', statusPagamento: 'TODOS', mes: '' },
@@ -501,7 +518,27 @@ export default function Financeiro({ currentUser }) {
     recusadas: { empresa: '', departamento: '', busca: '', formaPagamento: '', statusPagamento: 'TODOS', mes: '' },
     relatorio: { empresa: '', departamento: '', busca: '', formaPagamento: '', statusPagamento: 'TODOS', mes: '' },
     consulta: { empresa: '', departamento: '', busca: '', formaPagamento: '', statusPagamento: 'TODOS', mes: '' }
+  };
+
+  const [filtrosPorAba, setFiltrosPorAba] = useState(() => {
+    try {
+      const saved = localStorage.getItem(filterStorageKey);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && typeof parsed === 'object') {
+          return { ...FILTROS_ESTRUTURA_PADRAO, ...parsed };
+        }
+      }
+    } catch(e){}
+    return FILTROS_ESTRUTURA_PADRAO;
   });
+
+  // Salvar alterações de filtro no escopo isolado do Usuário Logado
+  useEffect(() => {
+    try {
+      localStorage.setItem(filterStorageKey, JSON.stringify(filtrosPorAba));
+    } catch(e){}
+  }, [filtrosPorAba, filterStorageKey]);
 
   // Obter estado de filtro da aba ativa atual
   const tabChaveAtual = activeTab === 'relatorio' ? (subTabRelatorio === 'consulta' ? 'consulta' : 'relatorio') : activeTab;
