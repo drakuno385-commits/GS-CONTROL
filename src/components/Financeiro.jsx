@@ -597,11 +597,54 @@ export default function Financeiro({ currentUser }) {
   const [modalAprovacao, setModalAprovacao] = useState(null);
   const [obsAprovacaoInput, setObsAprovacaoInput] = useState('');
 
-  // Modal de Confirmação de Pagamento com Digitação de Valor Executado
+  // Helper para Visualização / Download de Anexos em PDF
+  const abrirPDF = (pdfObj) => {
+    if (!pdfObj || !pdfObj.dataUrl) return alert('Nenhum PDF disponível.');
+    try {
+      const win = window.open('');
+      if (win) {
+        win.document.write(`
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <title>${pdfObj.name || 'Visualizador PDF'}</title>
+              <meta charset="utf-8" />
+            </head>
+            <body style="margin:0; background:#0f172a; display:flex; flex-direction:column; height:100vh; color:#fff; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+              <div style="padding:12px 20px; background:#1e293b; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #334155; box-shadow:0 2px 8px rgba(0,0,0,0.3);">
+                <div style="display:flex; align-items:center; gap:10px;">
+                  <span style="font-size:18px;">📄</span>
+                  <div>
+                    <div style="font-weight:bold; font-size:14px; color:#f8fafc;">${pdfObj.name || 'Documento Anexo PDF'}</div>
+                    <div style="font-size:11px; color:#94a3b8;">Módulo Financeiro — ACOWEB</div>
+                  </div>
+                </div>
+                <a href="${pdfObj.dataUrl}" download="${pdfObj.name || 'documento.pdf'}" style="background:#3b82f6; color:#fff; padding:8px 16px; text-decoration:none; border-radius:8px; font-size:13px; font-weight:bold; display:inline-flex; align-items:center; gap:6px;">
+                  ⬇️ Baixar PDF
+                </a>
+              </div>
+              <iframe src="${pdfObj.dataUrl}" style="flex:1; width:100%; border:none;"></iframe>
+            </body>
+          </html>
+        `);
+      } else {
+        const a = document.createElement('a');
+        a.href = pdfObj.dataUrl;
+        a.download = pdfObj.name || 'documento.pdf';
+        a.click();
+      }
+    } catch (e) {
+      console.error(e);
+      window.open(pdfObj.dataUrl, '_blank');
+    }
+  };
+
+  // Modal de Confirmação de Pagamento com Digitação de Valor Executado e Anexo PDF
   const [modalConfirmarPagamento, setModalConfirmarPagamento] = useState(null);
   const [valorExecutadoInput, setValorExecutadoInput] = useState('');
   const [dataPagamentoInput, setDataPagamentoInput] = useState('');
   const [obsPagamentoInput, setObsPagamentoInput] = useState('');
+  const [pdfComprovanteInput, setPdfComprovanteInput] = useState(null);
 
   // Formulário de Nova Despesa
   const [formNovaDespesa, setFormNovaDespesa] = useState({
@@ -613,6 +656,7 @@ export default function Financeiro({ currentUser }) {
     vencimento: new Date().toISOString().slice(0, 10),
     temOP: false,
     numeroOP: '',
+    pdfOP: null,
     banco: 'Itaú',
     formaPagamento: 'Boleto',
     prioridade: 'MÉDIA',
@@ -680,6 +724,8 @@ export default function Financeiro({ currentUser }) {
       vencimento: item.vencimento || new Date().toISOString().slice(0, 10),
       temOP: !!item.temOP,
       numeroOP: item.numeroOP || '',
+      pdfOP: item.pdfOP || null,
+      pdfComprovante: item.pdfComprovante || null,
       banco: item.banco || 'Itaú',
       formaPagamento: item.formaPagamento || 'Boleto',
       prioridade: item.prioridade || 'MÉDIA',
@@ -707,6 +753,8 @@ export default function Financeiro({ currentUser }) {
           vencimento: modalEditarDespesa.vencimento,
           temOP: modalEditarDespesa.temOP,
           numeroOP: modalEditarDespesa.temOP ? modalEditarDespesa.numeroOP.trim() : '',
+          pdfOP: modalEditarDespesa.temOP ? modalEditarDespesa.pdfOP : null,
+          pdfComprovante: modalEditarDespesa.pdfComprovante || null,
           banco: modalEditarDespesa.banco,
           formaPagamento: modalEditarDespesa.formaPagamento,
           prioridade: modalEditarDespesa.prioridade,
@@ -755,6 +803,7 @@ export default function Financeiro({ currentUser }) {
     setValorExecutadoInput(despesa.valorExecutado !== undefined ? String(despesa.valorExecutado) : String(despesa.valor));
     setDataPagamentoInput(despesa.dataPagamento || hoje);
     setObsPagamentoInput(despesa.obsPagamento || '');
+    setPdfComprovanteInput(despesa.pdfComprovante || null);
   };
 
   const handleSalvarConfirmarPagamento = (e) => {
@@ -774,7 +823,8 @@ export default function Financeiro({ currentUser }) {
           statusPagamento: 'PAGO',
           valorExecutado: valExec,
           dataPagamento: dataPagamentoInput || hoje,
-          obsPagamento: obsPagamentoInput.trim()
+          obsPagamento: obsPagamentoInput.trim(),
+          pdfComprovante: pdfComprovanteInput || d.pdfComprovante || null
         };
       }
       return d;
@@ -858,6 +908,8 @@ export default function Financeiro({ currentUser }) {
         vencimento: dataVenc,
         temOP: formNovaDespesa.temOP,
         numeroOP: formNovaDespesa.temOP ? formNovaDespesa.numeroOP.trim() : '',
+        pdfOP: formNovaDespesa.temOP ? formNovaDespesa.pdfOP : null,
+        pdfComprovante: null,
         banco: formNovaDespesa.banco,
         formaPagamento: formNovaDespesa.formaPagamento,
         prioridade: formNovaDespesa.prioridade,
@@ -884,6 +936,7 @@ export default function Financeiro({ currentUser }) {
       vencimento: new Date().toISOString().slice(0, 10),
       temOP: false,
       numeroOP: '',
+      pdfOP: null,
       banco: bancos[0] || 'Itaú',
       formaPagamento: 'Boleto',
       prioridade: 'MÉDIA',
@@ -1908,20 +1961,55 @@ export default function Financeiro({ currentUser }) {
               </label>
             </div>
 
-            {/* Número da OP (Condicional) */}
+            {/* Número da OP e Anexo PDF (Condicional) */}
             {formNovaDespesa.temOP && (
-              <div>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#60a5fa', marginBottom: '6px' }}>
-                  Número da OP *
-                </label>
-                <input
-                  type="text"
-                  placeholder="Ex: OP-2026-9901"
-                  value={formNovaDespesa.numeroOP}
-                  onChange={(e) => setFormNovaDespesa({ ...formNovaDespesa, numeroOP: e.target.value })}
-                  style={{ width: '100%', padding: '10px 14px', background: '#0f172a', border: '1px solid #3b82f6', borderRadius: '8px', color: '#fff', fontSize: '13px', fontWeight: 600 }}
-                />
-              </div>
+              <>
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#60a5fa', marginBottom: '6px' }}>
+                    Número da OP *
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Ex: OP-2026-9901"
+                    value={formNovaDespesa.numeroOP}
+                    onChange={(e) => setFormNovaDespesa({ ...formNovaDespesa, numeroOP: e.target.value })}
+                    style={{ width: '100%', padding: '10px 14px', background: '#0f172a', border: '1px solid #3b82f6', borderRadius: '8px', color: '#fff', fontSize: '13px', fontWeight: 600 }}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#60a5fa', marginBottom: '6px' }}>
+                    Anexo Documento da OP (PDF)
+                  </label>
+                  <input
+                    type="file"
+                    accept="application/pdf"
+                    onChange={(e) => {
+                      const file = e.target.files[0];
+                      if (file) {
+                        if (file.type !== 'application/pdf') {
+                          alert('Por favor, selecione apenas arquivos PDF.');
+                          e.target.value = '';
+                          return;
+                        }
+                        const reader = new FileReader();
+                        reader.onload = (ev) => {
+                          setFormNovaDespesa(prev => ({
+                            ...prev,
+                            pdfOP: { name: file.name, dataUrl: ev.target.result }
+                          }));
+                        };
+                        reader.readAsDataURL(file);
+                      }
+                    }}
+                    style={{ width: '100%', padding: '8px 12px', background: '#0f172a', border: '1px solid #334155', borderRadius: '8px', color: '#fff', fontSize: '12px' }}
+                  />
+                  {formNovaDespesa.pdfOP && (
+                    <div style={{ fontSize: '11px', color: '#34d399', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 600 }}>
+                      📄 Anexo OP: {formNovaDespesa.pdfOP.name}
+                    </div>
+                  )}
+                </div>
+              </>
             )}
 
             {/* Observações */}
@@ -2170,16 +2258,38 @@ export default function Financeiro({ currentUser }) {
                           </div>
                         </td>
 
-                        {/* OP / Banco / Forma Pagamento */}
+                        {/* OP / Banco / Forma Pagamento / Anexos PDF */}
                         <td style={{ padding: '12px 14px', fontSize: '11px' }}>
                           {item.temOP ? (
-                            <span style={{ color: '#38bdf8', fontWeight: 600, display: 'block' }}>OP: {item.numeroOP}</span>
+                            <div>
+                              <span style={{ color: '#38bdf8', fontWeight: 600, display: 'block' }}>OP: {item.numeroOP}</span>
+                              {item.pdfOP && (
+                                <button
+                                  type="button"
+                                  onClick={() => abrirPDF(item.pdfOP)}
+                                  style={{ marginTop: '3px', background: 'rgba(56, 189, 248, 0.15)', color: '#38bdf8', border: '1px solid rgba(56, 189, 248, 0.35)', borderRadius: '4px', padding: '2px 6px', fontSize: '10px', fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '3px' }}
+                                  title={item.pdfOP.name || 'Ver PDF OP'}
+                                >
+                                  <FileText size={10} /> PDF OP
+                                </button>
+                              )}
+                            </div>
                           ) : (
                             <span style={{ color: '#64748b', display: 'block' }}>Sem OP</span>
                           )}
-                          <span style={{ color: '#cbd5e1' }}>{item.banco}</span>
+                          <span style={{ color: '#cbd5e1', display: 'block', marginTop: '2px' }}>{item.banco}</span>
                           {item.formaPagamento && (
                             <span style={{ color: '#a78bfa', display: 'block', fontSize: '10px' }}>• {item.formaPagamento}</span>
+                          )}
+                          {item.pdfComprovante && (
+                            <button
+                              type="button"
+                              onClick={() => abrirPDF(item.pdfComprovante)}
+                              style={{ marginTop: '4px', background: 'rgba(52, 211, 153, 0.15)', color: '#34d399', border: '1px solid rgba(52, 211, 153, 0.35)', borderRadius: '4px', padding: '2px 6px', fontSize: '10px', fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '3px' }}
+                              title={item.pdfComprovante.name || 'Ver Comprovante PDF'}
+                            >
+                              <FileText size={10} /> Comprovante PDF
+                            </button>
                           )}
                         </td>
 
@@ -2690,7 +2800,17 @@ export default function Financeiro({ currentUser }) {
                         <tr key={item.id} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.04)', background: idx % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.01)' }}>
                           <td style={{ padding: '10px', color: '#94a3b8', fontFamily: 'monospace' }}>
                             <div>{item.id}</div>
-                            {item.temOP && <span style={{ color: '#38bdf8', fontWeight: 700, fontSize: '10px' }}>{item.numeroOP}</span>}
+                            {item.temOP && <span style={{ color: '#38bdf8', fontWeight: 700, fontSize: '10px', display: 'block' }}>{item.numeroOP}</span>}
+                            {item.pdfOP && (
+                              <button
+                                type="button"
+                                onClick={() => abrirPDF(item.pdfOP)}
+                                style={{ marginTop: '2px', background: 'rgba(56, 189, 248, 0.15)', color: '#38bdf8', border: '1px solid rgba(56, 189, 248, 0.35)', borderRadius: '4px', padding: '1px 5px', fontSize: '9px', fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '2px' }}
+                                title={item.pdfOP.name || 'Ver PDF OP'}
+                              >
+                                <FileText size={9} /> PDF OP
+                              </button>
+                            )}
                           </td>
                           <td style={{ padding: '10px', fontWeight: 700, color: '#f8fafc' }}>{item.empresa}</td>
                           <td style={{ padding: '10px', color: '#cbd5e1' }}>{item.departamento}</td>
@@ -2701,7 +2821,17 @@ export default function Financeiro({ currentUser }) {
                           <td style={{ padding: '10px', textAlign: 'right', fontWeight: 800, color: '#60a5fa', fontFamily: 'monospace' }}>{formatMoney(item.valor)}</td>
                           <td style={{ padding: '10px', color: '#cbd5e1' }}>
                             <div>{item.banco}</div>
-                            <span style={{ color: '#94a3b8', fontSize: '10px' }}>{item.formaPagamento}</span>
+                            <span style={{ color: '#94a3b8', fontSize: '10px', display: 'block' }}>{item.formaPagamento}</span>
+                            {item.pdfComprovante && (
+                              <button
+                                type="button"
+                                onClick={() => abrirPDF(item.pdfComprovante)}
+                                style={{ marginTop: '3px', background: 'rgba(52, 211, 153, 0.15)', color: '#34d399', border: '1px solid rgba(52, 211, 153, 0.35)', borderRadius: '4px', padding: '1px 5px', fontSize: '9px', fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '2px' }}
+                                title={item.pdfComprovante.name || 'Ver Comprovante PDF'}
+                              >
+                                <FileText size={9} /> Comprovante PDF
+                              </button>
+                            )}
                           </td>
                           <td style={{ padding: '10px', color: '#cbd5e1' }}>{formatDate(item.vencimento)}</td>
                           <td style={{ padding: '10px', textAlign: 'center' }}>
@@ -2787,7 +2917,27 @@ export default function Financeiro({ currentUser }) {
                           </td>
                           <td style={{ padding: '10px', color: '#cbd5e1' }}>
                             <div>{item.banco}</div>
-                            {item.temOP && <span style={{ color: '#38bdf8', fontSize: '10px' }}>OP: {item.numeroOP}</span>}
+                            {item.temOP && <span style={{ color: '#38bdf8', fontSize: '10px', display: 'block' }}>OP: {item.numeroOP}</span>}
+                            {item.pdfOP && (
+                              <button
+                                type="button"
+                                onClick={() => abrirPDF(item.pdfOP)}
+                                style={{ marginTop: '2px', background: 'rgba(56, 189, 248, 0.15)', color: '#38bdf8', border: '1px solid rgba(56, 189, 248, 0.35)', borderRadius: '4px', padding: '1px 5px', fontSize: '9px', fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '2px' }}
+                                title={item.pdfOP.name || 'Ver PDF OP'}
+                              >
+                                <FileText size={9} /> PDF OP
+                              </button>
+                            )}
+                            {item.pdfComprovante && (
+                              <button
+                                type="button"
+                                onClick={() => abrirPDF(item.pdfComprovante)}
+                                style={{ marginTop: '3px', background: 'rgba(52, 211, 153, 0.15)', color: '#34d399', border: '1px solid rgba(52, 211, 153, 0.35)', borderRadius: '4px', padding: '1px 5px', fontSize: '9px', fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '2px' }}
+                                title={item.pdfComprovante.name || 'Ver Comprovante PDF'}
+                              >
+                                <FileText size={9} /> Comprovante PDF
+                              </button>
+                            )}
                           </td>
                           <td style={{ padding: '10px', color: '#cbd5e1' }}>{formatDate(item.vencimento)}</td>
                           <td style={{ padding: '10px', textAlign: 'center' }}>
@@ -3016,7 +3166,7 @@ export default function Financeiro({ currentUser }) {
                 />
               </div>
 
-              {/* Observação / Comprovante */}
+              {/* Observação */}
               <div>
                 <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#cbd5e1', marginBottom: '6px' }}>
                   Observação / N. Autenticação Comprovante (opcional)
@@ -3028,6 +3178,38 @@ export default function Financeiro({ currentUser }) {
                   onChange={(e) => setObsPagamentoInput(e.target.value)}
                   style={{ width: '100%', padding: '10px 14px', background: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '8px', color: '#f8fafc', fontSize: '13px' }}
                 />
+              </div>
+
+              {/* Anexo Comprovante PDF */}
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#34d399', marginBottom: '6px' }}>
+                  Anexo Comprovante de Pagamento (PDF)
+                </label>
+                <input
+                  type="file"
+                  accept="application/pdf"
+                  onChange={(e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                      if (file.type !== 'application/pdf') {
+                        alert('Por favor, selecione apenas arquivos PDF.');
+                        e.target.value = '';
+                        return;
+                      }
+                      const reader = new FileReader();
+                      reader.onload = (ev) => {
+                        setPdfComprovanteInput({ name: file.name, dataUrl: ev.target.result });
+                      };
+                      reader.readAsDataURL(file);
+                    }
+                  }}
+                  style={{ width: '100%', padding: '8px 12px', background: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(52, 211, 153, 0.4)', borderRadius: '8px', color: '#f8fafc', fontSize: '12px' }}
+                />
+                {pdfComprovanteInput && (
+                  <div style={{ fontSize: '11px', color: '#34d399', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 600 }}>
+                    📑 Comprovante: {pdfComprovanteInput.name}
+                  </div>
+                )}
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '10px' }}>
@@ -3225,19 +3407,61 @@ export default function Financeiro({ currentUser }) {
                 </label>
               </div>
 
-              {/* Número da OP (Condicional) */}
+              {/* Número da OP e Anexo PDF (Condicional) */}
               {modalEditarDespesa.temOP && (
-                <div>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#60a5fa', marginBottom: '6px' }}>
-                    Número da OP *
-                  </label>
-                  <input
-                    type="text"
-                    value={modalEditarDespesa.numeroOP}
-                    onChange={(e) => setModalEditarDespesa({ ...modalEditarDespesa, numeroOP: e.target.value })}
-                    style={{ width: '100%', padding: '10px 12px', background: '#1e293b', border: '1px solid #3b82f6', borderRadius: '8px', color: '#fff', fontSize: '13px', fontWeight: 600 }}
-                  />
-                </div>
+                <>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#60a5fa', marginBottom: '6px' }}>
+                      Número da OP *
+                    </label>
+                    <input
+                      type="text"
+                      value={modalEditarDespesa.numeroOP}
+                      onChange={(e) => setModalEditarDespesa({ ...modalEditarDespesa, numeroOP: e.target.value })}
+                      style={{ width: '100%', padding: '10px 12px', background: '#1e293b', border: '1px solid #3b82f6', borderRadius: '8px', color: '#fff', fontSize: '13px', fontWeight: 600 }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#60a5fa', marginBottom: '6px' }}>
+                      Anexo Documento da OP (PDF)
+                    </label>
+                    <input
+                      type="file"
+                      accept="application/pdf"
+                      onChange={(e) => {
+                        const file = e.target.files[0];
+                        if (file) {
+                          if (file.type !== 'application/pdf') {
+                            alert('Por favor, selecione apenas arquivos PDF.');
+                            e.target.value = '';
+                            return;
+                          }
+                          const reader = new FileReader();
+                          reader.onload = (ev) => {
+                            setModalEditarDespesa(prev => ({
+                              ...prev,
+                              pdfOP: { name: file.name, dataUrl: ev.target.result }
+                            }));
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                      style={{ width: '100%', padding: '8px 12px', background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', color: '#fff', fontSize: '12px' }}
+                    />
+                    {modalEditarDespesa.pdfOP && (
+                      <div style={{ fontSize: '11px', color: '#38bdf8', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 600 }}>
+                        📄 {modalEditarDespesa.pdfOP.name}
+                        <button
+                          type="button"
+                          onClick={() => abrirPDF(modalEditarDespesa.pdfOP)}
+                          style={{ marginLeft: '6px', background: 'rgba(56, 189, 248, 0.2)', color: '#38bdf8', border: 'none', borderRadius: '4px', padding: '2px 6px', fontSize: '10px', cursor: 'pointer' }}
+                        >
+                          Ver
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </>
               )}
 
               {/* Observações */}
