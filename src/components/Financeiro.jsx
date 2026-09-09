@@ -515,6 +515,12 @@ export default function Financeiro({ currentUser }) {
   const [modalAprovacao, setModalAprovacao] = useState(null);
   const [obsAprovacaoInput, setObsAprovacaoInput] = useState('');
 
+  // Modal de Confirmação de Pagamento com Digitação de Valor Executado
+  const [modalConfirmarPagamento, setModalConfirmarPagamento] = useState(null);
+  const [valorExecutadoInput, setValorExecutadoInput] = useState('');
+  const [dataPagamentoInput, setDataPagamentoInput] = useState('');
+  const [obsPagamentoInput, setObsPagamentoInput] = useState('');
+
   // Formulário de Nova Despesa
   const [formNovaDespesa, setFormNovaDespesa] = useState({
     empresa: 'AÇOFORTE',
@@ -661,19 +667,48 @@ export default function Financeiro({ currentUser }) {
     alert('🏦 Despesa confirmada como Lançada no Banco! Agora está disponível na aba "Lançadas".');
   };
 
-  const handleMarcarComoPaga = (id) => {
+  const handleAbrirConfirmarPagamento = (despesa) => {
+    const hoje = new Date().toISOString().slice(0, 10);
+    setModalConfirmarPagamento(despesa);
+    setValorExecutadoInput(despesa.valorExecutado !== undefined ? String(despesa.valorExecutado) : String(despesa.valor));
+    setDataPagamentoInput(despesa.dataPagamento || hoje);
+    setObsPagamentoInput(despesa.obsPagamento || '');
+  };
+
+  const handleSalvarConfirmarPagamento = (e) => {
+    e.preventDefault();
+    if (!modalConfirmarPagamento) return;
+    const valExec = parseFloat(valorExecutadoInput);
+    if (isNaN(valExec) || valExec < 0) {
+      alert('Por favor, digite um valor executado válido.');
+      return;
+    }
+
     const hoje = new Date().toISOString().slice(0, 10);
     setDespesas(prev => prev.map(d => {
-      if (d.id === id) {
+      if (d.id === modalConfirmarPagamento.id) {
         return {
           ...d,
           statusPagamento: 'PAGO',
-          dataPagamento: d.dataPagamento || hoje
+          valorExecutado: valExec,
+          dataPagamento: dataPagamentoInput || hoje,
+          obsPagamento: obsPagamentoInput.trim()
         };
       }
       return d;
     }));
-    alert('✓ Despesa marcada como PAGA com sucesso! Ela foi movida para a aba "Pagas".');
+
+    alert(`✓ Pagamento confirmado com sucesso!\nValor Previsto Original: ${formatMoney(modalConfirmarPagamento.valor)}\nValor Executado Pago: ${formatMoney(valExec)}`);
+    setModalConfirmarPagamento(null);
+  };
+
+  const handleMarcarComoPaga = (despesaOuId) => {
+    if (typeof despesaOuId === 'object' && despesaOuId !== null) {
+      handleAbrirConfirmarPagamento(despesaOuId);
+    } else {
+      const item = despesas.find(d => d.id === despesaOuId);
+      if (item) handleAbrirConfirmarPagamento(item);
+    }
   };
 
   const handleEnviarParaConciliacao = (id) => {
@@ -854,13 +889,13 @@ export default function Financeiro({ currentUser }) {
       countLancadas: lancadas.length,
       valorLancadas: lancadas.reduce((a, b) => a + b.valor, 0),
       countPagas: pagas.length,
-      valorPagas: pagas.reduce((a, b) => a + b.valor, 0),
+      valorPagas: pagas.reduce((a, b) => a + (b.valorExecutado !== undefined ? b.valorExecutado : b.valor), 0),
       countConciliacao: conciliacao.length,
-      valorConciliacao: conciliacao.reduce((a, b) => a + b.valor, 0),
+      valorConciliacao: conciliacao.reduce((a, b) => a + (b.valorExecutado !== undefined ? b.valorExecutado : b.valor), 0),
       countRecusadas: recusadas.length,
       valorRecusadas: recusadas.reduce((a, b) => a + b.valor, 0),
       countArquivadas: arquivadas.length,
-      valorArquivadas: arquivadas.reduce((a, b) => a + b.valor, 0),
+      valorArquivadas: arquivadas.reduce((a, b) => a + (b.valorExecutado !== undefined ? b.valorExecutado : b.valor), 0),
 
       countEmAberto: emAberto.length,
       valorEmAberto: emAberto.reduce((a, b) => a + b.valor, 0),
@@ -996,11 +1031,12 @@ export default function Financeiro({ currentUser }) {
       }
 
       if (d.statusPagamento === 'PAGO' || d.statusPagamento === 'PENDENTE_CONCILIACAO' || d.statusPagamento === 'ARQUIVADO') {
-        mapMeses[mesChave].pago += d.valor;
+        const valExec = d.valorExecutado !== undefined ? d.valorExecutado : d.valor;
+        mapMeses[mesChave].pago += valExec;
       } else {
         mapMeses[mesChave].pendente += d.valor;
       }
-      mapMeses[mesChave].total += d.valor;
+      mapMeses[mesChave].total += (d.statusPagamento === 'PAGO' || d.statusPagamento === 'PENDENTE_CONCILIACAO' || d.statusPagamento === 'ARQUIVADO') ? (d.valorExecutado !== undefined ? d.valorExecutado : d.valor) : d.valor;
     });
 
     const listaMeses = Object.values(mapMeses).sort((a, b) => a.mes.localeCompare(b.mes));
@@ -1015,13 +1051,15 @@ export default function Financeiro({ currentUser }) {
       if (!mapEmpresa[emp]) mapEmpresa[emp] = { empresa: emp, pago: 0, pendente: 0, total: 0, listaPago: [], listaPendente: [], listaTotal: [] };
 
       if (d.statusPagamento === 'PAGO' || d.statusPagamento === 'PENDENTE_CONCILIACAO' || d.statusPagamento === 'ARQUIVADO') {
-        mapEmpresa[emp].pago += d.valor;
+        const valExec = d.valorExecutado !== undefined ? d.valorExecutado : d.valor;
+        mapEmpresa[emp].pago += valExec;
         mapEmpresa[emp].listaPago.push(d);
+        mapEmpresa[emp].total += valExec;
       } else {
         mapEmpresa[emp].pendente += d.valor;
         mapEmpresa[emp].listaPendente.push(d);
+        mapEmpresa[emp].total += d.valor;
       }
-      mapEmpresa[emp].total += d.valor;
       mapEmpresa[emp].listaTotal.push(d);
     });
 
@@ -1035,13 +1073,15 @@ export default function Financeiro({ currentUser }) {
       if (!mapDepto[dep]) mapDepto[dep] = { departamento: dep, pago: 0, pendente: 0, total: 0, listaPago: [], listaPendente: [], listaTotal: [] };
 
       if (d.statusPagamento === 'PAGO' || d.statusPagamento === 'PENDENTE_CONCILIACAO' || d.statusPagamento === 'ARQUIVADO') {
-        mapDepto[dep].pago += d.valor;
+        const valExec = d.valorExecutado !== undefined ? d.valorExecutado : d.valor;
+        mapDepto[dep].pago += valExec;
         mapDepto[dep].listaPago.push(d);
+        mapDepto[dep].total += valExec;
       } else {
         mapDepto[dep].pendente += d.valor;
         mapDepto[dep].listaPendente.push(d);
+        mapDepto[dep].total += d.valor;
       }
-      mapDepto[dep].total += d.valor;
       mapDepto[dep].listaTotal.push(d);
     });
 
@@ -1088,31 +1128,38 @@ export default function Financeiro({ currentUser }) {
       nomeArquivo += `_${filtroMes}`;
     }
 
-    const headers = ['ID', 'Empresa', 'Departamento', 'Descrição Despesa', 'Valor (R$)', 'Parcela', 'Total Parcelas', 'Vencimento', 'Último Vencimento Est.', 'Tem OP', 'Num OP', 'Banco', 'Forma Pagamento', 'Prioridade', 'Status Etapa', 'Status Pagamento', 'Data Pagamento', 'Data Conciliação', 'Data Arquivamento', 'Obs Cadastro', 'Obs Análise'];
+    const headers = ['ID', 'Empresa', 'Departamento', 'Descrição Despesa', 'Valor Previsto (R$)', 'Valor Executado (R$)', 'Diferença (R$)', 'Parcela', 'Total Parcelas', 'Vencimento', 'Último Vencimento Est.', 'Tem OP', 'Num OP', 'Banco', 'Forma Pagamento', 'Prioridade', 'Status Etapa', 'Status Pagamento', 'Data Pagamento', 'Data Conciliação', 'Data Arquivamento', 'Obs Cadastro', 'Obs Análise', 'Obs Pagamento'];
     
-    const rows = dadosFiltrados.map(item => [
-      item.id,
-      `"${item.empresa || ''}"`,
-      `"${item.departamento || ''}"`,
-      `"${item.nome || ''}"`,
-      item.valor.toFixed(2),
-      item.parcelaNumero || 1,
-      item.parcelas || 1,
-      item.vencimento,
-      calcularUltimoVencimento(item.vencimento, item.parcelas || 1),
-      item.temOP ? 'SIM' : 'NÃO',
-      `"${item.numeroOP || ''}"`,
-      `"${item.banco || ''}"`,
-      `"${item.formaPagamento || ''}"`,
-      item.prioridade,
-      item.status,
-      CONFIG_STATUS_PAGAMENTO[item.statusPagamento || 'PENDENTE_PAGAMENTO']?.label || item.statusPagamento,
-      item.dataPagamento || '-',
-      item.dataConciliacao || '-',
-      item.dataArquivamento || '-',
-      `"${item.observacao || ''}"`,
-      `"${item.obsAprovacao || ''}"`
-    ]);
+    const rows = dadosFiltrados.map(item => {
+      const valExec = item.valorExecutado !== undefined ? item.valorExecutado : item.valor;
+      const dif = item.valorExecutado !== undefined ? (item.valorExecutado - item.valor) : 0;
+      return [
+        item.id,
+        `"${item.empresa || ''}"`,
+        `"${item.departamento || ''}"`,
+        `"${item.nome || ''}"`,
+        item.valor.toFixed(2),
+        valExec.toFixed(2),
+        dif.toFixed(2),
+        item.parcelaNumero || 1,
+        item.parcelas || 1,
+        item.vencimento,
+        calcularUltimoVencimento(item.vencimento, item.parcelas || 1),
+        item.temOP ? 'SIM' : 'NÃO',
+        `"${item.numeroOP || ''}"`,
+        `"${item.banco || ''}"`,
+        `"${item.formaPagamento || ''}"`,
+        item.prioridade,
+        item.status,
+        CONFIG_STATUS_PAGAMENTO[item.statusPagamento || 'PENDENTE_PAGAMENTO']?.label || item.statusPagamento,
+        item.dataPagamento || '-',
+        item.dataConciliacao || '-',
+        item.dataArquivamento || '-',
+        `"${item.observacao || ''}"`,
+        `"${item.obsAprovacao || ''}"`,
+        `"${item.obsPagamento || ''}"`
+      ];
+    });
 
     const csvContent = 'data:text/csv;charset=utf-8,\uFEFF' + [headers.join(';'), ...rows.map(e => e.join(';'))].join('\n');
     const encodedUri = encodeURI(csvContent);
@@ -1995,9 +2042,21 @@ export default function Financeiro({ currentUser }) {
 
                         {/* Valor */}
                         <td style={{ padding: '12px 14px', textAlign: 'right', fontFamily: 'monospace' }}>
-                          <div style={{ fontWeight: 800, color: '#60a5fa', fontSize: '14px' }}>
-                            {formatMoney(item.valor)}
+                          <div style={{ fontWeight: 800, color: item.valorExecutado !== undefined ? '#34d399' : '#60a5fa', fontSize: '14px' }}>
+                            {formatMoney(item.valorExecutado !== undefined ? item.valorExecutado : item.valor)}
                           </div>
+                          {item.valorExecutado !== undefined && item.valorExecutado !== item.valor && (
+                            <div style={{ fontSize: '10px', fontWeight: 700, marginTop: '2px', color: item.valorExecutado > item.valor ? '#f87171' : '#34d399' }}>
+                              {item.valorExecutado > item.valor 
+                                ? `+${formatMoney(item.valorExecutado - item.valor)} (Juros)` 
+                                : `-${formatMoney(item.valor - item.valorExecutado)} (Desconto)`}
+                            </div>
+                          )}
+                          {item.valorExecutado !== undefined && (
+                            <div style={{ fontSize: '10px', color: '#94a3b8', marginTop: '2px' }}>
+                              Previsto: {formatMoney(item.valor)}
+                            </div>
+                          )}
                           <div style={{ fontSize: '10px', color: '#64748b', marginTop: '2px' }}>
                             {item.parcelas > 1 ? `Parc. ${item.parcelaNumero || 1}/${item.parcelas}` : '1x (À vista)'}
                           </div>
@@ -2597,7 +2656,17 @@ export default function Financeiro({ currentUser }) {
                             {item.nome}
                             {item.parcelas > 1 && <span style={{ color: '#a78bfa', fontSize: '10px', display: 'block' }}>Parc. {item.parcelaNumero}/{item.parcelas}</span>}
                           </td>
-                          <td style={{ padding: '10px', textAlign: 'right', fontWeight: 800, color: '#60a5fa', fontFamily: 'monospace' }}>{formatMoney(item.valor)}</td>
+                          <td style={{ padding: '10px', textAlign: 'right', fontWeight: 800, color: item.valorExecutado !== undefined ? '#34d399' : '#60a5fa', fontFamily: 'monospace' }}>
+                            <div>{formatMoney(item.valorExecutado !== undefined ? item.valorExecutado : item.valor)}</div>
+                            {item.valorExecutado !== undefined && item.valorExecutado !== item.valor && (
+                              <div style={{ fontSize: '10px', color: item.valorExecutado > item.valor ? '#f87171' : '#34d399', fontWeight: 700 }}>
+                                {item.valorExecutado > item.valor ? `+${formatMoney(item.valorExecutado - item.valor)} (Juros)` : `-${formatMoney(item.valor - item.valorExecutado)} (Desconto)`}
+                              </div>
+                            )}
+                            {item.valorExecutado !== undefined && (
+                              <div style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 400 }}>Previsto: {formatMoney(item.valor)}</div>
+                            )}
+                          </td>
                           <td style={{ padding: '10px', color: '#cbd5e1' }}>
                             <div>{item.banco}</div>
                             {item.temOP && <span style={{ color: '#38bdf8', fontSize: '10px' }}>OP: {item.numeroOP}</span>}
@@ -2756,6 +2825,110 @@ export default function Financeiro({ currentUser }) {
               </button>
             </div>
 
+          </div>
+        </div>
+      )}
+
+      {/* MODAL CONFIRMAR PAGAMENTO COM DIGITAÇÃO DE VALOR EXECUTADO */}
+      {modalConfirmarPagamento && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: '16px' }}>
+          <div style={{ background: '#0f172a', border: '1px solid rgba(52, 211, 153, 0.4)', borderRadius: '16px', padding: '24px', maxWidth: '520px', width: '100%', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.5)' }}>
+            
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '12px' }}>
+              <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#34d399', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <CheckCircle2 size={22} color="#34d399" />
+                Confirmar Pagamento da Despesa
+              </h3>
+              <button onClick={() => setModalConfirmarPagamento(null)} style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer' }}><X size={20} /></button>
+            </div>
+
+            {/* Resumo da despesa */}
+            <div style={{ background: 'rgba(30, 41, 59, 0.6)', padding: '14px', borderRadius: '12px', marginBottom: '16px', border: '1px solid rgba(255,255,255,0.05)', fontSize: '13px' }}>
+              <div style={{ fontWeight: 700, color: '#f8fafc', marginBottom: '4px' }}>{modalConfirmarPagamento.nome}</div>
+              <div style={{ color: '#94a3b8', fontSize: '12px' }}>
+                Empresa: <strong style={{ color: '#e2e8f0' }}>{modalConfirmarPagamento.empresa}</strong> | Depto: <strong style={{ color: '#e2e8f0' }}>{modalConfirmarPagamento.departamento}</strong>
+              </div>
+              <div style={{ color: '#60a5fa', fontWeight: 700, marginTop: '6px', fontSize: '13px' }}>
+                Valor Previsto Original: {formatMoney(modalConfirmarPagamento.valor)}
+              </div>
+            </div>
+
+            <form onSubmit={handleSalvarConfirmarPagamento} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              
+              {/* Campo Valor Executado */}
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#34d399', marginBottom: '6px' }}>
+                  Valor Executado (Pago Efetivo em R$) *
+                </label>
+                <input 
+                  type="number"
+                  step="0.01"
+                  required
+                  value={valorExecutadoInput}
+                  onChange={(e) => setValorExecutadoInput(e.target.value)}
+                  placeholder="Digite o valor efetivamente pago..."
+                  style={{ width: '100%', padding: '10px 14px', background: 'rgba(15, 23, 42, 0.8)', border: '2px solid rgba(52, 211, 153, 0.5)', borderRadius: '8px', color: '#f8fafc', fontSize: '16px', fontWeight: 800, fontFamily: 'monospace' }}
+                  autoFocus
+                />
+                {/* Cálculo de Diferença em Tempo Real */}
+                {(() => {
+                  const valExec = parseFloat(valorExecutadoInput) || 0;
+                  const dif = valExec - modalConfirmarPagamento.valor;
+                  if (Math.abs(dif) < 0.01) {
+                    return <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '4px' }}>✓ Valor executado igual ao previsto original (100%).</div>;
+                  }
+                  if (dif > 0) {
+                    return <div style={{ fontSize: '11px', color: '#f87171', fontWeight: 700, marginTop: '4px' }}>⚠️ Acréscimo / Juros: +{formatMoney(dif)} em relação ao previsto.</div>;
+                  }
+                  return <div style={{ fontSize: '11px', color: '#34d399', fontWeight: 700, marginTop: '4px' }}>🎉 Desconto / Economia: -{formatMoney(Math.abs(dif))} em relação ao previsto.</div>;
+                })()}
+              </div>
+
+              {/* Data do Pagamento */}
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#cbd5e1', marginBottom: '6px' }}>
+                  Data do Pagamento *
+                </label>
+                <input 
+                  type="date"
+                  required
+                  value={dataPagamentoInput}
+                  onChange={(e) => setDataPagamentoInput(e.target.value)}
+                  style={{ width: '100%', padding: '10px 14px', background: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '8px', color: '#f8fafc', fontSize: '13px' }}
+                />
+              </div>
+
+              {/* Observação / Comprovante */}
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#cbd5e1', marginBottom: '6px' }}>
+                  Observação / N. Autenticação Comprovante (opcional)
+                </label>
+                <input 
+                  type="text"
+                  placeholder="Ex: Comprovante Pix #984102 / Pago com desconto negociado..."
+                  value={obsPagamentoInput}
+                  onChange={(e) => setObsPagamentoInput(e.target.value)}
+                  style={{ width: '100%', padding: '10px 14px', background: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '8px', color: '#f8fafc', fontSize: '13px' }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '10px' }}>
+                <button
+                  type="button"
+                  onClick={() => setModalConfirmarPagamento(null)}
+                  style={{ padding: '10px 16px', background: 'rgba(148, 163, 184, 0.15)', color: '#cbd5e1', border: 'none', borderRadius: '8px', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  style={{ padding: '10px 18px', background: '#10b981', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', boxShadow: '0 4px 12px rgba(16, 185, 129, 0.4)' }}
+                >
+                  <CheckCircle2 size={16} /> Confirmar & Baixar Pagamento
+                </button>
+              </div>
+
+            </form>
           </div>
         </div>
       )}
