@@ -524,15 +524,15 @@ export default function Financeiro({ currentUser }) {
 
   // Filtros Independentes por Aba e por Usuário (Nenhum usuário afeta a tela do outro)
   const FILTROS_ESTRUTURA_PADRAO = {
-    cadastradas: { empresa: '', departamento: '', busca: '', formaPagamento: '', statusPagamento: 'TODOS', mes: '' },
-    aguardando: { empresa: '', departamento: '', busca: '', formaPagamento: '', statusPagamento: 'TODOS', mes: '' },
-    aprovadas: { empresa: '', departamento: '', busca: '', formaPagamento: '', statusPagamento: 'TODOS', mes: '' },
-    lancadas: { empresa: '', departamento: '', busca: '', formaPagamento: '', statusPagamento: 'TODOS', mes: '' },
-    pagas: { empresa: '', departamento: '', busca: '', formaPagamento: '', statusPagamento: 'TODOS', mes: '' },
-    conciliacao: { empresa: '', departamento: '', busca: '', formaPagamento: '', statusPagamento: 'TODOS', mes: '' },
-    recusadas: { empresa: '', departamento: '', busca: '', formaPagamento: '', statusPagamento: 'TODOS', mes: '' },
-    relatorio: { empresa: '', departamento: '', busca: '', formaPagamento: '', statusPagamento: 'TODOS', mes: '' },
-    consulta: { empresa: '', departamento: '', busca: '', formaPagamento: '', statusPagamento: 'TODOS', mes: '' }
+    cadastradas: { empresa: '', departamento: '', busca: '', formaPagamento: '', banco: '', statusPagamento: 'TODOS', mes: '' },
+    aguardando: { empresa: '', departamento: '', busca: '', formaPagamento: '', banco: '', statusPagamento: 'TODOS', mes: '' },
+    aprovadas: { empresa: '', departamento: '', busca: '', formaPagamento: '', banco: '', statusPagamento: 'TODOS', mes: '' },
+    lancadas: { empresa: '', departamento: '', busca: '', formaPagamento: '', banco: '', statusPagamento: 'TODOS', mes: '' },
+    pagas: { empresa: '', departamento: '', busca: '', formaPagamento: '', banco: '', statusPagamento: 'TODOS', mes: '' },
+    conciliacao: { empresa: '', departamento: '', busca: '', formaPagamento: '', banco: '', statusPagamento: 'TODOS', mes: '' },
+    recusadas: { empresa: '', departamento: '', busca: '', formaPagamento: '', banco: '', statusPagamento: 'TODOS', mes: '' },
+    relatorio: { empresa: '', departamento: '', busca: '', formaPagamento: '', banco: '', statusPagamento: 'TODOS', mes: '' },
+    consulta: { empresa: '', departamento: '', busca: '', formaPagamento: '', banco: '', statusPagamento: 'TODOS', mes: '' }
   };
 
   const [filtrosPorAba, setFiltrosPorAba] = useState(() => {
@@ -564,6 +564,7 @@ export default function Financeiro({ currentUser }) {
       departamento: '',
       busca: '',
       formaPagamento: '',
+      banco: '',
       statusPagamento: 'TODOS',
       mes: ''
     };
@@ -573,7 +574,7 @@ export default function Financeiro({ currentUser }) {
     setFiltrosPorAba(prev => ({
       ...prev,
       [tabChaveAtual]: {
-        ...(prev[tabChaveAtual] || { empresa: '', departamento: '', busca: '', formaPagamento: '', statusPagamento: 'TODOS', mes: '' }),
+        ...(prev[tabChaveAtual] || { empresa: '', departamento: '', busca: '', formaPagamento: '', banco: '', statusPagamento: 'TODOS', mes: '' }),
         [field]: value
       }
     }));
@@ -996,7 +997,7 @@ export default function Financeiro({ currentUser }) {
   // Lista Filtrada para a Aba Ativa da Tabela Principal
   const listaExibicao = useMemo(() => {
     const hoje = new Date().toISOString().slice(0, 10);
-    const { mes, statusPagamento, empresa, departamento, formaPagamento, busca } = filtroAtual;
+    const { mes, statusPagamento, empresa, departamento, formaPagamento, banco, busca } = filtroAtual;
 
     return despesas.filter(d => {
       if (activeTab === 'cadastradas') {
@@ -1044,6 +1045,7 @@ export default function Financeiro({ currentUser }) {
       if (empresa && d.empresa !== empresa) return false;
       if (departamento && d.departamento !== departamento) return false;
       if (formaPagamento && d.formaPagamento !== formaPagamento) return false;
+      if (banco && d.banco !== banco) return false;
       
       if (busca) {
         const term = busca.toLowerCase();
@@ -1062,7 +1064,7 @@ export default function Financeiro({ currentUser }) {
   // Lista para a Consulta Geral de TODAS as Despesas (Na Aba de Relatório)
   const listaConsultaGeral = useMemo(() => {
     const hoje = new Date().toISOString().slice(0, 10);
-    const { mes, statusPagamento, empresa, departamento, formaPagamento, busca } = filtroAtual;
+    const { mes, statusPagamento, empresa, departamento, formaPagamento, banco, busca } = filtroAtual;
 
     return despesas.filter(d => {
       if (mes) {
@@ -1082,6 +1084,7 @@ export default function Financeiro({ currentUser }) {
       if (empresa && d.empresa !== empresa) return false;
       if (departamento && d.departamento !== departamento) return false;
       if (formaPagamento && d.formaPagamento !== formaPagamento) return false;
+      if (banco && d.banco !== banco) return false;
 
       if (busca) {
         const term = busca.toLowerCase();
@@ -1205,7 +1208,7 @@ export default function Financeiro({ currentUser }) {
     }
 
     // Aplicar filtros ativos da aba/usuário se houver
-    const { mes, statusPagamento, empresa, departamento, formaPagamento, busca } = filtroAtual || {};
+    const { mes, statusPagamento, empresa, departamento, formaPagamento, banco, busca } = filtroAtual || {};
     const hoje = new Date().toISOString().slice(0, 10);
 
     if (mes) {
@@ -1220,6 +1223,9 @@ export default function Financeiro({ currentUser }) {
     }
     if (formaPagamento) {
       dadosFiltrados = dadosFiltrados.filter(d => d.formaPagamento === formaPagamento);
+    }
+    if (banco) {
+      dadosFiltrados = dadosFiltrados.filter(d => d.banco === banco);
     }
     if (statusPagamento && statusPagamento !== 'TODOS') {
       if (statusPagamento === 'VENCIDA') {
@@ -2046,6 +2052,16 @@ export default function Financeiro({ currentUser }) {
                 {FORMAS_PAGAMENTO.map(fp => <option key={fp} value={fp}>{fp}</option>)}
               </select>
 
+              {/* Filtro Banco Pagador */}
+              <select
+                value={filtroAtual.banco || ''}
+                onChange={(e) => setFiltroAtual('banco', e.target.value)}
+                style={{ padding: '8px 12px', background: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '8px', color: '#f8fafc', fontSize: '12px' }}
+              >
+                <option value="">Todos os Bancos</option>
+                {bancos.map(b => <option key={b} value={b}>{b}</option>)}
+              </select>
+
               {/* Exportar CSV */}
               <button
                 onClick={() => exportarCSVGenerico()}
@@ -2629,6 +2645,16 @@ export default function Financeiro({ currentUser }) {
                   >
                     <option value="">Todos os Deptos</option>
                     {departamentos.map(d => <option key={d} value={d}>{d}</option>)}
+                  </select>
+
+                  {/* Filtro Banco */}
+                  <select
+                    value={filtroAtual.banco || ''}
+                    onChange={(e) => setFiltroAtual('banco', e.target.value)}
+                    style={{ padding: '8px 12px', background: '#0f172a', border: '1px solid #334155', borderRadius: '8px', color: '#fff', fontSize: '12px' }}
+                  >
+                    <option value="">Todos os Bancos</option>
+                    {bancos.map(b => <option key={b} value={b}>{b}</option>)}
                   </select>
 
                   {/* Exportar CSV Geral */}
