@@ -1188,9 +1188,9 @@ export default function Financeiro({ currentUser }) {
       nomeArquivo = 'consulta_geral_despesas';
     }
 
-    if (filtroMes) {
-      dadosFiltrados = dadosFiltrados.filter(d => d.vencimento && d.vencimento.startsWith(filtroMes));
-      nomeArquivo += `_${filtroMes}`;
+    if (filtroAtual?.mes) {
+      dadosFiltrados = dadosFiltrados.filter(d => d.vencimento && d.vencimento.startsWith(filtroAtual.mes));
+      nomeArquivo += `_${filtroAtual.mes}`;
     }
 
     const headers = ['ID', 'Empresa', 'Departamento', 'Descrição Despesa', 'Valor Previsto (R$)', 'Valor Executado (R$)', 'Diferença (R$)', 'Parcela', 'Total Parcelas', 'Vencimento', 'Último Vencimento Est.', 'Tem OP', 'Num OP', 'Banco', 'Forma Pagamento', 'Prioridade', 'Status Etapa', 'Status Pagamento', 'Data Pagamento', 'Data Conciliação', 'Data Arquivamento', 'Obs Cadastro', 'Obs Análise', 'Obs Pagamento'];
@@ -2322,7 +2322,7 @@ export default function Financeiro({ currentUser }) {
                     Exportação de Relatórios de Pagamentos em CSV
                   </h3>
                   <span style={{ fontSize: '12px', color: '#94a3b8' }}>
-                    Baixe planilhas segmentadas por status de pagamento, conciliação e arquivo {filtroMes ? `(Filtrado por ${formatarMesExtenso(filtroMes)})` : ''}
+                    Baixe planilhas segmentadas por status de pagamento, conciliação e arquivo {filtroAtual?.mes ? `(Filtrado por ${formatarMesExtenso(filtroAtual.mes)})` : ''}
                   </span>
                 </div>
 
