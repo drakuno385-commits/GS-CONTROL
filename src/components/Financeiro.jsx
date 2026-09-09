@@ -1007,30 +1007,42 @@ export default function Financeiro({ currentUser }) {
 
     // Totais por Empresa
     const mapEmpresa = {};
-    EMPRESAS.forEach(emp => { mapEmpresa[emp] = { empresa: emp, pago: 0, pendente: 0, total: 0 }; });
+    EMPRESAS.forEach(emp => { mapEmpresa[emp] = { empresa: emp, pago: 0, pendente: 0, total: 0, listaPago: [], listaPendente: [], listaTotal: [] }; });
 
     despesas.forEach(d => {
       if (d.status === 'RECUSADA') return;
       const emp = d.empresa || 'OUTROS';
-      if (!mapEmpresa[emp]) mapEmpresa[emp] = { empresa: emp, pago: 0, pendente: 0, total: 0 };
+      if (!mapEmpresa[emp]) mapEmpresa[emp] = { empresa: emp, pago: 0, pendente: 0, total: 0, listaPago: [], listaPendente: [], listaTotal: [] };
 
-      if (d.statusPagamento === 'PAGO' || d.statusPagamento === 'PENDENTE_CONCILIACAO' || d.statusPagamento === 'ARQUIVADO') mapEmpresa[emp].pago += d.valor;
-      else mapEmpresa[emp].pendente += d.valor;
+      if (d.statusPagamento === 'PAGO' || d.statusPagamento === 'PENDENTE_CONCILIACAO' || d.statusPagamento === 'ARQUIVADO') {
+        mapEmpresa[emp].pago += d.valor;
+        mapEmpresa[emp].listaPago.push(d);
+      } else {
+        mapEmpresa[emp].pendente += d.valor;
+        mapEmpresa[emp].listaPendente.push(d);
+      }
       mapEmpresa[emp].total += d.valor;
+      mapEmpresa[emp].listaTotal.push(d);
     });
 
     // Totais por Departamento
     const mapDepto = {};
-    departamentos.forEach(dep => { mapDepto[dep] = { departamento: dep, pago: 0, pendente: 0, total: 0 }; });
+    departamentos.forEach(dep => { mapDepto[dep] = { departamento: dep, pago: 0, pendente: 0, total: 0, listaPago: [], listaPendente: [], listaTotal: [] }; });
 
     despesas.forEach(d => {
       if (d.status === 'RECUSADA') return;
       const dep = d.departamento || 'OUTROS';
-      if (!mapDepto[dep]) mapDepto[dep] = { departamento: dep, pago: 0, pendente: 0, total: 0 };
+      if (!mapDepto[dep]) mapDepto[dep] = { departamento: dep, pago: 0, pendente: 0, total: 0, listaPago: [], listaPendente: [], listaTotal: [] };
 
-      if (d.statusPagamento === 'PAGO' || d.statusPagamento === 'PENDENTE_CONCILIACAO' || d.statusPagamento === 'ARQUIVADO') mapDepto[dep].pago += d.valor;
-      else mapDepto[dep].pendente += d.valor;
+      if (d.statusPagamento === 'PAGO' || d.statusPagamento === 'PENDENTE_CONCILIACAO' || d.statusPagamento === 'ARQUIVADO') {
+        mapDepto[dep].pago += d.valor;
+        mapDepto[dep].listaPago.push(d);
+      } else {
+        mapDepto[dep].pendente += d.valor;
+        mapDepto[dep].listaPendente.push(d);
+      }
       mapDepto[dep].total += d.valor;
+      mapDepto[dep].listaTotal.push(d);
     });
 
     return {
@@ -2298,9 +2310,48 @@ export default function Financeiro({ currentUser }) {
                         {dadosRelatorioMensal.empresas.map(emp => (
                           <tr key={emp.empresa} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.04)' }}>
                             <td style={{ padding: '8px 10px', fontWeight: 700, color: '#f8fafc' }}>{emp.empresa}</td>
-                            <td style={{ padding: '8px 10px', textAlign: 'right', color: '#34d399', fontWeight: 700 }}>{formatMoney(emp.pago)}</td>
-                            <td style={{ padding: '8px 10px', textAlign: 'right', color: '#fbbf24', fontWeight: 700 }}>{formatMoney(emp.pendente)}</td>
-                            <td style={{ padding: '8px 10px', textAlign: 'right', color: '#60a5fa', fontWeight: 800 }}>{formatMoney(emp.total)}</td>
+                            <td 
+                              onClick={() => setModalDetalhesCard({
+                                titulo: `✓ Despesas Pagas — Empresa: ${emp.empresa}`,
+                                cor: '#34d399',
+                                icone: <CheckCircle2 size={20} color="#34d399" />,
+                                listaDespesas: emp.listaPago,
+                                valorTotal: emp.pago,
+                                targetTab: 'pagas'
+                              })}
+                              style={{ padding: '8px 10px', textAlign: 'right', color: '#34d399', fontWeight: 700, cursor: 'pointer', textDecoration: 'underline' }}
+                              title="Clique para ver a relação detalhada das despesas pagas desta empresa"
+                            >
+                              {formatMoney(emp.pago)}
+                            </td>
+                            <td 
+                              onClick={() => setModalDetalhesCard({
+                                titulo: `⏳ Despesas Pendentes — Empresa: ${emp.empresa}`,
+                                cor: '#fbbf24',
+                                icone: <Clock size={20} color="#fbbf24" />,
+                                listaDespesas: emp.listaPendente,
+                                valorTotal: emp.pendente,
+                                targetTab: 'lancadas'
+                              })}
+                              style={{ padding: '8px 10px', textAlign: 'right', color: '#fbbf24', fontWeight: 700, cursor: 'pointer', textDecoration: 'underline' }}
+                              title="Clique para ver a relação detalhada das despesas pendentes desta empresa"
+                            >
+                              {formatMoney(emp.pendente)}
+                            </td>
+                            <td 
+                              onClick={() => setModalDetalhesCard({
+                                titulo: `💳 Total Geral de Despesas — Empresa: ${emp.empresa}`,
+                                cor: '#60a5fa',
+                                icone: <CreditCard size={20} color="#60a5fa" />,
+                                listaDespesas: emp.listaTotal,
+                                valorTotal: emp.total,
+                                targetTab: 'relatorio'
+                              })}
+                              style={{ padding: '8px 10px', textAlign: 'right', color: '#60a5fa', fontWeight: 800, cursor: 'pointer', textDecoration: 'underline' }}
+                              title="Clique para ver a relação total de despesas desta empresa"
+                            >
+                              {formatMoney(emp.total)}
+                            </td>
                           </tr>
                         ))}
                       </tbody>
@@ -2327,9 +2378,48 @@ export default function Financeiro({ currentUser }) {
                         {dadosRelatorioMensal.departamentos.map(dep => (
                           <tr key={dep.departamento} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.04)' }}>
                             <td style={{ padding: '8px 10px', fontWeight: 700, color: '#f8fafc' }}>{dep.departamento}</td>
-                            <td style={{ padding: '8px 10px', textAlign: 'right', color: '#34d399', fontWeight: 700 }}>{formatMoney(dep.pago)}</td>
-                            <td style={{ padding: '8px 10px', textAlign: 'right', color: '#fbbf24', fontWeight: 700 }}>{formatMoney(dep.pendente)}</td>
-                            <td style={{ padding: '8px 10px', textAlign: 'right', color: '#60a5fa', fontWeight: 800 }}>{formatMoney(dep.total)}</td>
+                            <td 
+                              onClick={() => setModalDetalhesCard({
+                                titulo: `✓ Despesas Pagas — Departamento: ${dep.departamento}`,
+                                cor: '#34d399',
+                                icone: <CheckCircle2 size={20} color="#34d399" />,
+                                listaDespesas: dep.listaPago,
+                                valorTotal: dep.pago,
+                                targetTab: 'pagas'
+                              })}
+                              style={{ padding: '8px 10px', textAlign: 'right', color: '#34d399', fontWeight: 700, cursor: 'pointer', textDecoration: 'underline' }}
+                              title="Clique para ver a relação detalhada das despesas pagas deste departamento"
+                            >
+                              {formatMoney(dep.pago)}
+                            </td>
+                            <td 
+                              onClick={() => setModalDetalhesCard({
+                                titulo: `⏳ Despesas Pendentes — Departamento: ${dep.departamento}`,
+                                cor: '#fbbf24',
+                                icone: <Clock size={20} color="#fbbf24" />,
+                                listaDespesas: dep.listaPendente,
+                                valorTotal: dep.pendente,
+                                targetTab: 'lancadas'
+                              })}
+                              style={{ padding: '8px 10px', textAlign: 'right', color: '#fbbf24', fontWeight: 700, cursor: 'pointer', textDecoration: 'underline' }}
+                              title="Clique para ver a relação detalhada das despesas pendentes deste departamento"
+                            >
+                              {formatMoney(dep.pendente)}
+                            </td>
+                            <td 
+                              onClick={() => setModalDetalhesCard({
+                                titulo: `💳 Total Geral de Despesas — Departamento: ${dep.departamento}`,
+                                cor: '#60a5fa',
+                                icone: <CreditCard size={20} color="#60a5fa" />,
+                                listaDespesas: dep.listaTotal,
+                                valorTotal: dep.total,
+                                targetTab: 'relatorio'
+                              })}
+                              style={{ padding: '8px 10px', textAlign: 'right', color: '#60a5fa', fontWeight: 800, cursor: 'pointer', textDecoration: 'underline' }}
+                              title="Clique para ver a relação total de despesas deste departamento"
+                            >
+                              {formatMoney(dep.total)}
+                            </td>
                           </tr>
                         ))}
                       </tbody>
