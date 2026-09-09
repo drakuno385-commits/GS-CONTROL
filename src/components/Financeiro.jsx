@@ -1652,25 +1652,25 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
   return (
     <div style={{ color: '#f8fafc', padding: '24px', maxWidth: '1600px', margin: '0 auto', fontFamily: 'Inter, system-ui, sans-serif' }}>
       
-      {/* CABEÇALHO PRINCIPAL DA TELA FINANCEIRO */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '16px' }}>
+      {/* CABEÇALHO PRINCIPAL DA TELA */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{ padding: '10px', background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(16, 185, 129, 0.2))', borderRadius: '12px', border: '1px solid rgba(59, 130, 246, 0.3)' }}>
-              <Landmark size={28} color="#60a5fa" />
+            <div style={{ padding: '10px', background: moduloSubSecao === 'fluxo' ? 'linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(37, 99, 235, 0.2))' : 'linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(5, 150, 105, 0.2))', borderRadius: '12px', border: moduloSubSecao === 'fluxo' ? '1px solid rgba(59, 130, 246, 0.3)' : '1px solid rgba(16, 185, 129, 0.3)' }}>
+              {moduloSubSecao === 'fluxo' ? <BarChart2 size={28} color="#60a5fa" /> : <Landmark size={28} color="#34d399" />}
             </div>
             <div>
               <h1 style={{ fontSize: '24px', fontWeight: 800, color: '#f8fafc', letterSpacing: '-0.02em', margin: 0 }}>
-                Módulo Financeiro & Conciliação
+                {moduloSubSecao === 'fluxo' ? 'Fluxo de Despesas' : 'Conciliação Bancária'}
               </h1>
               <p style={{ fontSize: '13px', color: '#94a3b8', margin: '2px 0 0 0' }}>
-                {moduloSubSecao === 'fluxo' ? '📊 Fluxo de Despesas — Esteira Operacional & Relatórios' : '🏦 Conciliação Bancária, Entrada de Recursos & Abate de Saldos em Conta'}
+                {moduloSubSecao === 'fluxo' ? 'Esteira Operacional & Relatórios' : 'Gestão de Bancos, Saldos & Entradas de Recursos'}
               </p>
             </div>
           </div>
         </div>
 
-        {moduloSubSecao === 'fluxo' && (
+        {moduloSubSecao === 'fluxo' ? (
           <button
             onClick={() => setActiveTab('nova')}
             style={{
@@ -1692,60 +1692,9 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
             <PlusCircle size={18} />
             <span>Cadastrar Nova Despesa</span>
           </button>
-        )}
-      </div>
-
-      {/* MENU ÁRVORE DE NAVEGAÇÃO DO MÓDULO FINANCEIRO */}
-      <div style={{ background: '#0f172a', padding: '10px 14px', borderRadius: '14px', border: '1px solid #334155', marginBottom: '24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px', boxShadow: '0 4px 14px rgba(0,0,0,0.2)' }}>
-        <div style={{ display: 'flex', gap: '10px' }}>
-          <button
-            onClick={() => handleMudarSubSecao('fluxo')}
-            style={{
-              padding: '10px 18px',
-              borderRadius: '10px',
-              border: 'none',
-              background: moduloSubSecao === 'fluxo' ? 'linear-gradient(135deg, #3b82f6, #1d4ed8)' : 'rgba(30, 41, 59, 0.8)',
-              color: moduloSubSecao === 'fluxo' ? '#fff' : '#cbd5e1',
-              fontWeight: 800,
-              fontSize: '13px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              border: moduloSubSecao === 'fluxo' ? 'none' : '1px solid #334155',
-              boxShadow: moduloSubSecao === 'fluxo' ? '0 4px 14px rgba(59, 130, 246, 0.4)' : 'none'
-            }}
-          >
-            <Layers size={16} />
-            <span>📊 1. Fluxo de Despesas (Esteira & Relatórios)</span>
-          </button>
-
-          <button
-            onClick={() => handleMudarSubSecao('conciliacao_bancaria')}
-            style={{
-              padding: '10px 18px',
-              borderRadius: '10px',
-              border: 'none',
-              background: moduloSubSecao === 'conciliacao_bancaria' ? 'linear-gradient(135deg, #10b981, #047857)' : 'rgba(30, 41, 59, 0.8)',
-              color: moduloSubSecao === 'conciliacao_bancaria' ? '#fff' : '#cbd5e1',
-              fontWeight: 800,
-              fontSize: '13px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              border: moduloSubSecao === 'conciliacao_bancaria' ? 'none' : '1px solid #334155',
-              boxShadow: moduloSubSecao === 'conciliacao_bancaria' ? '0 4px 14px rgba(16, 185, 129, 0.4)' : 'none'
-            }}
-          >
-            <Landmark size={16} />
-            <span>🏦 2. Conciliação Bancária</span>
-          </button>
-        </div>
-
-        {moduloSubSecao === 'conciliacao_bancaria' && (
-          <div style={{ fontSize: '12px', color: '#94a3b8', fontWeight: 600 }}>
-            {bancosComSaldo.length} bancos cadastrados | Saldo Líquido em Caixa: <strong style={{ color: '#34d399' }}>{formatMoney(bancosComSaldo.reduce((acc, b) => acc + b.saldoAtual, 0))}</strong>
+        ) : (
+          <div style={{ fontSize: '12px', color: '#94a3b8', fontWeight: 600, background: 'rgba(30, 41, 59, 0.6)', padding: '8px 14px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.08)' }}>
+            {bancosComSaldo.length} bancos cadastrados | Saldo Líquido: <strong style={{ color: '#34d399' }}>{formatMoney(bancosComSaldo.reduce((acc, b) => acc + b.saldoAtual, 0))}</strong>
           </div>
         )}
       </div>
