@@ -76,8 +76,15 @@ const CONFIG_STATUS_PAGAMENTO = {
     border: 'rgba(59, 130, 246, 0.4)'
   },
   ARQUIVADO: {
-    label: 'Arquivada',
-    badge: '📦 Arquivada',
+    label: 'Finalizada',
+    badge: '✅ Finalizada',
+    color: '#94a3b8',
+    bg: 'rgba(148, 163, 184, 0.15)',
+    border: 'rgba(148, 163, 184, 0.4)'
+  },
+  FINALIZADO: {
+    label: 'Finalizada',
+    badge: '✅ Finalizada',
     color: '#94a3b8',
     bg: 'rgba(148, 163, 184, 0.15)',
     border: 'rgba(148, 163, 184, 0.4)'
@@ -798,13 +805,14 @@ export default function Financeiro({ currentUser }) {
       if (d.id === id) {
         return {
           ...d,
-          statusPagamento: 'ARQUIVADO',
-          dataArquivamento: d.dataArquivamento || hoje
+          statusPagamento: 'FINALIZADO',
+          dataArquivamento: d.dataArquivamento || d.dataFinalizacao || hoje,
+          dataFinalizacao: d.dataFinalizacao || d.dataArquivamento || hoje
         };
       }
       return d;
     }));
-    alert('📦 Despesa conciliada e arquivada com sucesso!');
+    alert('✅ Despesa conciliada e finalizada com sucesso!');
   };
 
   // Handler de envio do formulário de nova despesa
@@ -913,8 +921,8 @@ export default function Financeiro({ currentUser }) {
     if (item.statusPagamento === 'PENDENTE_CONCILIACAO') {
       return { code: 'PENDENTE_CONCILIACAO', label: '🏦 Pendente Conciliação', color: '#60a5fa', bg: 'rgba(59, 130, 246, 0.15)', border: 'rgba(59, 130, 246, 0.4)' };
     }
-    if (item.statusPagamento === 'ARQUIVADO') {
-      return { code: 'ARQUIVADO', label: '📦 Arquivada', color: '#94a3b8', bg: 'rgba(148, 163, 184, 0.15)', border: 'rgba(148, 163, 184, 0.4)' };
+    if (item.statusPagamento === 'ARQUIVADO' || item.statusPagamento === 'FINALIZADO') {
+      return { code: 'FINALIZADO', label: '✅ Finalizada', color: '#94a3b8', bg: 'rgba(148, 163, 184, 0.15)', border: 'rgba(148, 163, 184, 0.4)' };
     }
 
     if (item.vencimento && item.vencimento < hoje) {
@@ -931,11 +939,11 @@ export default function Financeiro({ currentUser }) {
     const cadastradas = despesasEscopo.filter(d => d.status === 'CADASTRADA');
     const aguardando = despesasEscopo.filter(d => d.status === 'AGUARDANDO_APROVACAO');
     const aprovadas = despesasEscopo.filter(d => d.status === 'APROVADA');
-    const lancadas = despesasEscopo.filter(d => d.status === 'LANCADA' && d.statusPagamento !== 'PAGO' && d.statusPagamento !== 'PENDENTE_CONCILIACAO' && d.statusPagamento !== 'ARQUIVADO');
+    const lancadas = despesasEscopo.filter(d => d.status === 'LANCADA' && d.statusPagamento !== 'PAGO' && d.statusPagamento !== 'PENDENTE_CONCILIACAO' && d.statusPagamento !== 'ARQUIVADO' && d.statusPagamento !== 'FINALIZADO');
     const pagas = despesasEscopo.filter(d => d.statusPagamento === 'PAGO');
     const conciliacao = despesasEscopo.filter(d => d.statusPagamento === 'PENDENTE_CONCILIACAO');
     const recusadas = despesasEscopo.filter(d => d.status === 'RECUSADA');
-    const arquivadas = despesasEscopo.filter(d => d.statusPagamento === 'ARQUIVADO');
+    const arquivadas = despesasEscopo.filter(d => d.statusPagamento === 'ARQUIVADO' || d.statusPagamento === 'FINALIZADO');
 
     const emAberto = despesasEscopo.filter(d => d.status !== 'RECUSADA' && (!d.statusPagamento || d.statusPagamento === 'PENDENTE_PAGAMENTO'));
     const vencidas = emAberto.filter(d => d.vencimento && d.vencimento < hoje);
@@ -996,7 +1004,7 @@ export default function Financeiro({ currentUser }) {
       }
 
       if (activeTab === 'lancadas') {
-        if (d.status !== 'LANCADA' || d.statusPagamento === 'PAGO' || d.statusPagamento === 'PENDENTE_CONCILIACAO' || d.statusPagamento === 'ARQUIVADO') return false;
+        if (d.status !== 'LANCADA' || d.statusPagamento === 'PAGO' || d.statusPagamento === 'PENDENTE_CONCILIACAO' || d.statusPagamento === 'ARQUIVADO' || d.statusPagamento === 'FINALIZADO') return false;
       }
       
       if (activeTab === 'pagas') {
@@ -1017,9 +1025,9 @@ export default function Financeiro({ currentUser }) {
 
       if (statusPagamento && statusPagamento !== 'TODOS') {
         if (statusPagamento === 'VENCIDA') {
-          if (d.statusPagamento === 'PAGO' || d.statusPagamento === 'PENDENTE_CONCILIACAO' || d.statusPagamento === 'ARQUIVADO' || !d.vencimento || d.vencimento >= hoje) return false;
+          if (d.statusPagamento === 'PAGO' || d.statusPagamento === 'PENDENTE_CONCILIACAO' || d.statusPagamento === 'ARQUIVADO' || d.statusPagamento === 'FINALIZADO' || !d.vencimento || d.vencimento >= hoje) return false;
         } else if (statusPagamento === 'A_VENCER') {
-          if (d.statusPagamento === 'PAGO' || d.statusPagamento === 'PENDENTE_CONCILIACAO' || d.statusPagamento === 'ARQUIVADO' || (d.vencimento && d.vencimento < hoje)) return false;
+          if (d.statusPagamento === 'PAGO' || d.statusPagamento === 'PENDENTE_CONCILIACAO' || d.statusPagamento === 'ARQUIVADO' || d.statusPagamento === 'FINALIZADO' || (d.vencimento && d.vencimento < hoje)) return false;
         } else if (d.statusPagamento !== statusPagamento) {
           return false;
         }
@@ -1055,9 +1063,9 @@ export default function Financeiro({ currentUser }) {
 
       if (statusPagamento && statusPagamento !== 'TODOS') {
         if (statusPagamento === 'VENCIDA') {
-          if (d.statusPagamento === 'PAGO' || d.statusPagamento === 'PENDENTE_CONCILIACAO' || d.statusPagamento === 'ARQUIVADO' || !d.vencimento || d.vencimento >= hoje) return false;
+          if (d.statusPagamento === 'PAGO' || d.statusPagamento === 'PENDENTE_CONCILIACAO' || d.statusPagamento === 'ARQUIVADO' || d.statusPagamento === 'FINALIZADO' || !d.vencimento || d.vencimento >= hoje) return false;
         } else if (statusPagamento === 'A_VENCER') {
-          if (d.statusPagamento === 'PAGO' || d.statusPagamento === 'PENDENTE_CONCILIACAO' || d.statusPagamento === 'ARQUIVADO' || (d.vencimento && d.vencimento < hoje)) return false;
+          if (d.statusPagamento === 'PAGO' || d.statusPagamento === 'PENDENTE_CONCILIACAO' || d.statusPagamento === 'ARQUIVADO' || d.statusPagamento === 'FINALIZADO' || (d.vencimento && d.vencimento < hoje)) return false;
         } else if (d.statusPagamento !== statusPagamento) {
           return false;
         }
@@ -1095,13 +1103,13 @@ export default function Financeiro({ currentUser }) {
         mapMeses[mesChave] = { mes: mesChave, mesFormatado, pago: 0, pendente: 0, total: 0 };
       }
 
-      if (d.statusPagamento === 'PAGO' || d.statusPagamento === 'PENDENTE_CONCILIACAO' || d.statusPagamento === 'ARQUIVADO') {
+      if (d.statusPagamento === 'PAGO' || d.statusPagamento === 'PENDENTE_CONCILIACAO' || d.statusPagamento === 'ARQUIVADO' || d.statusPagamento === 'FINALIZADO') {
         const valExec = d.valorExecutado !== undefined ? d.valorExecutado : d.valor;
         mapMeses[mesChave].pago += valExec;
       } else {
         mapMeses[mesChave].pendente += d.valor;
       }
-      mapMeses[mesChave].total += (d.statusPagamento === 'PAGO' || d.statusPagamento === 'PENDENTE_CONCILIACAO' || d.statusPagamento === 'ARQUIVADO') ? (d.valorExecutado !== undefined ? d.valorExecutado : d.valor) : d.valor;
+      mapMeses[mesChave].total += (d.statusPagamento === 'PAGO' || d.statusPagamento === 'PENDENTE_CONCILIACAO' || d.statusPagamento === 'ARQUIVADO' || d.statusPagamento === 'FINALIZADO') ? (d.valorExecutado !== undefined ? d.valorExecutado : d.valor) : d.valor;
     });
 
     const listaMeses = Object.values(mapMeses).sort((a, b) => a.mes.localeCompare(b.mes));
@@ -1115,7 +1123,7 @@ export default function Financeiro({ currentUser }) {
       const emp = d.empresa || 'OUTROS';
       if (!mapEmpresa[emp]) mapEmpresa[emp] = { empresa: emp, pago: 0, pendente: 0, total: 0, listaPago: [], listaPendente: [], listaTotal: [] };
 
-      if (d.statusPagamento === 'PAGO' || d.statusPagamento === 'PENDENTE_CONCILIACAO' || d.statusPagamento === 'ARQUIVADO') {
+      if (d.statusPagamento === 'PAGO' || d.statusPagamento === 'PENDENTE_CONCILIACAO' || d.statusPagamento === 'ARQUIVADO' || d.statusPagamento === 'FINALIZADO') {
         const valExec = d.valorExecutado !== undefined ? d.valorExecutado : d.valor;
         mapEmpresa[emp].pago += valExec;
         mapEmpresa[emp].listaPago.push(d);
@@ -1137,7 +1145,7 @@ export default function Financeiro({ currentUser }) {
       const dep = d.departamento || 'OUTROS';
       if (!mapDepto[dep]) mapDepto[dep] = { departamento: dep, pago: 0, pendente: 0, total: 0, listaPago: [], listaPendente: [], listaTotal: [] };
 
-      if (d.statusPagamento === 'PAGO' || d.statusPagamento === 'PENDENTE_CONCILIACAO' || d.statusPagamento === 'ARQUIVADO') {
+      if (d.statusPagamento === 'PAGO' || d.statusPagamento === 'PENDENTE_CONCILIACAO' || d.statusPagamento === 'ARQUIVADO' || d.statusPagamento === 'FINALIZADO') {
         const valExec = d.valorExecutado !== undefined ? d.valorExecutado : d.valor;
         mapDepto[dep].pago += valExec;
         mapDepto[dep].listaPago.push(d);
@@ -1171,9 +1179,9 @@ export default function Financeiro({ currentUser }) {
     } else if (filtroTipo === 'PENDENTES_CONCILIACAO') {
       dadosFiltrados = despesas.filter(d => d.statusPagamento === 'PENDENTE_CONCILIACAO');
       nomeArquivo = 'despesas_pendentes_conciliacao';
-    } else if (filtroTipo === 'ARQUIVADAS') {
-      dadosFiltrados = despesas.filter(d => d.statusPagamento === 'ARQUIVADO');
-      nomeArquivo = 'despesas_arquivadas';
+    } else if (filtroTipo === 'ARQUIVADAS' || filtroTipo === 'FINALIZADAS') {
+      dadosFiltrados = despesas.filter(d => d.statusPagamento === 'ARQUIVADO' || d.statusPagamento === 'FINALIZADO');
+      nomeArquivo = 'despesas_finalizadas';
     } else if (filtroTipo === 'AGUARDANDO_APROVACAO') {
       dadosFiltrados = despesas.filter(d => d.status === 'AGUARDANDO_APROVACAO');
       nomeArquivo = 'despesas_aguardando_aprovacao';
@@ -1207,9 +1215,9 @@ export default function Financeiro({ currentUser }) {
     }
     if (statusPagamento && statusPagamento !== 'TODOS') {
       if (statusPagamento === 'VENCIDA') {
-        dadosFiltrados = dadosFiltrados.filter(d => d.statusPagamento !== 'PAGO' && d.statusPagamento !== 'PENDENTE_CONCILIACAO' && d.statusPagamento !== 'ARQUIVADO' && d.vencimento && d.vencimento < hoje);
+        dadosFiltrados = dadosFiltrados.filter(d => d.statusPagamento !== 'PAGO' && d.statusPagamento !== 'PENDENTE_CONCILIACAO' && d.statusPagamento !== 'ARQUIVADO' && d.statusPagamento !== 'FINALIZADO' && d.vencimento && d.vencimento < hoje);
       } else if (statusPagamento === 'A_VENCER') {
-        dadosFiltrados = dadosFiltrados.filter(d => d.statusPagamento !== 'PAGO' && d.statusPagamento !== 'PENDENTE_CONCILIACAO' && d.statusPagamento !== 'ARQUIVADO' && (!d.vencimento || d.vencimento >= hoje));
+        dadosFiltrados = dadosFiltrados.filter(d => d.statusPagamento !== 'PAGO' && d.statusPagamento !== 'PENDENTE_CONCILIACAO' && d.statusPagamento !== 'ARQUIVADO' && d.statusPagamento !== 'FINALIZADO' && (!d.vencimento || d.vencimento >= hoje));
       } else {
         dadosFiltrados = dadosFiltrados.filter(d => d.statusPagamento === statusPagamento);
       }
@@ -1226,7 +1234,7 @@ export default function Financeiro({ currentUser }) {
       });
     }
 
-    const headers = ['ID', 'Empresa', 'Departamento', 'Descrição Despesa', 'Valor Previsto (R$)', 'Valor Executado (R$)', 'Diferença (R$)', 'Parcela', 'Total Parcelas', 'Vencimento', 'Último Vencimento Est.', 'Tem OP', 'Num OP', 'Banco', 'Forma Pagamento', 'Prioridade', 'Status Etapa', 'Status Pagamento', 'Data Pagamento', 'Data Conciliação', 'Data Arquivamento', 'Obs Cadastro', 'Obs Análise', 'Obs Pagamento'];
+    const headers = ['ID', 'Empresa', 'Departamento', 'Descrição Despesa', 'Valor Previsto (R$)', 'Valor Executado (R$)', 'Diferença (R$)', 'Parcela', 'Total Parcelas', 'Vencimento', 'Último Vencimento Est.', 'Tem OP', 'Num OP', 'Banco', 'Forma Pagamento', 'Prioridade', 'Status Etapa', 'Status Pagamento', 'Data Pagamento', 'Data Conciliação', 'Data Finalização', 'Obs Cadastro', 'Obs Análise', 'Obs Pagamento'];
     
     const rows = dadosFiltrados.map(item => {
       const valExec = item.valorExecutado !== undefined ? item.valorExecutado : item.valor;
@@ -1252,7 +1260,7 @@ export default function Financeiro({ currentUser }) {
         CONFIG_STATUS_PAGAMENTO[item.statusPagamento || 'PENDENTE_PAGAMENTO']?.label || item.statusPagamento,
         item.dataPagamento || '-',
         item.dataConciliacao || '-',
-        item.dataArquivamento || '-',
+        item.dataFinalizacao || item.dataArquivamento || '-',
         `"${item.observacao || ''}"`,
         `"${item.obsAprovacao || ''}"`,
         `"${item.obsPagamento || ''}"`
@@ -2255,10 +2263,10 @@ export default function Financeiro({ currentUser }) {
                             <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', alignItems: 'center' }}>
                               <button
                                 onClick={() => handleConciliarEArquivar(item.id)}
-                                style={{ padding: '6px 12px', background: 'rgba(148, 163, 184, 0.2)', color: '#cbd5e1', border: '1px solid rgba(148, 163, 184, 0.4)', borderRadius: '6px', fontSize: '11px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
-                                title="Conciliar e arquivar no histórico"
+                                style={{ padding: '6px 12px', background: 'rgba(16, 185, 129, 0.2)', color: '#34d399', border: '1px solid rgba(16, 185, 129, 0.4)', borderRadius: '6px', fontSize: '11px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                                title="Conciliar e finalizar despesa no histórico"
                               >
-                                <Archive size={12} /> 📦 Conciliar & Arquivar
+                                <CheckCircle2 size={12} /> ✅ Conciliar & Finalizar
                               </button>
                             </div>
                           )}
@@ -2375,10 +2383,10 @@ export default function Financeiro({ currentUser }) {
                   </button>
 
                   <button
-                    onClick={() => exportarCSVGenerico('ARQUIVADAS')}
+                    onClick={() => exportarCSVGenerico('FINALIZADAS')}
                     style={{ padding: '8px 14px', background: 'rgba(148, 163, 184, 0.2)', color: '#94a3b8', border: '1px solid rgba(148, 163, 184, 0.4)', borderRadius: '8px', fontSize: '12px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
                   >
-                    <Archive size={14} /> Exportar ARQUIVADAS
+                    <CheckCircle2 size={14} /> Exportar FINALIZADAS
                   </button>
                 </div>
               </div>
