@@ -11,7 +11,7 @@ const Monitoramento = ({ currentUser }) => {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('visitas');
 
-  const [filterData, setFilterData] = useState(() => localStorage.getItem(`mon_filter_data_${userId}`) || '');
+  const [filterData, setFilterData] = useState('');
   const [filterSupervisor, setFilterSupervisor] = useState(() => localStorage.getItem(`mon_filter_sup_${userId}`) || '');
   const [filterCliente, setFilterCliente] = useState(() => localStorage.getItem(`mon_filter_cli_${userId}`) || '');
   const [filterStatusOcorrencia, setFilterStatusOcorrencia] = useState('Aberto');
@@ -20,7 +20,8 @@ const Monitoramento = ({ currentUser }) => {
   const [tratativaTexto, setTratativaTexto] = useState('');
 
   useEffect(() => {
-    localStorage.setItem(`mon_filter_data_${userId}`, filterData);
+    // Limpa filtro de data salvo anteriormente para não esconder registros ao reabrir
+    localStorage.removeItem(`mon_filter_data_${userId}`);
     localStorage.setItem(`mon_filter_sup_${userId}`, filterSupervisor);
     localStorage.setItem(`mon_filter_cli_${userId}`, filterCliente);
   }, [filterData, filterSupervisor, filterCliente, userId]);
