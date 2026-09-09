@@ -1643,7 +1643,7 @@ const App = () => {
               {hasAccess(currentUser, 'financeiro') && (
                 <a className={`nav-item ${activeMenu === 'financeiro' ? 'active' : ''}`} onClick={() => setActiveMenu('financeiro')}>
                   <DollarSign size={20} />
-                  <span>Financeiro & DRE</span>
+                  <span>Financeiro</span>
                 </a>
               )}
               {hasAccess(currentUser, 'monitoramento') && (
