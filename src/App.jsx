@@ -5,7 +5,7 @@ import { supabase } from './supabaseClient';
 import { 
   LayoutDashboard, Users, Settings, Upload, UserCheck, UserX, Briefcase, 
   Activity, Truck, Fuel, Map, DollarSign, AlertTriangle, Scale, Loader2, Cloud, Filter, FileText, CheckCircle, Droplet, Shield, Menu,
-  Car, MapPin, Smartphone, LogOut, Download, Stethoscope, X, Calculator, ChevronDown, ChevronRight, Landmark, BarChart2, Layers
+  Car, MapPin, Smartphone, LogOut, Download, Stethoscope, X, Calculator, ChevronDown, ChevronRight, Landmark, BarChart2, Layers, Calendar
 } from 'lucide-react';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area, PieChart, Pie, Cell, ComposedChart, LabelList } from 'recharts';
 import Login from './components/Login';
@@ -261,7 +261,8 @@ const App = () => {
   const [totalsFrota, setTotalsFrota] = useState({ custo: 0, km: 0, kml_medio: 0 });
 
   // Calculated States for Disciplina
-  const [discFaltasPorDia, setDiscFaltasPorDia] = useState([]);
+  const [discFaltasPorMes, setDiscFaltasPorMes] = useState([]);
+  const [selectedMesDisciplina, setSelectedMesDisciplina] = useState(null);
   const [discFaltasPorArea, setDiscFaltasPorArea] = useState([]);
   const [discRanking, setDiscRanking] = useState([]);
   const [discAlertas, setDiscAlertas] = useState([]);
@@ -714,12 +715,18 @@ const App = () => {
     const porCombustivel = {};
 
     data.forEach(row => {
-      const placa = row.placa || row.Placa;
+      const getVal = (possibleKeys) => {
+        const key = Object.keys(row).find(k => possibleKeys.some(pk => k.toLowerCase().includes(pk)));
+        return key ? row[key] : null;
+      };
+      
+      const placa = getVal(['placa', 'veículo', 'veiculo']);
       if (!placa) return;
-      const motorista = row.motorista || row.Motorista || "Desconhecido";
-      const produto = row.produto || row.Produto || "Outro";
-      const distKey = Object.keys(row).find(k => k.toLowerCase().includes('dist'));
-      const km = parseFloatBR(distKey ? row[distKey] : (row.distancia || 0));
+      
+      const motorista = getVal(['motorista', 'condutor', 'nome']) || "Desconhecido";
+      const produto = getVal(['produto', 'combust', 'tipo']) || "Outro";
+      const distKey = Object.keys(row).find(k => k.toLowerCase().includes('dist') || k.toLowerCase().includes('km'));
+      const km = parseFloatBR(distKey ? row[distKey] : 0);
       const valor = getFrotaValor(row);
       const consKey = Object.keys(row).find(k => k.toLowerCase().includes('consumo'));
       const consumo = parseFloatBR(consKey ? row[consKey] : (row.consumo || 0)); 
@@ -759,7 +766,7 @@ const App = () => {
 
   const processDisciplinaCSV = (data) => {
     let totFaltasS = 0;
-    const faltasDia = {};
+    const faltasMes = {};
     const faltasArea = {};
     const faltasPessoa = {};
 
@@ -770,12 +777,24 @@ const App = () => {
       const nome = row.nome || "Desconhecido";
       area = area.trim().split(" ")[0].toUpperCase();
       totFaltasS++;
+      
       if (dataFalta) {
-        if (!faltasDia[dataFalta]) faltasDia[dataFalta] = 0;
-        faltasDia[dataFalta]++;
+        let mesStr = "Sem Data";
+        if (dataFalta.includes('/')) {
+          const p = dataFalta.split('/');
+          mesStr = p.length >= 3 ? `${p[1]}/${p[2]}` : dataFalta; // MM/YYYY
+        } else if (dataFalta.includes('-')) {
+          const p = dataFalta.split('-');
+          mesStr = p.length >= 3 ? `${p[1]}/${p[0]}` : dataFalta; // MM/YYYY
+        }
+        if (!faltasMes[mesStr]) faltasMes[mesStr] = { mes: mesStr, faltas: 0, detalhes: [], raw: mesStr };
+        faltasMes[mesStr].faltas++;
+        faltasMes[mesStr].detalhes.push({ nome, data: dataFalta, ocorrencia: row.nomeocor || '' });
       }
+
       if (!faltasArea[area]) faltasArea[area] = 0;
       faltasArea[area]++;
+      
       if (!faltasPessoa[nome]) faltasPessoa[nome] = { nome, faltas: 0, ocorrencias: [] };
       faltasPessoa[nome].faltas++;
       faltasPessoa[nome].ocorrencias.push({
@@ -787,10 +806,16 @@ const App = () => {
     });
 
     const arrPessoaAll = Object.values(faltasPessoa).sort((a, b) => b.faltas - a.faltas);
-    setDiscFaltasPorDia(Object.keys(faltasDia).map(k => {
-      const p = k.split('/');
-      return { dia: k.substring(0, 5), faltas: faltasDia[k], rawDate: k, sDate: p.length === 3 ? p[2]+p[1]+p[0] : k };
-    }).sort((a, b) => a.sDate.localeCompare(b.sDate)));
+    
+    // Ordenar faltasMes
+    const faltasMesArray = Object.values(faltasMes).sort((a, b) => {
+       const [mA, yA] = a.raw.split('/');
+       const [mB, yB] = b.raw.split('/');
+       if (yA !== yB) return (yA || '').localeCompare(yB || '');
+       return (mA || '').localeCompare(mB || '');
+    });
+    setDiscFaltasPorMes(faltasMesArray);
+    
     setDiscFaltasPorArea(Object.keys(faltasArea).map(k => ({ name: k, value: faltasArea[k] })).sort((a, b) => b.value - a.value));
     setDiscRanking(arrPessoaAll.slice(0, 10));
     setDiscAlertas(arrPessoaAll.filter(p => p.faltas >= 3).map(p => {
@@ -822,7 +847,7 @@ const App = () => {
         else if (hasField('nomevigil')) sheetType = 'efetivos';
         else if (hasField('nomeocor') || hasField('codocor')) sheetType = 'disciplina';
         else if (hasField('sithoje')) sheetType = 'presencas';
-        else if (hasField('placa')) sheetType = 'frota';
+        else if (hasField('placa') || hasField('veículo') || hasField('veiculo') || hasField('placa do veículo')) sheetType = 'frota';
 
         let isValidForPage = false;
         if (activeMenu === 'rh' && (sheetType === 'efetivos' || sheetType === 'presencas')) isValidForPage = true;
@@ -1305,23 +1330,19 @@ const App = () => {
 
       <div className="charts-grid" style={{ gridTemplateColumns: '1fr 1fr', marginBottom: '24px' }}>
         <div className="card chart-card glass-panel" style={{ gridColumn: '1 / -1' }}>
-          <div className="chart-header"><div className="chart-title">Ocorrências por Dia (Tipo S)</div></div>
+          <div className="chart-header"><div className="chart-title">Ocorrências por Mês (Tipo S)</div></div>
           <div className="chart-wrapper">
-            {discFaltasPorDia.length > 0 ? (
+            {discFaltasPorMes.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={discFaltasPorDia} margin={{ bottom: 20 }}>
-                  <defs>
-                    <linearGradient id="colorFaltasDisc" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#ef4444" stopOpacity={0.8}/>
-                      <stop offset="95%" stopColor="#ef4444" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
+                <BarChart data={discFaltasPorMes} margin={{ bottom: 20 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" vertical={false} />
-                  <XAxis dataKey="dia" stroke="#94a3b8" tick={{fontSize: 12}} angle={-45} textAnchor="end" height={40}/>
+                  <XAxis dataKey="mes" stroke="#94a3b8" tick={{fontSize: 12}} />
                   <YAxis stroke="#94a3b8" />
                   <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }} />
-                  <Area type="monotone" dataKey="faltas" stroke="#ef4444" strokeWidth={3} fillOpacity={1} fill="url(#colorFaltasDisc)" />
-                </AreaChart>
+                  <Bar dataKey="faltas" fill="#ef4444" radius={[4, 4, 0, 0]} onClick={(data) => {
+                    if(data && data.payload) setSelectedMesDisciplina(data.payload);
+                  }} style={{ cursor: 'pointer' }} />
+                </BarChart>
               </ResponsiveContainer>
             ) : (<div style={{color: '#94a3b8', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%'}}>Importe a planilha de Disciplina</div>)}
           </div>
@@ -1422,6 +1443,49 @@ const App = () => {
                           {oc.area}
                         </div>
                       </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {selectedMesDisciplina && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(15, 23, 42, 0.85)', backdropFilter: 'blur(8px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+          <div style={{ background: 'linear-gradient(145deg, #1e293b, #0f172a)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px', padding: '24px', width: '100%', maxWidth: '700px', maxHeight: '85vh', display: 'flex', flexDirection: 'column', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', paddingBottom: '16px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+              <h2 style={{ color: '#e2e8f0', margin: 0, display: 'flex', alignItems: 'center', gap: '12px', fontSize: '20px' }}>
+                <Calendar size={20} color="#ef4444" />
+                Resumo de Faltas - {selectedMesDisciplina.mes}
+              </h2>
+              <button onClick={() => setSelectedMesDisciplina(null)} style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer', transition: 'color 0.2s' }} onMouseOver={(e)=>e.currentTarget.style.color='#fff'} onMouseOut={(e)=>e.currentTarget.style.color='#94a3b8'}>
+                <X size={24} />
+              </button>
+            </div>
+            
+            <div style={{ marginBottom: '24px' }}>
+              <div style={{ color: '#e2e8f0', fontSize: '14px', background: 'rgba(239, 68, 68, 0.1)', padding: '8px 12px', borderRadius: '8px', border: '1px solid rgba(239, 68, 68, 0.2)', display: 'inline-block' }}>
+                Total de Ocorrências neste Mês: <strong>{selectedMesDisciplina.faltas}</strong>
+              </div>
+            </div>
+
+            <div style={{ overflowY: 'auto', flex: 1, border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', background: 'rgba(0,0,0,0.3)', boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.1)' }}>
+              <table className="table-row-hover" style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                <thead style={{ position: 'sticky', top: 0, background: '#1e293b', backdropFilter: 'blur(4px)' }}>
+                  <tr>
+                    <th style={{ padding: '16px', fontWeight: 600, color: '#94a3b8', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Data</th>
+                    <th style={{ padding: '16px', fontWeight: 600, color: '#94a3b8', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Colaborador</th>
+                    <th style={{ padding: '16px', fontWeight: 600, color: '#94a3b8', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Ocorrência</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {selectedMesDisciplina.detalhes && selectedMesDisciplina.detalhes.map((det, idx) => (
+                    <tr key={idx} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                      <td style={{ padding: '16px', color: '#e2e8f0', fontSize: '14px', verticalAlign: 'top' }}>{det.data}</td>
+                      <td style={{ padding: '16px', color: '#e2e8f0', fontSize: '14px', fontWeight: 500 }}>{det.nome}</td>
+                      <td style={{ padding: '16px', color: '#94a3b8', fontSize: '14px' }}>{det.ocorrencia}</td>
                     </tr>
                   ))}
                 </tbody>

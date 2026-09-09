@@ -1415,7 +1415,7 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
   };
 
   return (
-    <div style={{ color: '#f8fafc', padding: '24px', maxWidth: '1600px', margin: '0 auto', fontFamily: 'Inter, system-ui, sans-serif' }}>
+    <div style={{ color: '#f8fafc', padding: '24px', maxWidth: '1600px', margin: '0 auto' }}>
       
       {/* CABEÇALHO PRINCIPAL DA TELA */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
@@ -1436,30 +1436,6 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          {currentUser?.role === 'MASTER' && (
-            <button
-              onClick={handleZerarBase}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                background: 'rgba(239, 68, 68, 0.15)',
-                color: '#ef4444',
-                padding: '10px 14px',
-                borderRadius: '10px',
-                fontWeight: 700,
-                fontSize: '12px',
-                border: '1px solid rgba(239, 68, 68, 0.3)',
-                cursor: 'pointer',
-                transition: 'all 0.2s'
-              }}
-              title="Apagar dados de testes e deixar base limpa para produção"
-            >
-              <Trash2 size={16} />
-              <span>Zerar Base (Testes)</span>
-            </button>
-          )}
-          
           {moduloSubSecao === 'fluxo' ? (
             <button
               onClick={() => setActiveTab('nova')}
