@@ -108,31 +108,61 @@ const formatDate = (dateStr) => {
   return dateStr;
 };
 
-// Helper para calcular a data da última parcela
-const calcularUltimoVencimento = (vencimentoInicialStr, numParcelas) => {
-  if (!vencimentoInicialStr) return '-';
+// Helper para calcular a data de vencimento incremental por mês (reparcelamento)
+const calcularDataParcela = (vencimentoInicialStr, offsetMeses) => {
+  if (!vencimentoInicialStr) return vencimentoInicialStr;
   try {
     const [y, m, d] = vencimentoInicialStr.split('-').map(Number);
-    const n = Math.max(1, parseInt(numParcelas, 10) || 1);
     if (!y || !m || !d) return vencimentoInicialStr;
 
-    const data = new Date(y, m - 1 + (n - 1), d);
-    const dia = String(data.getDate()).padStart(2, '0');
-    const mes = String(data.getMonth() + 1).padStart(2, '0');
-    const ano = data.getFullYear();
-    return `${dia}/${mes}/${ano}`;
+    const targetDate = new Date(y, m - 1 + offsetMeses, 1);
+    const targetYear = targetDate.getFullYear();
+    const targetMonth = targetDate.getMonth(); // 0-indexed
+    
+    // Trata overflow de dias no mês (ex: 31 de janeiro -> 28 de fevereiro)
+    const lastDayOfTargetMonth = new Date(targetYear, targetMonth + 1, 0).getDate();
+    const actualDay = Math.min(d, lastDayOfTargetMonth);
+
+    const mmStr = String(targetMonth + 1).padStart(2, '0');
+    const ddStr = String(actualDay).padStart(2, '0');
+    return `${targetYear}-${mmStr}-${ddStr}`;
   } catch (e) {
     return vencimentoInicialStr;
   }
 };
 
+// Helper para calcular a data da última parcela
+const calcularUltimoVencimento = (vencimentoInicialStr, numParcelas) => {
+  if (!vencimentoInicialStr) return '-';
+  const n = Math.max(1, parseInt(numParcelas, 10) || 1);
+  const dataFimStr = calcularDataParcela(vencimentoInicialStr, n - 1);
+  return formatDate(dataFimStr);
+};
+
+// Formatador de 'YYYY-MM' para extenso (ex: '2026-09' -> 'Setembro / 2026')
+const formatarMesExtenso = (anoMes) => {
+  if (!anoMes || anoMes.length < 7) return anoMes;
+  const [ano, mes] = anoMes.split('-');
+  const nomesMeses = [
+    'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+    'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+  ];
+  const idx = parseInt(mes, 10) - 1;
+  if (idx >= 0 && idx < 12) {
+    return `${nomesMeses[idx]} / ${ano}`;
+  }
+  return anoMes;
+};
+
 const DESPESAS_INICIAIS = [
   {
     id: 'fin_1001',
+    grupoId: 'grp_1001',
     empresa: 'AÇOFORTE',
     departamento: 'Frota',
     nome: 'Combustível da Frota de Viaturas - Quinzena',
     valor: 28450.00,
+    parcelaNumero: 1,
     parcelas: 1,
     vencimento: '2026-09-25',
     temOP: true,
@@ -150,11 +180,13 @@ const DESPESAS_INICIAIS = [
     dataCriacao: '2026-09-01'
   },
   {
-    id: 'fin_1002',
+    id: 'fin_1002_1',
+    grupoId: 'grp_1002',
     empresa: 'BELLS',
     departamento: 'Operacional',
-    nome: 'Manutenção de Equipamentos de CFTV e Portaria',
-    valor: 14200.00,
+    nome: 'Manutenção de Equipamentos CFTV (1/2)',
+    valor: 7100.00,
+    parcelaNumero: 1,
     parcelas: 2,
     vencimento: '2026-09-20',
     temOP: true,
@@ -162,8 +194,32 @@ const DESPESAS_INICIAIS = [
     banco: 'Bradesco',
     formaPagamento: 'Transferência / TED',
     prioridade: 'CRÍTICA',
-    observacao: 'Conserto de nobreaks e câmeras do posto Centro Operacional Gopouva.',
-    status: 'CADASTRADA',
+    observacao: 'Conserto de nobreaks e câmeras - Parcela 1/2.',
+    status: 'AGUARDANDO_APROVACAO',
+    statusPagamento: 'PENDENTE_PAGAMENTO',
+    dataPagamento: null,
+    dataConciliacao: null,
+    dataArquivamento: null,
+    obsAprovacao: '',
+    dataCriacao: '2026-09-02'
+  },
+  {
+    id: 'fin_1002_2',
+    grupoId: 'grp_1002',
+    empresa: 'BELLS',
+    departamento: 'Operacional',
+    nome: 'Manutenção de Equipamentos CFTV (2/2)',
+    valor: 7100.00,
+    parcelaNumero: 2,
+    parcelas: 2,
+    vencimento: '2026-10-20',
+    temOP: true,
+    numeroOP: 'OP-2026-9012',
+    banco: 'Bradesco',
+    formaPagamento: 'Transferência / TED',
+    prioridade: 'CRÍTICA',
+    observacao: 'Conserto de nobreaks e câmeras - Parcela 2/2.',
+    status: 'AGUARDANDO_APROVACAO',
     statusPagamento: 'PENDENTE_PAGAMENTO',
     dataPagamento: null,
     dataConciliacao: null,
@@ -173,10 +229,12 @@ const DESPESAS_INICIAIS = [
   },
   {
     id: 'fin_1008',
+    grupoId: 'grp_1008',
     empresa: 'REGIONAL',
     departamento: 'Suprimentos',
     nome: 'Compra Urgente de EPIs e Equipamentos de Segurança',
     valor: 19800.00,
+    parcelaNumero: 1,
     parcelas: 1,
     vencimento: '2026-09-01',
     temOP: true,
@@ -194,11 +252,13 @@ const DESPESAS_INICIAIS = [
     dataCriacao: '2026-08-20'
   },
   {
-    id: 'fin_1003',
+    id: 'fin_1003_1',
+    grupoId: 'grp_1003',
     empresa: 'REGIONAL',
     departamento: 'RH',
-    nome: 'Compra de Uniformes e Coturnos para Vigilantes',
-    valor: 45800.00,
+    nome: 'Compra de Uniformes e Coturnos (1/3)',
+    valor: 15266.66,
+    parcelaNumero: 1,
     parcelas: 3,
     vencimento: '2026-09-18',
     temOP: false,
@@ -206,7 +266,55 @@ const DESPESAS_INICIAIS = [
     banco: 'Banco do Brasil',
     formaPagamento: 'Boleto',
     prioridade: 'MÉDIA',
-    observacao: 'Lote de coturnos, coletes e jaquetas para os novos postos.',
+    observacao: 'Lote de coturnos e coletes - Parcela 1/3.',
+    status: 'LANCADA',
+    statusPagamento: 'PENDENTE_PAGAMENTO',
+    dataPagamento: null,
+    dataConciliacao: null,
+    dataArquivamento: null,
+    obsAprovacao: 'Aprovado e lançado para pagamento.',
+    dataCriacao: '2026-08-28'
+  },
+  {
+    id: 'fin_1003_2',
+    grupoId: 'grp_1003',
+    empresa: 'REGIONAL',
+    departamento: 'RH',
+    nome: 'Compra de Uniformes e Coturnos (2/3)',
+    valor: 15266.67,
+    parcelaNumero: 2,
+    parcelas: 3,
+    vencimento: '2026-10-18',
+    temOP: false,
+    numeroOP: '',
+    banco: 'Banco do Brasil',
+    formaPagamento: 'Boleto',
+    prioridade: 'MÉDIA',
+    observacao: 'Lote de coturnos e coletes - Parcela 2/3.',
+    status: 'LANCADA',
+    statusPagamento: 'PENDENTE_PAGAMENTO',
+    dataPagamento: null,
+    dataConciliacao: null,
+    dataArquivamento: null,
+    obsAprovacao: 'Aprovado e lançado para pagamento.',
+    dataCriacao: '2026-08-28'
+  },
+  {
+    id: 'fin_1003_3',
+    grupoId: 'grp_1003',
+    empresa: 'REGIONAL',
+    departamento: 'RH',
+    nome: 'Compra de Uniformes e Coturnos (3/3)',
+    valor: 15266.67,
+    parcelaNumero: 3,
+    parcelas: 3,
+    vencimento: '2026-11-18',
+    temOP: false,
+    numeroOP: '',
+    banco: 'Banco do Brasil',
+    formaPagamento: 'Boleto',
+    prioridade: 'MÉDIA',
+    observacao: 'Lote de coturnos e coletes - Parcela 3/3.',
     status: 'LANCADA',
     statusPagamento: 'PENDENTE_PAGAMENTO',
     dataPagamento: null,
@@ -217,10 +325,12 @@ const DESPESAS_INICIAIS = [
   },
   {
     id: 'fin_1004',
+    grupoId: 'grp_1004',
     empresa: 'LGA',
     departamento: 'TI',
     nome: 'Licenciamento de Software de Monitoramento e Nuvem',
     valor: 8900.00,
+    parcelaNumero: 1,
     parcelas: 1,
     vencimento: '2026-09-05',
     temOP: true,
@@ -239,10 +349,12 @@ const DESPESAS_INICIAIS = [
   },
   {
     id: 'fin_1005',
+    grupoId: 'grp_1005',
     empresa: 'LÓGICA',
     departamento: 'Suprimentos',
     nome: 'Material de Escritório e Limpeza Geral',
     valor: 3450.00,
+    parcelaNumero: 1,
     parcelas: 1,
     vencimento: '2026-09-12',
     temOP: false,
@@ -261,10 +373,12 @@ const DESPESAS_INICIAIS = [
   },
   {
     id: 'fin_1006',
+    grupoId: 'grp_1006',
     empresa: 'AÇOFORTE',
     departamento: 'Comercial',
     nome: 'Serviço de Consultoria de Segurança Operacional',
     valor: 12500.00,
+    parcelaNumero: 1,
     parcelas: 1,
     vencimento: '2026-08-30',
     temOP: true,
@@ -283,10 +397,12 @@ const DESPESAS_INICIAIS = [
   },
   {
     id: 'fin_1007',
+    grupoId: 'grp_1007',
     empresa: 'BELLS',
     departamento: 'Jurídico',
     nome: 'Taxas de Cartório e Selos Digitais - Registro de Contratos',
     valor: 1850.00,
+    parcelaNumero: 1,
     parcelas: 1,
     vencimento: '2026-08-15',
     temOP: false,
@@ -324,7 +440,7 @@ export default function Financeiro({ currentUser }) {
     return BANCOS_PADRAO;
   });
 
-  // Salvar customizações de Departamentos e Bancos no localStorage
+  // Salvar customizações no localStorage
   useEffect(() => {
     localStorage.setItem('acoweb_financeiro_deptos', JSON.stringify(departamentos));
   }, [departamentos]);
@@ -333,9 +449,9 @@ export default function Financeiro({ currentUser }) {
     localStorage.setItem('acoweb_financeiro_bancos', JSON.stringify(bancos));
   }, [bancos]);
 
-  // Estado Principal de Despesas (versão 3 para cadastradas, lançadas e situações de vencimento)
+  // Estado Principal de Despesas (versão 4 para reparcelamento mensal e ordem de abas)
   const [despesas, setDespesas] = useState(() => {
-    const saved = localStorage.getItem('acoweb_financeiro_despesas_v3');
+    const saved = localStorage.getItem('acoweb_financeiro_despesas_v4');
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
@@ -345,16 +461,17 @@ export default function Financeiro({ currentUser }) {
     return DESPESAS_INICIAIS;
   });
 
-  // Salvar despesas no localStorage
+  // Salvar despesas v4 no localStorage
   useEffect(() => {
     try {
-      localStorage.setItem('acoweb_financeiro_despesas_v3', JSON.stringify(despesas));
+      localStorage.setItem('acoweb_financeiro_despesas_v4', JSON.stringify(despesas));
     } catch(e) {
       console.error('Erro ao salvar despesas no localStorage:', e);
     }
   }, [despesas]);
 
   // Aba Ativa (Primeira aba padrão: 'cadastradas')
+  // Abas disponíveis: 'cadastradas', 'aguardando', 'lancadas', 'conciliacao', 'arquivadas', 'recusadas', 'relatorio', 'nova'
   const [activeTab, setActiveTab] = useState('cadastradas');
 
   // Filtros Globais da Tabela
@@ -363,6 +480,7 @@ export default function Financeiro({ currentUser }) {
   const [filtroBusca, setFiltroBusca] = useState('');
   const [filtroStatusPagamento, setFiltroStatusPagamento] = useState('TODOS');
   const [filtroFormaPagamento, setFiltroFormaPagamento] = useState('');
+  const [filtroMes, setFiltroMes] = useState(''); // Filtro por Mês 'YYYY-MM'
 
   // Modal de Edição de Valor da Despesa
   const [modalEditarValor, setModalEditarValor] = useState(null);
@@ -395,6 +513,19 @@ export default function Financeiro({ currentUser }) {
     observacao: ''
   });
 
+  // Obter Lista Dinâmica de Meses Disponíveis para o Filtro
+  const mesesDisponiveis = useMemo(() => {
+    const setMeses = new Set();
+    despesas.forEach(d => {
+      if (d.vencimento && d.vencimento.length >= 7) {
+        setMeses.add(d.vencimento.substring(0, 7));
+      }
+    });
+    const hojeMes = new Date().toISOString().slice(0, 7);
+    setMeses.add(hojeMes);
+    return Array.from(setMeses).sort();
+  }, [despesas]);
+
   // Adicionar Novo Departamento Rápido
   const handleAdicionarDepto = (e) => {
     e.preventDefault();
@@ -425,7 +556,7 @@ export default function Financeiro({ currentUser }) {
     setShowNovoBancoModal(false);
   };
 
-  // Salvar Novo Valor Editado
+  // Salvar Novo Valor Editado (Disponível na 1ª Aba)
   const handleSalvarNovoValor = (e) => {
     e.preventDefault();
     if (!modalEditarValor) return;
@@ -445,22 +576,22 @@ export default function Financeiro({ currentUser }) {
     setNovoValorInput('');
   };
 
-  // Enviar Despesa da 1ª Aba (Cadastradas) para a 2ª Aba (Lançadas p/ Pagamento)
-  const handleEnviarParaPagamento = (id) => {
+  // Enviar Despesa da 1ª Aba (Cadastradas) para a 2ª Aba (Aguardando Aprovação)
+  const handleEnviarParaAprovacao = (id) => {
     setDespesas(prev => prev.map(d => {
       if (d.id === id) {
         return {
           ...d,
-          status: 'LANCADA',
+          status: 'AGUARDANDO_APROVACAO',
           statusPagamento: 'PENDENTE_PAGAMENTO'
         };
       }
       return d;
     }));
-    alert('🚀 Despesa enviada para a aba "Lançadas" para pagamento e liquidação!');
+    alert('🚀 Despesa enviada para a aba "Aguardando Aprovação"! A diretoria/gestor poderá avaliar e aprovar.');
   };
 
-  // Handler de envio do formulário de nova despesa (Cria na 1ª Aba - Cadastradas)
+  // Handler de envio do formulário de nova despesa (Suporta Parcelamento Multi-Mês)
   const handleCadastrarDespesa = (e) => {
     e.preventDefault();
     if (!formNovaDespesa.nome.trim()) return alert('Por favor, informe a descrição/nome da despesa.');
@@ -468,32 +599,49 @@ export default function Financeiro({ currentUser }) {
     if (formNovaDespesa.temOP && !formNovaDespesa.numeroOP.trim()) return alert('Por favor, informe o Número da OP.');
 
     const numParc = Math.max(1, parseInt(formNovaDespesa.parcelas, 10) || 1);
+    const valTotal = parseFloat(formNovaDespesa.valor) || 0;
+    
+    // Divisão de parcelas com arredondamento preciso
+    const valParcelaBase = Math.floor((valTotal / numParc) * 100) / 100;
+    const resto = Math.round((valTotal - (valParcelaBase * numParc)) * 100) / 100;
 
-    const nova = {
-      id: `fin_${Date.now()}_${Math.floor(Math.random()*1000)}`,
-      empresa: formNovaDespesa.empresa,
-      departamento: formNovaDespesa.departamento,
-      nome: formNovaDespesa.nome.trim(),
-      valor: parseFloat(formNovaDespesa.valor) || 0,
-      parcelas: numParc,
-      vencimento: formNovaDespesa.vencimento,
-      temOP: formNovaDespesa.temOP,
-      numeroOP: formNovaDespesa.temOP ? formNovaDespesa.numeroOP.trim() : '',
-      banco: formNovaDespesa.banco,
-      formaPagamento: formNovaDespesa.formaPagamento,
-      prioridade: formNovaDespesa.prioridade,
-      observacao: formNovaDespesa.observacao.trim(),
-      status: 'CADASTRADA',
-      statusPagamento: 'PENDENTE_PAGAMENTO',
-      dataPagamento: null,
-      dataConciliacao: null,
-      dataArquivamento: null,
-      obsAprovacao: '',
-      dataCriacao: new Date().toISOString().slice(0, 10)
-    };
+    const grupoId = `grp_${Date.now()}`;
+    const novasDespesas = [];
 
-    setDespesas(prev => [nova, ...prev]);
-    alert('✅ Despesa cadastrada com sucesso na aba "Despesas Cadastradas"! Você pode ajustar o valor e enviar para pagamento.');
+    for (let i = 0; i < numParc; i++) {
+      const valorItem = (i === numParc - 1) ? Number((valParcelaBase + resto).toFixed(2)) : valParcelaBase;
+      const dataVenc = calcularDataParcela(formNovaDespesa.vencimento, i);
+      const nomeItem = numParc > 1 ? `${formNovaDespesa.nome.trim()} (${i + 1}/${numParc})` : formNovaDespesa.nome.trim();
+
+      novasDespesas.push({
+        id: `fin_${Date.now()}_${i}_${Math.floor(Math.random()*1000)}`,
+        grupoId: grupoId,
+        empresa: formNovaDespesa.empresa,
+        departamento: formNovaDespesa.departamento,
+        nome: nomeItem,
+        valorTotalOriginal: valTotal,
+        valor: valorItem,
+        parcelaNumero: i + 1,
+        parcelas: numParc,
+        vencimento: dataVenc,
+        temOP: formNovaDespesa.temOP,
+        numeroOP: formNovaDespesa.temOP ? formNovaDespesa.numeroOP.trim() : '',
+        banco: formNovaDespesa.banco,
+        formaPagamento: formNovaDespesa.formaPagamento,
+        prioridade: formNovaDespesa.prioridade,
+        observacao: formNovaDespesa.observacao.trim(),
+        status: 'CADASTRADA',
+        statusPagamento: 'PENDENTE_PAGAMENTO',
+        dataPagamento: null,
+        dataConciliacao: null,
+        dataArquivamento: null,
+        obsAprovacao: '',
+        dataCriacao: new Date().toISOString().slice(0, 10)
+      });
+    }
+
+    setDespesas(prev => [...novasDespesas, ...prev]);
+    alert(`✅ Despesa cadastrada com sucesso! ${numParc > 1 ? `Criadas ${numParc} parcelas mensais replicadas automaticamente.` : ''}`);
 
     // Resetar formulário
     setFormNovaDespesa({
@@ -515,7 +663,7 @@ export default function Financeiro({ currentUser }) {
     setActiveTab('cadastradas');
   };
 
-  // Confirmar Aprovação ou Reprovação
+  // Confirmar Aprovação ou Reprovação (Da 2ª Aba: Aguardando Aprovação)
   const handleConfirmarAnalise = () => {
     if (!modalAprovacao) return;
     const { despesa, acao } = modalAprovacao;
@@ -531,7 +679,7 @@ export default function Financeiro({ currentUser }) {
       return d;
     }));
 
-    alert(`Despesa ${acao === 'APROVAR' ? 'Aprovada e Lançada' : 'Reprovada'} com sucesso!`);
+    alert(`Despesa ${acao === 'APROVAR' ? 'Aprovada e enviada para Lançadas no Banco' : 'Reprovada/Recusada'} com sucesso!`);
     setModalAprovacao(null);
     setObsAprovacaoInput('');
   };
@@ -562,7 +710,7 @@ export default function Financeiro({ currentUser }) {
     handleMudarStatusPagamento(id, configAtual.proximo);
   };
 
-  // Excluir Lançamento
+  // Excluir Despesa
   const handleExcluirDespesa = (id) => {
     if (window.confirm('Tem certeza que deseja excluir esta despesa permanentemente?')) {
       setDespesas(prev => prev.filter(d => d.id !== id));
@@ -573,7 +721,7 @@ export default function Financeiro({ currentUser }) {
   const getSituacaoItem = (item) => {
     const hoje = new Date().toISOString().slice(0, 10);
     if (item.status === 'RECUSADA') {
-      return { code: 'RECUSADA', label: 'Reprovada / Não Paga', color: '#f87171', bg: 'rgba(239, 68, 68, 0.15)', border: 'rgba(239, 68, 68, 0.4)' };
+      return { code: 'RECUSADA', label: 'Reprovada / Recusada', color: '#f87171', bg: 'rgba(239, 68, 68, 0.15)', border: 'rgba(239, 68, 68, 0.4)' };
     }
     if (item.statusPagamento === 'PAGO') {
       return { code: 'PAGO', label: '✓ Pago', color: '#34d399', bg: 'rgba(16, 185, 129, 0.15)', border: 'rgba(16, 185, 129, 0.4)' };
@@ -592,29 +740,37 @@ export default function Financeiro({ currentUser }) {
     return { code: 'A_VENCER', label: '⏳ A Vencer', color: '#fbbf24', bg: 'rgba(245, 158, 11, 0.15)', border: 'rgba(245, 158, 11, 0.4)' };
   };
 
-  // Estatísticas Globais das Abas e Situações Financeiras
+  // Estatísticas Globais & Resumo por Mês (Balanço Mensal)
   const estatisticas = useMemo(() => {
     const hoje = new Date().toISOString().slice(0, 10);
 
-    const cadastradas = despesas.filter(d => (d.status === 'CADASTRADA' || d.status === 'AGUARDANDO_APROVACAO') && d.status !== 'RECUSADA');
-    const lancadas = despesas.filter(d => (d.status === 'LANCADA' || d.status === 'APROVADA') && d.status !== 'RECUSADA');
-    const recusadas = despesas.filter(d => d.status === 'RECUSADA');
+    // Filtragem por mês para o resumo de KPIs se `filtroMes` estiver ativo
+    const despesasEscopo = filtroMes 
+      ? despesas.filter(d => d.vencimento && d.vencimento.startsWith(filtroMes))
+      : despesas;
 
-    // Situações de Pagamento Globais
-    const pagas = despesas.filter(d => d.statusPagamento === 'PAGO');
-    const emAberto = despesas.filter(d => d.status !== 'RECUSADA' && (!d.statusPagamento || d.statusPagamento === 'PENDENTE_PAGAMENTO'));
+    const cadastradas = despesasEscopo.filter(d => d.status === 'CADASTRADA');
+    const aguardando = despesasEscopo.filter(d => d.status === 'AGUARDANDO_APROVACAO');
+    const lancadas = despesasEscopo.filter(d => d.status === 'LANCADA' || d.status === 'APROVADA');
+    const recusadas = despesasEscopo.filter(d => d.status === 'RECUSADA');
+
+    // Situações de Pagamento Globais no Escopo
+    const pagas = despesasEscopo.filter(d => d.statusPagamento === 'PAGO');
+    const emAberto = despesasEscopo.filter(d => d.status !== 'RECUSADA' && (!d.statusPagamento || d.statusPagamento === 'PENDENTE_PAGAMENTO'));
 
     // Vencidas vs A Vencer
     const vencidas = emAberto.filter(d => d.vencimento && d.vencimento < hoje);
     const aVencer = emAberto.filter(d => !d.vencimento || d.vencimento >= hoje);
 
-    const conciliacao = despesas.filter(d => d.statusPagamento === 'PENDENTE_CONCILIACAO');
-    const arquivadas = despesas.filter(d => d.statusPagamento === 'ARQUIVADO');
+    const conciliacao = despesasEscopo.filter(d => d.statusPagamento === 'PENDENTE_CONCILIACAO');
+    const arquivadas = despesasEscopo.filter(d => d.statusPagamento === 'ARQUIVADO');
 
     return {
-      totalGeral: despesas.length,
+      totalGeral: despesasEscopo.length,
       countCadastradas: cadastradas.length,
       valorCadastradas: cadastradas.reduce((a, b) => a + b.valor, 0),
+      countAguardando: aguardando.length,
+      valorAguardando: aguardando.reduce((a, b) => a + b.valor, 0),
       countLancadas: lancadas.length,
       valorLancadas: lancadas.reduce((a, b) => a + b.valor, 0),
       countRecusadas: recusadas.length,
@@ -635,7 +791,7 @@ export default function Financeiro({ currentUser }) {
       countArquivadas: arquivadas.length,
       valorArquivadas: arquivadas.reduce((a, b) => a + b.valor, 0)
     };
-  }, [despesas]);
+  }, [despesas, filtroMes]);
 
   // Lista Filtrada para a Aba Ativa
   const listaExibicao = useMemo(() => {
@@ -644,27 +800,40 @@ export default function Financeiro({ currentUser }) {
     return despesas.filter(d => {
       // 1ª Aba: Despesas Cadastradas
       if (activeTab === 'cadastradas') {
-        if (d.status !== 'CADASTRADA' && d.status !== 'AGUARDANDO_APROVACAO') return false;
+        if (d.status !== 'CADASTRADA') return false;
       }
       
-      // 2ª Aba: Despesas Lançadas (confirmação de pagamento)
+      // 2ª Aba: Aguardando Aprovação
+      if (activeTab === 'aguardando') {
+        if (d.status !== 'AGUARDANDO_APROVACAO') return false;
+      }
+
+      // 3ª Aba: Lançadas no Banco (após aprovação)
       if (activeTab === 'lancadas') {
         if (d.status !== 'LANCADA' && d.status !== 'APROVADA') return false;
       }
       
+      // 4ª Aba: Pendente de Conciliação
       if (activeTab === 'conciliacao') {
         if (d.statusPagamento !== 'PENDENTE_CONCILIACAO') return false;
       }
 
+      // 5ª Aba: Arquivadas
       if (activeTab === 'arquivadas') {
         if (d.statusPagamento !== 'ARQUIVADO') return false;
       }
 
+      // 6ª Aba: Recusadas
       if (activeTab === 'recusadas') {
         if (d.status !== 'RECUSADA') return false;
       }
 
-      // Filtro de Situação/Status de Pagamento (Selecione VENCIDA, A_VENCER, PAGO, etc.)
+      // Filtro por Mês (Vencimento)
+      if (filtroMes) {
+        if (!d.vencimento || !d.vencimento.startsWith(filtroMes)) return false;
+      }
+
+      // Filtro de Situação/Status de Pagamento
       if (filtroStatusPagamento !== 'TODOS') {
         if (filtroStatusPagamento === 'VENCIDA') {
           if (d.statusPagamento === 'PAGO' || d.statusPagamento === 'PENDENTE_CONCILIACAO' || d.statusPagamento === 'ARQUIVADO' || !d.vencimento || d.vencimento >= hoje) return false;
@@ -691,14 +860,14 @@ export default function Financeiro({ currentUser }) {
 
       return true;
     });
-  }, [despesas, activeTab, filtroEmpresa, filtroDepartamento, filtroFormaPagamento, filtroBusca, filtroStatusPagamento]);
+  }, [despesas, activeTab, filtroEmpresa, filtroDepartamento, filtroFormaPagamento, filtroBusca, filtroStatusPagamento, filtroMes]);
 
   // Relatório Mensal Comparativo
   const dadosRelatorioMensal = useMemo(() => {
     const mapMeses = {};
 
     despesas.forEach(d => {
-      if (d.status !== 'APROVADA') return;
+      if (d.status === 'RECUSADA') return;
       const mesChave = (d.vencimento || d.dataCriacao || '').substring(0, 7);
       if (!mesChave) return;
 
@@ -721,7 +890,7 @@ export default function Financeiro({ currentUser }) {
     EMPRESAS.forEach(emp => { mapEmpresa[emp] = { empresa: emp, pago: 0, pendente: 0, total: 0 }; });
 
     despesas.forEach(d => {
-      if (d.status !== 'APROVADA') return;
+      if (d.status === 'RECUSADA') return;
       const emp = d.empresa || 'OUTROS';
       if (!mapEmpresa[emp]) mapEmpresa[emp] = { empresa: emp, pago: 0, pendente: 0, total: 0 };
 
@@ -735,7 +904,7 @@ export default function Financeiro({ currentUser }) {
     departamentos.forEach(dep => { mapDepto[dep] = { departamento: dep, pago: 0, pendente: 0, total: 0 }; });
 
     despesas.forEach(d => {
-      if (d.status !== 'APROVADA') return;
+      if (d.status === 'RECUSADA') return;
       const dep = d.departamento || 'OUTROS';
       if (!mapDepto[dep]) mapDepto[dep] = { departamento: dep, pago: 0, pendente: 0, total: 0 };
 
@@ -757,16 +926,16 @@ export default function Financeiro({ currentUser }) {
     let nomeArquivo = 'relatorio_financeiro';
 
     if (filtroTipo === 'PAGAS') {
-      dadosFiltrados = despesas.filter(d => d.status === 'APROVADA' && d.statusPagamento === 'PAGO');
+      dadosFiltrados = despesas.filter(d => d.statusPagamento === 'PAGO');
       nomeArquivo = 'despesas_pagas';
     } else if (filtroTipo === 'PENDENTES_PAGAMENTO') {
-      dadosFiltrados = despesas.filter(d => d.status === 'APROVADA' && (d.statusPagamento || 'PENDENTE_PAGAMENTO') === 'PENDENTE_PAGAMENTO');
+      dadosFiltrados = despesas.filter(d => (d.statusPagamento || 'PENDENTE_PAGAMENTO') === 'PENDENTE_PAGAMENTO' && d.status !== 'RECUSADA');
       nomeArquivo = 'despesas_pendentes_pagamento';
     } else if (filtroTipo === 'PENDENTES_CONCILIACAO') {
-      dadosFiltrados = despesas.filter(d => d.status === 'APROVADA' && d.statusPagamento === 'PENDENTE_CONCILIACAO');
+      dadosFiltrados = despesas.filter(d => d.statusPagamento === 'PENDENTE_CONCILIACAO');
       nomeArquivo = 'despesas_pendentes_conciliacao';
     } else if (filtroTipo === 'ARQUIVADAS') {
-      dadosFiltrados = despesas.filter(d => d.status === 'APROVADA' && d.statusPagamento === 'ARQUIVADO');
+      dadosFiltrados = despesas.filter(d => d.statusPagamento === 'ARQUIVADO');
       nomeArquivo = 'despesas_arquivadas';
     } else if (filtroTipo === 'AGUARDANDO_APROVACAO') {
       dadosFiltrados = despesas.filter(d => d.status === 'AGUARDANDO_APROVACAO');
@@ -776,7 +945,12 @@ export default function Financeiro({ currentUser }) {
       nomeArquivo = 'despesas_recusadas';
     }
 
-    const headers = ['ID', 'Empresa', 'Departamento', 'Descrição Despesa', 'Valor (R$)', 'Parcelas', 'Vencimento', 'Último Vencimento Est.', 'Tem OP', 'Num OP', 'Banco', 'Forma Pagamento', 'Prioridade', 'Status Aprovação', 'Status Fluxo Pagamento', 'Data Pagamento', 'Data Conciliação', 'Data Arquivamento', 'Obs Cadastro', 'Obs Análise'];
+    if (filtroMes) {
+      dadosFiltrados = dadosFiltrados.filter(d => d.vencimento && d.vencimento.startsWith(filtroMes));
+      nomeArquivo += `_${filtroMes}`;
+    }
+
+    const headers = ['ID', 'Empresa', 'Departamento', 'Descrição Despesa', 'Valor (R$)', 'Parcela', 'Total Parcelas', 'Vencimento', 'Último Vencimento Est.', 'Tem OP', 'Num OP', 'Banco', 'Forma Pagamento', 'Prioridade', 'Status Etapa', 'Status Pagamento', 'Data Pagamento', 'Data Conciliação', 'Data Arquivamento', 'Obs Cadastro', 'Obs Análise'];
     
     const rows = dadosFiltrados.map(item => [
       item.id,
@@ -784,9 +958,10 @@ export default function Financeiro({ currentUser }) {
       `"${item.departamento || ''}"`,
       `"${item.nome || ''}"`,
       item.valor.toFixed(2),
-      item.parcelas,
+      item.parcelaNumero || 1,
+      item.parcelas || 1,
       item.vencimento,
-      calcularUltimoVencimento(item.vencimento, item.parcelas),
+      calcularUltimoVencimento(item.vencimento, item.parcelas || 1),
       item.temOP ? 'SIM' : 'NÃO',
       `"${item.numeroOP || ''}"`,
       `"${item.banco || ''}"`,
@@ -826,7 +1001,7 @@ export default function Financeiro({ currentUser }) {
                 Módulo Financeiro & Fluxo de Caixa
               </h1>
               <p style={{ fontSize: '13px', color: '#94a3b8', margin: '2px 0 0 0' }}>
-                Acompanhamento de despesas das empresas: <strong>AÇOFORTE, BELLS, LGA, REGIONAL e LÓGICA</strong>
+                Gestão de despesas das empresas: <strong>AÇOFORTE, BELLS, LGA, REGIONAL e LÓGICA</strong>
               </p>
             </div>
           </div>
@@ -856,7 +1031,7 @@ export default function Financeiro({ currentUser }) {
         </button>
       </div>
 
-      {/* CARDS RESUMO / KPIS DAS 4 SITUAÇÕES FINANCEIRAS */}
+      {/* CARDS RESUMO / KPIS DAS 4 SITUAÇÕES FINANCEIRAS & BALANÇO MENSAL */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '24px' }}>
         
         {/* Situação 1: CONTAS VENCIDAS (ALERTA EM VERMELHO) */}
@@ -869,7 +1044,7 @@ export default function Financeiro({ currentUser }) {
             {formatMoney(estatisticas.valorVencidas)}
           </div>
           <div style={{ fontSize: '11px', color: '#fca5a5', marginTop: '4px', fontWeight: 600 }}>
-            {estatisticas.countVencidas} contas em atraso
+            {estatisticas.countVencidas} contas em atraso {filtroMes ? `(${formatarMesExtenso(filtroMes)})` : ''}
           </div>
         </div>
 
@@ -915,17 +1090,17 @@ export default function Financeiro({ currentUser }) {
           </div>
         </div>
 
-        {/* DESPESAS CADASTRADAS (RASCUNHOS DA 1ª ABA) */}
-        <div style={{ background: 'rgba(30, 41, 59, 0.5)', padding: '16px', borderRadius: '14px', border: '1px solid rgba(139, 92, 246, 0.2)' }}>
+        {/* AGUARDANDO APROVAÇÃO */}
+        <div style={{ background: 'rgba(30, 41, 59, 0.5)', padding: '16px', borderRadius: '14px', border: '1px solid rgba(245, 158, 11, 0.2)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-            <span style={{ fontSize: '12px', color: '#94a3b8', fontWeight: 600 }}>Despesas Cadastradas</span>
-            <FileText size={18} color="#a78bfa" />
+            <span style={{ fontSize: '12px', color: '#fbbf24', fontWeight: 600 }}>Aguardando Aprovação</span>
+            <Clock size={18} color="#fbbf24" />
           </div>
-          <div style={{ fontSize: '18px', fontWeight: 800, color: '#c084fc' }}>
-            {formatMoney(estatisticas.valorCadastradas)}
+          <div style={{ fontSize: '18px', fontWeight: 800, color: '#fde047' }}>
+            {formatMoney(estatisticas.valorAguardando)}
           </div>
           <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '4px' }}>
-            {estatisticas.countCadastradas} para enviar a pagamento
+            {estatisticas.countAguardando} pendentes de análise
           </div>
         </div>
 
@@ -945,7 +1120,8 @@ export default function Financeiro({ currentUser }) {
 
       </div>
 
-      {/* BARRA DE NAVEGAÇÃO ENTRE ABAS - 1ª ABA: CADASTRADAS, 2ª ABA: LANÇADAS */}
+      {/* BARRA DE NAVEGAÇÃO DE ABAS — ORDEM EXATA SOLICITADA */}
+      {/* 1. Cadastradas -> 2. Aguardando Aprovação -> 3. Lançadas no Banco -> 4. Pendente Conciliação -> 5. Arquivadas -> 6. Recusadas -> 7. Relatório */}
       <div style={{ display: 'flex', gap: '8px', borderBottom: '1px solid rgba(255, 255, 255, 0.1)', marginBottom: '24px', overflowX: 'auto', paddingBottom: '4px' }}>
         
         {/* 1ª ABA: DESPESAS CADASTRADAS */}
@@ -955,7 +1131,7 @@ export default function Financeiro({ currentUser }) {
             display: 'flex',
             alignItems: 'center',
             gap: '8px',
-            padding: '10px 18px',
+            padding: '10px 16px',
             borderRadius: '8px 8px 0 0',
             border: 'none',
             background: activeTab === 'cadastradas' ? 'rgba(139, 92, 246, 0.2)' : 'transparent',
@@ -970,14 +1146,36 @@ export default function Financeiro({ currentUser }) {
           <span>1. Despesas Cadastradas ({estatisticas.countCadastradas})</span>
         </button>
 
-        {/* 2ª ABA: DESPESAS LANÇADAS */}
+        {/* 2ª ABA: AGUARDANDO APROVAÇÃO */}
+        <button
+          onClick={() => setActiveTab('aguardando')}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '10px 16px',
+            borderRadius: '8px 8px 0 0',
+            border: 'none',
+            background: activeTab === 'aguardando' ? 'rgba(245, 158, 11, 0.2)' : 'transparent',
+            color: activeTab === 'aguardando' ? '#fbbf24' : '#94a3b8',
+            fontWeight: 800,
+            fontSize: '13px',
+            cursor: 'pointer',
+            borderBottom: activeTab === 'aguardando' ? '3px solid #fbbf24' : 'none'
+          }}
+        >
+          <Clock size={16} />
+          <span>2. Aguardando Aprovação ({estatisticas.countAguardando})</span>
+        </button>
+
+        {/* 3ª ABA: LANÇADAS NO BANCO (APÓS APROVAÇÃO) */}
         <button
           onClick={() => setActiveTab('lancadas')}
           style={{
             display: 'flex',
             alignItems: 'center',
             gap: '8px',
-            padding: '10px 18px',
+            padding: '10px 16px',
             borderRadius: '8px 8px 0 0',
             border: 'none',
             background: activeTab === 'lancadas' ? 'rgba(59, 130, 246, 0.2)' : 'transparent',
@@ -989,10 +1187,10 @@ export default function Financeiro({ currentUser }) {
           }}
         >
           <Send size={16} />
-          <span>2. Lançadas p/ Pagamento ({estatisticas.countLancadas})</span>
+          <span>3. Lançadas no Banco ({estatisticas.countLancadas})</span>
         </button>
 
-        {/* ABA: CONCILIAÇÃO */}
+        {/* 4ª ABA: CONCILIAÇÃO BANCÁRIA */}
         <button
           onClick={() => setActiveTab('conciliacao')}
           style={{
@@ -1011,10 +1209,10 @@ export default function Financeiro({ currentUser }) {
           }}
         >
           <Landmark size={16} />
-          <span>Pendente de Conciliação ({estatisticas.countConciliacao})</span>
+          <span>4. Pendente Conciliação ({estatisticas.countConciliacao})</span>
         </button>
 
-        {/* ABA: ARQUIVADAS */}
+        {/* 5ª ABA: ARQUIVADAS */}
         <button
           onClick={() => setActiveTab('arquivadas')}
           style={{
@@ -1033,10 +1231,10 @@ export default function Financeiro({ currentUser }) {
           }}
         >
           <Archive size={16} />
-          <span>Arquivadas ({estatisticas.countArquivadas})</span>
+          <span>5. Arquivadas ({estatisticas.countArquivadas})</span>
         </button>
 
-        {/* ABA: RECUSADAS */}
+        {/* 6ª ABA: RECUSADAS */}
         <button
           onClick={() => setActiveTab('recusadas')}
           style={{
@@ -1055,10 +1253,10 @@ export default function Financeiro({ currentUser }) {
           }}
         >
           <XCircle size={16} />
-          <span>Recusadas ({estatisticas.countRecusadas})</span>
+          <span>6. Recusadas ({estatisticas.countRecusadas})</span>
         </button>
 
-        {/* ABA: RELATÓRIO MENSAL */}
+        {/* 7ª ABA: RELATÓRIO MENSAL */}
         <button
           onClick={() => setActiveTab('relatorio')}
           style={{
@@ -1080,7 +1278,7 @@ export default function Financeiro({ currentUser }) {
           <span>Relatório Mensal</span>
         </button>
 
-        {/* ABA: CADASTRAR NOVA DESPESA */}
+        {/* ABA FORMULÁRIO: CADASTRAR NOVA DESPESA */}
         <button
           onClick={() => setActiveTab('nova')}
           style={{
@@ -1105,7 +1303,7 @@ export default function Financeiro({ currentUser }) {
 
       </div>
 
-      {/* CADASTRO DE NOVAR DESPESAS (ABA FORMULÁRIO) */}
+      {/* CADASTRO DE NOVAS DESPESAS (ABA FORMULÁRIO) */}
       {activeTab === 'nova' && (
         <div style={{ background: 'rgba(30, 41, 59, 0.5)', padding: '28px', borderRadius: '16px', border: '1px solid rgba(255, 255, 255, 0.08)', maxWidth: '950px', margin: '0 auto' }}>
           <h2 style={{ fontSize: '18px', fontWeight: 700, color: '#f8fafc', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -1186,7 +1384,7 @@ export default function Financeiro({ currentUser }) {
             {/* Parcelas Manuais */}
             <div>
               <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#94a3b8', marginBottom: '6px' }}>
-                Quantidade de Parcelas (Manual) *
+                Quantidade de Parcelas (Inserida Manualmente) *
               </label>
               <input
                 type="number"
@@ -1339,30 +1537,54 @@ export default function Financeiro({ currentUser }) {
         </div>
       )}
 
-      {/* ABAS: TABELA DE DESPESAS (CADASTRADAS / LANÇADAS / CONCILIAÇÃO / ARQUIVADAS / RECUSADAS) */}
-      {(activeTab === 'cadastradas' || activeTab === 'lancadas' || activeTab === 'conciliacao' || activeTab === 'arquivadas' || activeTab === 'recusadas') && (
+      {/* ABAS DA TABELA DE DESPESAS (CADASTRADAS / AGUARDANDO / LANÇADAS / CONCILIAÇÃO / ARQUIVADAS / RECUSADAS) */}
+      {(activeTab === 'cadastradas' || activeTab === 'aguardando' || activeTab === 'lancadas' || activeTab === 'conciliacao' || activeTab === 'arquivadas' || activeTab === 'recusadas') && (
         <div style={{ background: 'rgba(30, 41, 59, 0.5)', padding: '24px', borderRadius: '16px', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
           
           {/* BARRA DE FILTROS E EXPORTAÇÃO */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '16px' }}>
             <div>
               <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#f8fafc', margin: 0 }}>
-                {activeTab === 'cadastradas' && '1. Despesas Cadastradas (Aguardando Envio p/ Pagamento)'}
-                {activeTab === 'lancadas' && '2. Despesas Lançadas (Confirmação de Pagamento)'}
-                {activeTab === 'conciliacao' && 'Despesas Pendentes de Conciliação Bancária'}
-                {activeTab === 'arquivadas' && 'Histórico de Despesas Arquivadas & Conciliadas'}
-                {activeTab === 'recusadas' && 'Despesas Recusadas / Reprovadas'}
+                {activeTab === 'cadastradas' && '1. Despesas Cadastradas (Editar Valores & Enviar p/ Aprovação)'}
+                {activeTab === 'aguardando' && '2. Aguardando Aprovação (Gestão / Diretoria)'}
+                {activeTab === 'lancadas' && '3. Lançadas no Banco (Confirmação de Pagamento)'}
+                {activeTab === 'conciliacao' && '4. Despesas Pendentes de Conciliação Bancária'}
+                {activeTab === 'arquivadas' && '5. Histórico de Despesas Arquivadas & Conciliadas'}
+                {activeTab === 'recusadas' && '6. Despesas Recusadas / Reprovadas'}
                 {` (${listaExibicao.length})`}
               </h3>
-              <span style={{ fontSize: '12px', color: '#94a3b8' }}>
-                Total na visualização: {formatMoney(listaExibicao.reduce((a,b) => a + b.valor, 0))}
-              </span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '4px' }}>
+                <span style={{ fontSize: '12px', color: '#94a3b8' }}>
+                  Total na visualização: <strong>{formatMoney(listaExibicao.reduce((a,b) => a + b.valor, 0))}</strong>
+                </span>
+                {filtroMes && (
+                  <span style={{ fontSize: '11px', color: '#a78bfa', background: 'rgba(139, 92, 246, 0.15)', padding: '2px 8px', borderRadius: '6px', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                    <Calendar size={12} /> Mês: {formatarMesExtenso(filtroMes)}
+                    <button onClick={() => setFiltroMes('')} style={{ background: 'none', border: 'none', color: '#a78bfa', cursor: 'pointer', padding: 0, marginLeft: '4px' }}>✕</button>
+                  </span>
+                )}
+              </div>
             </div>
 
             <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
               
+              {/* Filtro por Mês (Vencimento) */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <Calendar size={14} color="#a78bfa" />
+                <select
+                  value={filtroMes}
+                  onChange={(e) => setFiltroMes(e.target.value)}
+                  style={{ padding: '8px 12px', background: 'rgba(139, 92, 246, 0.15)', border: '1px solid rgba(139, 92, 246, 0.4)', borderRadius: '8px', color: '#c084fc', fontSize: '12px', fontWeight: 700 }}
+                >
+                  <option value="">Todos os Meses</option>
+                  {mesesDisponiveis.map(m => (
+                    <option key={m} value={m}>{formatarMesExtenso(m)}</option>
+                  ))}
+                </select>
+              </div>
+
               {/* Campo Busca */}
-              <div style={{ position: 'relative', minWidth: '180px' }}>
+              <div style={{ position: 'relative', minWidth: '160px' }}>
                 <Search size={14} color="#94a3b8" style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)' }} />
                 <input 
                   type="text"
@@ -1389,7 +1611,7 @@ export default function Financeiro({ currentUser }) {
                 onChange={(e) => setFiltroDepartamento(e.target.value)}
                 style={{ padding: '8px 12px', background: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '8px', color: '#f8fafc', fontSize: '12px' }}
               >
-                <option value="">Todos os Departamentos</option>
+                <option value="">Todos os Deptos</option>
                 {departamentos.map(d => <option key={d} value={d}>{d}</option>)}
               </select>
 
@@ -1399,7 +1621,7 @@ export default function Financeiro({ currentUser }) {
                 onChange={(e) => setFiltroFormaPagamento(e.target.value)}
                 style={{ padding: '8px 12px', background: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '8px', color: '#f8fafc', fontSize: '12px' }}
               >
-                <option value="">Todas as Formas Pagto</option>
+                <option value="">Forma Pagto</option>
                 {FORMAS_PAGAMENTO.map(fp => <option key={fp} value={fp}>{fp}</option>)}
               </select>
 
@@ -1421,10 +1643,11 @@ export default function Financeiro({ currentUser }) {
               {/* Exportar CSV */}
               <button
                 onClick={() => exportarCSVGenerico(
-                  activeTab === 'cadastradas' ? 'AGUARDANDO_APROVACAO' : 
+                  activeTab === 'cadastradas' ? 'CADASTRADA' : 
+                  (activeTab === 'aguardando' ? 'AGUARDANDO_APROVACAO' : 
                   (activeTab === 'lancadas' ? 'PAGAS' : 
                   (activeTab === 'conciliacao' ? 'PENDENTES_CONCILIACAO' : 
-                  (activeTab === 'arquivadas' ? 'ARQUIVADAS' : 'RECUSADAS')))
+                  (activeTab === 'arquivadas' ? 'ARQUIVADAS' : 'RECUSADAS'))))
                 )}
                 style={{ padding: '8px 12px', background: 'rgba(51, 65, 85, 0.6)', color: '#cbd5e1', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', fontSize: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
               >
@@ -1454,7 +1677,7 @@ export default function Financeiro({ currentUser }) {
                     <th style={{ padding: '12px 14px' }}>Vencimento</th>
                     <th style={{ padding: '12px 14px', textAlign: 'center' }}>Situação</th>
 
-                    <th style={{ padding: '12px 14px', textAlign: 'center' }}>Ações & Confirmação</th>
+                    <th style={{ padding: '12px 14px', textAlign: 'center' }}>Ações & Fluxo</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1506,7 +1729,7 @@ export default function Financeiro({ currentUser }) {
                           )}
                           {item.obsAprovacao && (
                             <div style={{ fontSize: '11px', color: item.status === 'RECUSADA' ? '#f87171' : '#34d399', marginTop: '2px', fontStyle: 'italic' }}>
-                              Obs: "{item.obsAprovacao}"
+                              Obs Análise: "{item.obsAprovacao}"
                             </div>
                           )}
                         </td>
@@ -1517,21 +1740,23 @@ export default function Financeiro({ currentUser }) {
                             <div style={{ fontWeight: 800, color: '#60a5fa', fontSize: '14px' }}>
                               {formatMoney(item.valor)}
                             </div>
-                            {/* Botão de Editar Valor (Principalmente na 1ª Aba) */}
-                            <button
-                              onClick={() => {
-                                setModalEditarValor(item);
-                                setNovoValorInput(String(item.valor));
-                              }}
-                              style={{ background: 'rgba(59, 130, 246, 0.15)', border: '1px solid rgba(59, 130, 246, 0.3)', color: '#60a5fa', borderRadius: '4px', padding: '3px 6px', cursor: 'pointer', fontSize: '10px', display: 'inline-flex', alignItems: 'center', gap: '2px' }}
-                              title="Editar o valor desta despesa"
-                            >
-                              <Edit2 size={10} />
-                              <span>Editar</span>
-                            </button>
+                            {/* Botão de Editar Valor na 1ª Aba (Despesas Cadastradas) */}
+                            {activeTab === 'cadastradas' && (
+                              <button
+                                onClick={() => {
+                                  setModalEditarValor(item);
+                                  setNovoValorInput(String(item.valor));
+                                }}
+                                style={{ background: 'rgba(59, 130, 246, 0.15)', border: '1px solid rgba(59, 130, 246, 0.3)', color: '#60a5fa', borderRadius: '4px', padding: '3px 6px', cursor: 'pointer', fontSize: '10px', display: 'inline-flex', alignItems: 'center', gap: '2px' }}
+                                title="Editar o valor desta despesa antes de enviar para aprovação"
+                              >
+                                <Edit2 size={10} />
+                                <span>Editar</span>
+                              </button>
+                            )}
                           </div>
                           <div style={{ fontSize: '10px', color: '#64748b', marginTop: '2px' }}>
-                            {item.parcelas > 1 ? `${item.parcelas}x parcelas` : '1x (À vista)'}
+                            {item.parcelas > 1 ? `Parc. ${item.parcelaNumero || 1}/${item.parcelas}` : '1x (À vista)'}
                           </div>
                         </td>
 
@@ -1552,7 +1777,7 @@ export default function Financeiro({ currentUser }) {
                         <td style={{ padding: '12px 14px', color: '#cbd5e1', fontSize: '12px' }}>
                           <div>{formatDate(item.vencimento)}</div>
                           {item.parcelas > 1 && (
-                            <div style={{ fontSize: '10px', color: '#a78bfa' }}>Fim: {calcularUltimoVencimento(item.vencimento, item.parcelas)}</div>
+                            <div style={{ fontSize: '10px', color: '#a78bfa' }}>Fim: {calcularUltimoVencimento(item.vencimento, item.parcelas - (item.parcelaNumero - 1))}</div>
                           )}
                         </td>
 
@@ -1581,11 +1806,11 @@ export default function Financeiro({ currentUser }) {
                           {activeTab === 'cadastradas' && (
                             <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', alignItems: 'center' }}>
                               <button
-                                onClick={() => handleEnviarParaPagamento(item.id)}
-                                style={{ padding: '6px 12px', background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)', color: '#fff', border: 'none', borderRadius: '6px', fontSize: '11px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', boxShadow: '0 2px 8px rgba(59, 130, 246, 0.3)' }}
-                                title="Enviar para a aba Lançadas para autorização e liquidação de pagamento"
+                                onClick={() => handleEnviarParaAprovacao(item.id)}
+                                style={{ padding: '6px 12px', background: 'linear-gradient(135deg, #f59e0b, #d97706)', color: '#fff', border: 'none', borderRadius: '6px', fontSize: '11px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', boxShadow: '0 2px 8px rgba(245, 158, 11, 0.3)' }}
+                                title="Enviar para a aba Aguardando Aprovação para avaliação da gestão/diretoria"
                               >
-                                <Send size={12} /> Enviar p/ Pagamentos
+                                <Send size={12} /> Enviar p/ Aprovação
                               </button>
 
                               <button
@@ -1598,7 +1823,27 @@ export default function Financeiro({ currentUser }) {
                             </div>
                           )}
 
-                          {/* AÇÕES NA 2ª ABA: DESPESAS LANÇADAS (CONFIRMAÇÃO DE PAGAMENTO) */}
+                          {/* AÇÕES NA 2ª ABA: AGUARDANDO APROVAÇÃO */}
+                          {activeTab === 'aguardando' && (
+                            <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', alignItems: 'center' }}>
+                              <button
+                                onClick={() => setModalAprovacao({ despesa: item, acao: 'APROVAR' })}
+                                style={{ padding: '6px 12px', background: '#10b981', color: '#fff', border: 'none', borderRadius: '6px', fontSize: '11px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                                title="Aprovar despesa e enviar para Lançadas no Banco"
+                              >
+                                <Check size={12} /> Aprovar
+                              </button>
+                              <button
+                                onClick={() => setModalAprovacao({ despesa: item, acao: 'REPROVAR' })}
+                                style={{ padding: '6px 10px', background: '#ef4444', color: '#fff', border: 'none', borderRadius: '6px', fontSize: '11px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                                title="Reprovar / Recusar despesa"
+                              >
+                                <X size={12} /> Reprovar
+                              </button>
+                            </div>
+                          )}
+
+                          {/* AÇÕES NA 3ª ABA: DESPESAS LANÇADAS NO BANCO */}
                           {activeTab === 'lancadas' && (
                             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
                               {item.statusPagamento !== 'PAGO' ? (
@@ -1606,14 +1851,14 @@ export default function Financeiro({ currentUser }) {
                                   <button
                                     onClick={() => handleMudarStatusPagamento(item.id, 'PAGO')}
                                     style={{ padding: '6px 12px', background: '#10b981', color: '#fff', border: 'none', borderRadius: '6px', fontSize: '11px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
-                                    title="Confirmar pagamento da despesa"
+                                    title="Confirmar pagamento bancário da despesa"
                                   >
-                                    <Check size={12} /> Confirmar PAGO
+                                    <Check size={12} /> ✓ Confirmar PAGO
                                   </button>
                                   <button
                                     onClick={() => setModalAprovacao({ despesa: item, acao: 'REPROVAR' })}
-                                    style={{ padding: '6px 10px', background: '#ef4444', color: '#fff', border: 'none', borderRadius: '6px', fontSize: '11px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
-                                    title="Reprovar ou marcar como Não Pago"
+                                    style={{ padding: '6px 10px', background: 'rgba(239, 68, 68, 0.2)', color: '#f87171', border: '1px solid rgba(239, 68, 68, 0.4)', borderRadius: '6px', fontSize: '11px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                                    title="Marcar como Não Pago ou Recusar"
                                   >
                                     <X size={12} /> Reprovar
                                   </button>
@@ -1631,7 +1876,7 @@ export default function Financeiro({ currentUser }) {
                           )}
 
                           {/* AÇÕES NAS OUTRAS ABAS (CONCILIAÇÃO / ARQUIVADAS / RECUSADAS) */}
-                          {activeTab !== 'cadastradas' && activeTab !== 'lancadas' && (
+                          {activeTab !== 'cadastradas' && activeTab !== 'aguardando' && activeTab !== 'lancadas' && (
                             <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', alignItems: 'center' }}>
                               <select
                                 value={stPag}
@@ -1680,7 +1925,7 @@ export default function Financeiro({ currentUser }) {
                 Exportação de Relatórios de Pagamentos em CSV
               </h3>
               <span style={{ fontSize: '12px', color: '#94a3b8' }}>
-                Baixe planilhas segmentadas por status de pagamento, conciliação e arquivo
+                Baixe planilhas segmentadas por status de pagamento, conciliação e arquivo {filtroMes ? `(Filtrado por ${formatarMesExtenso(filtroMes)})` : ''}
               </span>
             </div>
 
@@ -1888,7 +2133,7 @@ export default function Financeiro({ currentUser }) {
               </label>
               <textarea
                 rows={3}
-                placeholder={modalAprovacao.acao === 'APROVAR' ? 'Ex: Aprovado conforme orçamento validado.' : 'Ex: Reprovado devido à falta de cota orçamentária.'}
+                placeholder={modalAprovacao.acao === 'APROVAR' ? 'Ex: Aprovado conforme orçamento validado pela diretoria.' : 'Ex: Reprovado devido à falta de cota orçamentária.'}
                 value={obsAprovacaoInput}
                 onChange={(e) => setObsAprovacaoInput(e.target.value)}
                 style={{ width: '100%', padding: '10px', background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', color: '#fff', fontSize: '13px', resize: 'vertical' }}
@@ -1945,7 +2190,7 @@ export default function Financeiro({ currentUser }) {
             <form onSubmit={handleSalvarNovoValor}>
               <div style={{ marginBottom: '20px' }}>
                 <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#94a3b8', marginBottom: '6px' }}>
-                  Novo Valor Total (R$) *
+                  Novo Valor da Parcela/Despesa (R$) *
                 </label>
                 <input
                   type="number"
