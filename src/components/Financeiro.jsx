@@ -1683,6 +1683,20 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
     document.body.removeChild(link);
   };
 
+  const handleZerarBase = () => {
+    if (!window.confirm("🔴 ATENÇÃO: Tem certeza que deseja excluir TODOS os dados de movimentação do financeiro (Despesas, Bancos, Entradas, Extrato)? Isso zerará o sistema para a produção.")) return;
+    
+    localStorage.removeItem('acoweb_financeiro_despesas_v5');
+    localStorage.removeItem('acoweb_bancos_saldo_v2');
+    localStorage.removeItem('acoweb_entradas_recursos_v2');
+    localStorage.removeItem('acoweb_historico_bancario_v2');
+    localStorage.removeItem('acoweb_financeiro_deptos');
+    localStorage.removeItem('acoweb_financeiro_bancos');
+    
+    alert("Base do Financeiro limpa com sucesso! O sistema será recarregado.");
+    window.location.reload();
+  };
+
   return (
     <div style={{ color: '#f8fafc', padding: '24px', maxWidth: '1600px', margin: '0 auto', fontFamily: 'Inter, system-ui, sans-serif' }}>
       
@@ -1704,33 +1718,59 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
           </div>
         </div>
 
-        {moduloSubSecao === 'fluxo' ? (
-          <button
-            onClick={() => setActiveTab('nova')}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
-              color: '#fff',
-              padding: '10px 18px',
-              borderRadius: '10px',
-              fontWeight: 700,
-              fontSize: '13px',
-              border: 'none',
-              cursor: 'pointer',
-              boxShadow: '0 4px 14px rgba(59, 130, 246, 0.4)',
-              transition: 'all 0.2s'
-            }}
-          >
-            <PlusCircle size={18} />
-            <span>Cadastrar Nova Despesa</span>
-          </button>
-        ) : (
-          <div style={{ fontSize: '12px', color: '#94a3b8', fontWeight: 600, background: 'rgba(30, 41, 59, 0.6)', padding: '8px 14px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.08)' }}>
-            {bancosComSaldo.length} bancos cadastrados | Saldo Líquido: <strong style={{ color: '#34d399' }}>{formatMoney(bancosComSaldo.reduce((acc, b) => acc + b.saldoAtual, 0))}</strong>
-          </div>
-        )}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          {currentUser?.role === 'MASTER' && (
+            <button
+              onClick={handleZerarBase}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                background: 'rgba(239, 68, 68, 0.15)',
+                color: '#ef4444',
+                padding: '10px 14px',
+                borderRadius: '10px',
+                fontWeight: 700,
+                fontSize: '12px',
+                border: '1px solid rgba(239, 68, 68, 0.3)',
+                cursor: 'pointer',
+                transition: 'all 0.2s'
+              }}
+              title="Apagar dados de testes e deixar base limpa para produção"
+            >
+              <Trash2 size={16} />
+              <span>Zerar Base (Testes)</span>
+            </button>
+          )}
+          
+          {moduloSubSecao === 'fluxo' ? (
+            <button
+              onClick={() => setActiveTab('nova')}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
+                color: '#fff',
+                padding: '10px 18px',
+                borderRadius: '10px',
+                fontWeight: 700,
+                fontSize: '13px',
+                border: 'none',
+                cursor: 'pointer',
+                boxShadow: '0 4px 14px rgba(59, 130, 246, 0.4)',
+                transition: 'all 0.2s'
+              }}
+            >
+              <PlusCircle size={18} />
+              <span>Cadastrar Nova Despesa</span>
+            </button>
+          ) : (
+            <div style={{ fontSize: '12px', color: '#94a3b8', fontWeight: 600, background: 'rgba(30, 41, 59, 0.6)', padding: '8px 14px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.08)' }}>
+              {bancosComSaldo.length} bancos cadastrados | Saldo Líquido: <strong style={{ color: '#34d399' }}>{formatMoney(bancosComSaldo.reduce((acc, b) => acc + b.saldoAtual, 0))}</strong>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* SEÇÃO 1: FLUXO DE DESPESAS (TELA ATUAL DA ESTEIRA) */}
