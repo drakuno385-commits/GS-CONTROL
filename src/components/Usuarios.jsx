@@ -349,14 +349,15 @@ const Usuarios = ({ currentUser }) => {
                       ]
                     },
                     {
-                      titulo: '💰 Sub-abas do Módulo Financeiro',
+                      titulo: '💰 Sub-telas e Abas do Módulo Financeiro',
                       opcoes: [
+                        { id: 'fin_fluxo', label: '📊 Fluxo de Despesas' },
+                        { id: 'fin_conciliacao', label: '🏦 Conciliação Bancária & Saldos' },
                         { id: 'fin_cadastradas', label: '1. Cadastro de Despesas' },
                         { id: 'fin_aguardando', label: '2. Aguardando Aprovação' },
                         { id: 'fin_aprovadas', label: '3. Despesas Aprovadas' },
                         { id: 'fin_lancadas', label: '5. Lançadas no Banco' },
                         { id: 'fin_pagas', label: '6. Despesas Pagas' },
-                        { id: 'fin_conciliacao', label: '7. Conciliação Bancária' },
                         { id: 'fin_recusadas', label: '8. Despesas Recusadas' },
                         { id: 'fin_relatorio', label: 'Relatório Mensal & Consulta' },
                         { id: 'fin_nova', label: '+ Cadastrar Nova Despesa' }

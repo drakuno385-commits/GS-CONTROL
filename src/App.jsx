@@ -5,7 +5,7 @@ import { supabase } from './supabaseClient';
 import { 
   LayoutDashboard, Users, Settings, Upload, UserCheck, UserX, Briefcase, 
   Activity, Truck, Fuel, Map, DollarSign, AlertTriangle, Scale, Loader2, Cloud, Filter, FileText, CheckCircle, Droplet, Shield, Menu,
-  Car, MapPin, Smartphone, LogOut, Download, Stethoscope, X, Calculator, ChevronDown, ChevronRight
+  Car, MapPin, Smartphone, LogOut, Download, Stethoscope, X, Calculator, ChevronDown, ChevronRight, Landmark, BarChart2, Layers
 } from 'lucide-react';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area, PieChart, Pie, Cell, ComposedChart, LabelList } from 'recharts';
 import Login from './components/Login';
@@ -125,6 +125,24 @@ const App = () => {
   useEffect(() => {
     localStorage.setItem('acoweb_dashboards_open', isDashboardsOpen);
   }, [isDashboardsOpen]);
+
+  const [isFinanceiroOpen, setIsFinanceiroOpen] = useState(() => {
+    const saved = localStorage.getItem('acoweb_financeiro_open');
+    return saved !== null ? saved === 'true' : true;
+  });
+
+  const [financeiroSubSecao, setFinanceiroSubSecao] = useState(() => {
+    const saved = localStorage.getItem('acoweb_financeiro_subsec');
+    return saved || 'fluxo';
+  });
+
+  useEffect(() => {
+    localStorage.setItem('acoweb_financeiro_open', isFinanceiroOpen);
+  }, [isFinanceiroOpen]);
+
+  useEffect(() => {
+    localStorage.setItem('acoweb_financeiro_subsec', financeiroSubSecao);
+  }, [financeiroSubSecao]);
 
   const [ApresentacaoStep, setApresentacaoStep] = useState(0);
   const [tvScreens, setTvScreens] = useState(() => {
@@ -1640,10 +1658,59 @@ const App = () => {
                 </a>
               )}
               {hasAccess(currentUser, 'financeiro') && (
-                <a className={`nav-item ${activeMenu === 'financeiro' ? 'active' : ''}`} onClick={() => setActiveMenu('financeiro')}>
-                  <DollarSign size={20} />
-                  <span>Financeiro</span>
-                </a>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <a 
+                    className={`nav-item ${activeMenu === 'financeiro' ? 'active' : ''}`} 
+                    onClick={() => {
+                      if (activeMenu !== 'financeiro') {
+                        setActiveMenu('financeiro');
+                      }
+                      setIsFinanceiroOpen(!isFinanceiroOpen);
+                    }}
+                    style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <DollarSign size={20} />
+                      <span>Módulo Financeiro</span>
+                    </div>
+                    {isFinanceiroOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                  </a>
+
+                  <AnimatePresence>
+                    {isFinanceiroOpen && (
+                      <motion.div 
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column', paddingLeft: '16px', gap: '2px', marginTop: '2px' }}
+                      >
+                        <a 
+                          className={`nav-item ${activeMenu === 'financeiro' && financeiroSubSecao === 'fluxo' ? 'active' : ''}`} 
+                          onClick={() => {
+                            setActiveMenu('financeiro');
+                            setFinanceiroSubSecao('fluxo');
+                          }}
+                          style={{ cursor: 'pointer', padding: '8px 12px' }}
+                        >
+                          <BarChart2 size={16} />
+                          <span style={{ fontSize: '13px' }}>📊 Fluxo de Despesas</span>
+                        </a>
+
+                        <a 
+                          className={`nav-item ${activeMenu === 'financeiro' && financeiroSubSecao === 'conciliacao_bancaria' ? 'active' : ''}`} 
+                          onClick={() => {
+                            setActiveMenu('financeiro');
+                            setFinanceiroSubSecao('conciliacao_bancaria');
+                          }}
+                          style={{ cursor: 'pointer', padding: '8px 12px' }}
+                        >
+                          <Landmark size={16} />
+                          <span style={{ fontSize: '13px' }}>🏦 Conciliação Bancária</span>
+                        </a>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
               )}
               {hasAccess(currentUser, 'monitoramento') && (
                 <a className={`nav-item ${activeMenu === 'monitoramento' ? 'active' : ''}`} onClick={() => setActiveMenu('monitoramento')}>
@@ -1821,7 +1888,11 @@ const App = () => {
         )}
         {activeMenu === 'financeiro' && (
           <ErrorBoundary>
-            <Financeiro currentUser={currentUser} />
+            <Financeiro 
+              currentUser={currentUser} 
+              subSecaoProp={financeiroSubSecao}
+              onSelectSubSecao={(sub) => setFinanceiroSubSecao(sub)}
+            />
           </ErrorBoundary>
         )}
                 </motion.div>

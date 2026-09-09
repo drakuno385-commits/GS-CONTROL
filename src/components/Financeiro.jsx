@@ -442,7 +442,7 @@ const DESPESAS_INICIAIS = [
   }
 ];
 
-export default function Financeiro({ currentUser }) {
+export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao }) {
   // Estado de Departamentos Customizados
   const [departamentos, setDepartamentos] = useState(() => {
     const saved = localStorage.getItem('acoweb_financeiro_deptos');
@@ -647,7 +647,20 @@ export default function Financeiro({ currentUser }) {
   const [pdfComprovanteInput, setPdfComprovanteInput] = useState(null);
 
   // Menu de Árvore Principal do Módulo Financeiro ('fluxo' | 'conciliacao_bancaria')
-  const [moduloSubSecao, setModuloSubSecao] = useState('fluxo');
+  const [moduloSubSecao, setModuloSubSecao] = useState(subSecaoProp || 'fluxo');
+
+  useEffect(() => {
+    if (subSecaoProp && subSecaoProp !== moduloSubSecao) {
+      setModuloSubSecao(subSecaoProp);
+    }
+  }, [subSecaoProp]);
+
+  const handleMudarSubSecao = (novaSecao) => {
+    setModuloSubSecao(novaSecao);
+    if (onSelectSubSecao) {
+      onSelectSubSecao(novaSecao);
+    }
+  };
 
   // Sub-abas da Tela Nova de Conciliação Bancária ('conciliar' | 'entradas' | 'bancos' | 'extrato')
   const [subTabConciliacao, setSubTabConciliacao] = useState('conciliar');
@@ -1686,7 +1699,7 @@ export default function Financeiro({ currentUser }) {
       <div style={{ background: '#0f172a', padding: '10px 14px', borderRadius: '14px', border: '1px solid #334155', marginBottom: '24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px', boxShadow: '0 4px 14px rgba(0,0,0,0.2)' }}>
         <div style={{ display: 'flex', gap: '10px' }}>
           <button
-            onClick={() => setModuloSubSecao('fluxo')}
+            onClick={() => handleMudarSubSecao('fluxo')}
             style={{
               padding: '10px 18px',
               borderRadius: '10px',
@@ -1708,7 +1721,7 @@ export default function Financeiro({ currentUser }) {
           </button>
 
           <button
-            onClick={() => setModuloSubSecao('conciliacao_bancaria')}
+            onClick={() => handleMudarSubSecao('conciliacao_bancaria')}
             style={{
               padding: '10px 18px',
               borderRadius: '10px',
