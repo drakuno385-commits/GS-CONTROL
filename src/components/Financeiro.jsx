@@ -4,7 +4,8 @@ import {
   DollarSign, PlusCircle, Clock, CheckCircle2, XCircle, FileText, 
   Building, Calendar, CreditCard, Shield, AlertTriangle, Filter, 
   Search, Download, Trash2, Eye, MessageSquare, Check, X, ArrowUpRight,
-  TrendingUp, TrendingDown, Layers, Percent, Tag, RefreshCw, Plus, Sparkles
+  TrendingUp, TrendingDown, Layers, Percent, Tag, RefreshCw, Plus, Sparkles,
+  Archive, Landmark, CheckCheck, RotateCcw, ArrowRight
 } from 'lucide-react';
 import { 
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, 
@@ -50,6 +51,49 @@ const PRIORIDADES = [
   { value: 'ALTA', label: 'Alta', color: '#f59e0b', bg: 'rgba(245, 158, 11, 0.15)' },
   { value: 'CRÍTICA', label: 'Crítica', color: '#ef4444', bg: 'rgba(239, 68, 68, 0.15)' }
 ];
+
+const CONFIG_STATUS_PAGAMENTO = {
+  PENDENTE_PAGAMENTO: {
+    label: 'Pendente de Pagamento',
+    badge: '⏳ Pendente de Pagamento',
+    color: '#fbbf24',
+    bg: 'rgba(245, 158, 11, 0.15)',
+    border: 'rgba(245, 158, 11, 0.4)',
+    proximo: 'PAGO',
+    acao: 'Marcar como Paga',
+    proximoBadge: '✓ Marcar Paga'
+  },
+  PAGO: {
+    label: 'Pago',
+    badge: '✓ PAGO',
+    color: '#34d399',
+    bg: 'rgba(16, 185, 129, 0.15)',
+    border: 'rgba(16, 185, 129, 0.4)',
+    proximo: 'PENDENTE_CONCILIACAO',
+    acao: 'Enviar p/ Conciliação',
+    proximoBadge: '🏦 Enviar p/ Conciliação'
+  },
+  PENDENTE_CONCILIACAO: {
+    label: 'Pendente de Conciliação',
+    badge: '🏦 Pendente de Conciliação',
+    color: '#60a5fa',
+    bg: 'rgba(59, 130, 246, 0.15)',
+    border: 'rgba(59, 130, 246, 0.4)',
+    proximo: 'ARQUIVADO',
+    acao: 'Conciliar & Arquivar',
+    proximoBadge: '📦 Conciliar & Arquivar'
+  },
+  ARQUIVADO: {
+    label: 'Arquivada',
+    badge: '📦 Arquivada',
+    color: '#94a3b8',
+    bg: 'rgba(148, 163, 184, 0.15)',
+    border: 'rgba(148, 163, 184, 0.4)',
+    proximo: 'PENDENTE_CONCILIACAO',
+    acao: 'Desarquivar',
+    proximoBadge: '🔄 Desarquivar'
+  }
+};
 
 const formatMoney = (val) => {
   return Number(val || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -100,6 +144,8 @@ const DESPESAS_INICIAIS = [
     status: 'AGUARDANDO_APROVACAO',
     statusPagamento: 'PENDENTE_PAGAMENTO',
     dataPagamento: null,
+    dataConciliacao: null,
+    dataArquivamento: null,
     obsAprovacao: '',
     dataCriacao: '2026-09-01'
   },
@@ -120,6 +166,8 @@ const DESPESAS_INICIAIS = [
     status: 'AGUARDANDO_APROVACAO',
     statusPagamento: 'PENDENTE_PAGAMENTO',
     dataPagamento: null,
+    dataConciliacao: null,
+    dataArquivamento: null,
     obsAprovacao: '',
     dataCriacao: '2026-09-02'
   },
@@ -140,6 +188,8 @@ const DESPESAS_INICIAIS = [
     status: 'APROVADA',
     statusPagamento: 'PENDENTE_PAGAMENTO',
     dataPagamento: null,
+    dataConciliacao: null,
+    dataArquivamento: null,
     obsAprovacao: 'Aprovado conforme orçamento validado pela diretoria.',
     dataCriacao: '2026-08-28'
   },
@@ -160,6 +210,8 @@ const DESPESAS_INICIAIS = [
     status: 'APROVADA',
     statusPagamento: 'PAGO',
     dataPagamento: '2026-09-05',
+    dataConciliacao: null,
+    dataArquivamento: null,
     obsAprovacao: 'Pagamento autorizado antecipadamente com desconto.',
     dataCriacao: '2026-08-25'
   },
@@ -180,8 +232,54 @@ const DESPESAS_INICIAIS = [
     status: 'RECUSADA',
     statusPagamento: 'PENDENTE_PAGAMENTO',
     dataPagamento: null,
+    dataConciliacao: null,
+    dataArquivamento: null,
     obsAprovacao: 'Reprovado por ultrapassar a cota mensal autorizada de suprimentos.',
     dataCriacao: '2026-09-03'
+  },
+  {
+    id: 'fin_1006',
+    empresa: 'AÇOFORTE',
+    departamento: 'Comercial',
+    nome: 'Serviço de Consultoria de Segurança Operacional',
+    valor: 12500.00,
+    parcelas: 1,
+    vencimento: '2026-08-30',
+    temOP: true,
+    numeroOP: 'OP-2026-6621',
+    banco: 'Itaú',
+    formaPagamento: 'Transferência / TED',
+    prioridade: 'MÉDIA',
+    observacao: 'Auditoria técnica e revisão de procedimentos operacionais dos postos.',
+    status: 'APROVADA',
+    statusPagamento: 'PENDENTE_CONCILIACAO',
+    dataPagamento: '2026-08-30',
+    dataConciliacao: '2026-09-01',
+    dataArquivamento: null,
+    obsAprovacao: 'Aprovado.',
+    dataCriacao: '2026-08-20'
+  },
+  {
+    id: 'fin_1007',
+    empresa: 'BELLS',
+    departamento: 'Jurídico',
+    nome: 'Taxas de Cartório e Selos Digitais - Registro de Contratos',
+    valor: 1850.00,
+    parcelas: 1,
+    vencimento: '2026-08-15',
+    temOP: false,
+    numeroOP: '',
+    banco: 'Bradesco',
+    formaPagamento: 'Pix',
+    prioridade: 'BAIXA',
+    observacao: 'Emolumentos de registro em cartório de notas.',
+    status: 'APROVADA',
+    statusPagamento: 'ARQUIVADO',
+    dataPagamento: '2026-08-15',
+    dataConciliacao: '2026-08-17',
+    dataArquivamento: '2026-08-18',
+    obsAprovacao: 'Aprovado.',
+    dataCriacao: '2026-08-10'
   }
 ];
 
@@ -213,13 +311,21 @@ export default function Financeiro({ currentUser }) {
     localStorage.setItem('acoweb_financeiro_bancos', JSON.stringify(bancos));
   }, [bancos]);
 
-  // Estado Principal de Despesas
+  // Estado Principal de Despesas (versão 2 para conciliação e arquivo)
   const [despesas, setDespesas] = useState(() => {
-    const saved = localStorage.getItem('acoweb_financeiro_despesas_v1');
+    const saved = localStorage.getItem('acoweb_financeiro_despesas_v2');
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      } catch(e){}
+    }
+    // Tentar fallback da v1 se existir
+    const savedV1 = localStorage.getItem('acoweb_financeiro_despesas_v1');
+    if (savedV1) {
+      try {
+        const parsedV1 = JSON.parse(savedV1);
+        if (Array.isArray(parsedV1) && parsedV1.length > 0) return parsedV1;
       } catch(e){}
     }
     return DESPESAS_INICIAIS;
@@ -228,7 +334,7 @@ export default function Financeiro({ currentUser }) {
   // Salvar despesas no localStorage
   useEffect(() => {
     try {
-      localStorage.setItem('acoweb_financeiro_despesas_v1', JSON.stringify(despesas));
+      localStorage.setItem('acoweb_financeiro_despesas_v2', JSON.stringify(despesas));
     } catch(e) {
       console.error('Erro ao salvar despesas no localStorage:', e);
     }
@@ -375,19 +481,30 @@ export default function Financeiro({ currentUser }) {
     setObsAprovacaoInput('');
   };
 
-  // Alternar status de pagamento (Pendente de Pagamento ↔ PAGA)
-  const handleTogglePagamento = (id) => {
+  // Alterar status de pagamento/conciliação/arquivamento
+  const handleMudarStatusPagamento = (id, novoStatus) => {
     setDespesas(prev => prev.map(d => {
       if (d.id === id) {
-        const isPago = d.statusPagamento === 'PAGO';
+        const hoje = new Date().toISOString().slice(0, 10);
         return {
           ...d,
-          statusPagamento: isPago ? 'PENDENTE_PAGAMENTO' : 'PAGO',
-          dataPagamento: isPago ? null : new Date().toISOString().slice(0, 10)
+          statusPagamento: novoStatus,
+          dataPagamento: novoStatus === 'PAGO' ? (d.dataPagamento || hoje) : d.dataPagamento,
+          dataConciliacao: novoStatus === 'PENDENTE_CONCILIACAO' ? (d.dataConciliacao || hoje) : d.dataConciliacao,
+          dataArquivamento: novoStatus === 'ARQUIVADO' ? (d.dataArquivamento || hoje) : d.dataArquivamento
         };
       }
       return d;
     }));
+  };
+
+  // Avançar status para a próxima fase do fluxo
+  const handleAvancarStatusPagamento = (id) => {
+    const item = despesas.find(d => d.id === id);
+    if (!item) return;
+    const stAtual = item.statusPagamento || 'PENDENTE_PAGAMENTO';
+    const configAtual = CONFIG_STATUS_PAGAMENTO[stAtual] || CONFIG_STATUS_PAGAMENTO.PENDENTE_PAGAMENTO;
+    handleMudarStatusPagamento(id, configAtual.proximo);
   };
 
   // Excluir Lançamento
@@ -407,11 +524,15 @@ export default function Financeiro({ currentUser }) {
     const valorAprovadas = aprovadas.reduce((a, b) => a + b.valor, 0);
     const valorRecusadas = recusadas.reduce((a, b) => a + b.valor, 0);
 
+    const pendentesPagamento = aprovadas.filter(d => (d.statusPagamento || 'PENDENTE_PAGAMENTO') === 'PENDENTE_PAGAMENTO');
     const pagas = aprovadas.filter(d => d.statusPagamento === 'PAGO');
-    const pendentesPagamento = aprovadas.filter(d => d.statusPagamento === 'PENDENTE_PAGAMENTO');
+    const conciliacao = aprovadas.filter(d => d.statusPagamento === 'PENDENTE_CONCILIACAO');
+    const arquivadas = aprovadas.filter(d => d.statusPagamento === 'ARQUIVADO');
 
-    const valorPagas = pagas.reduce((a, b) => a + b.valor, 0);
     const valorPendentesPagamento = pendentesPagamento.reduce((a, b) => a + b.valor, 0);
+    const valorPagas = pagas.reduce((a, b) => a + b.valor, 0);
+    const valorConciliacao = conciliacao.reduce((a, b) => a + b.valor, 0);
+    const valorArquivadas = arquivadas.reduce((a, b) => a + b.valor, 0);
 
     return {
       totalGeral: despesas.length,
@@ -421,10 +542,14 @@ export default function Financeiro({ currentUser }) {
       valorAprovadas,
       countRecusadas: recusadas.length,
       valorRecusadas,
+      countPendentesPagamento: pendentesPagamento.length,
+      valorPendentesPagamento,
       countPagas: pagas.length,
       valorPagas,
-      countPendentesPagamento: pendentesPagamento.length,
-      valorPendentesPagamento
+      countConciliacao: conciliacao.length,
+      valorConciliacao,
+      countArquivadas: arquivadas.length,
+      valorArquivadas
     };
   }, [despesas]);
 
@@ -432,10 +557,24 @@ export default function Financeiro({ currentUser }) {
   const listaExibicao = useMemo(() => {
     return despesas.filter(d => {
       if (activeTab === 'pendentes' && d.status !== 'AGUARDANDO_APROVACAO') return false;
-      if (activeTab === 'aprovadas' && d.status !== 'APROVADA') return false;
+      
+      if (activeTab === 'aprovadas') {
+        if (d.status !== 'APROVADA') return false;
+        // Na aba de aprovadas, mostrar apenas PENDENTE_PAGAMENTO e PAGO (a não ser que filtroStatusPagamento force)
+        if (filtroStatusPagamento === 'TODOS' && (d.statusPagamento === 'PENDENTE_CONCILIACAO' || d.statusPagamento === 'ARQUIVADO')) return false;
+      }
+      
+      if (activeTab === 'conciliacao') {
+        if (d.status !== 'APROVADA' || d.statusPagamento !== 'PENDENTE_CONCILIACAO') return false;
+      }
+
+      if (activeTab === 'arquivadas') {
+        if (d.status !== 'APROVADA' || d.statusPagamento !== 'ARQUIVADO') return false;
+      }
+
       if (activeTab === 'recusadas' && d.status !== 'RECUSADA') return false;
 
-      if (activeTab === 'aprovadas' && filtroStatusPagamento !== 'TODOS') {
+      if ((activeTab === 'aprovadas' || activeTab === 'conciliacao' || activeTab === 'arquivadas') && filtroStatusPagamento !== 'TODOS') {
         if (d.statusPagamento !== filtroStatusPagamento) return false;
       }
 
@@ -470,7 +609,7 @@ export default function Financeiro({ currentUser }) {
         mapMeses[mesChave] = { mes: mesChave, pago: 0, pendente: 0, total: 0 };
       }
 
-      if (d.statusPagamento === 'PAGO') {
+      if (d.statusPagamento === 'PAGO' || d.statusPagamento === 'PENDENTE_CONCILIACAO' || d.statusPagamento === 'ARQUIVADO') {
         mapMeses[mesChave].pago += d.valor;
       } else {
         mapMeses[mesChave].pendente += d.valor;
@@ -489,7 +628,7 @@ export default function Financeiro({ currentUser }) {
       const emp = d.empresa || 'OUTROS';
       if (!mapEmpresa[emp]) mapEmpresa[emp] = { empresa: emp, pago: 0, pendente: 0, total: 0 };
 
-      if (d.statusPagamento === 'PAGO') mapEmpresa[emp].pago += d.valor;
+      if (d.statusPagamento === 'PAGO' || d.statusPagamento === 'PENDENTE_CONCILIACAO' || d.statusPagamento === 'ARQUIVADO') mapEmpresa[emp].pago += d.valor;
       else mapEmpresa[emp].pendente += d.valor;
       mapEmpresa[emp].total += d.valor;
     });
@@ -503,7 +642,7 @@ export default function Financeiro({ currentUser }) {
       const dep = d.departamento || 'OUTROS';
       if (!mapDepto[dep]) mapDepto[dep] = { departamento: dep, pago: 0, pendente: 0, total: 0 };
 
-      if (d.statusPagamento === 'PAGO') mapDepto[dep].pago += d.valor;
+      if (d.statusPagamento === 'PAGO' || d.statusPagamento === 'PENDENTE_CONCILIACAO' || d.statusPagamento === 'ARQUIVADO') mapDepto[dep].pago += d.valor;
       else mapDepto[dep].pendente += d.valor;
       mapDepto[dep].total += d.valor;
     });
@@ -522,10 +661,16 @@ export default function Financeiro({ currentUser }) {
 
     if (filtroTipo === 'PAGAS') {
       dadosFiltrados = despesas.filter(d => d.status === 'APROVADA' && d.statusPagamento === 'PAGO');
-      nomeArquivo = 'despesas_pagas_quitadas';
+      nomeArquivo = 'despesas_pagas';
     } else if (filtroTipo === 'PENDENTES_PAGAMENTO') {
-      dadosFiltrados = despesas.filter(d => d.status === 'APROVADA' && d.statusPagamento === 'PENDENTE_PAGAMENTO');
+      dadosFiltrados = despesas.filter(d => d.status === 'APROVADA' && (d.statusPagamento || 'PENDENTE_PAGAMENTO') === 'PENDENTE_PAGAMENTO');
       nomeArquivo = 'despesas_pendentes_pagamento';
+    } else if (filtroTipo === 'PENDENTES_CONCILIACAO') {
+      dadosFiltrados = despesas.filter(d => d.status === 'APROVADA' && d.statusPagamento === 'PENDENTE_CONCILIACAO');
+      nomeArquivo = 'despesas_pendentes_conciliacao';
+    } else if (filtroTipo === 'ARQUIVADAS') {
+      dadosFiltrados = despesas.filter(d => d.status === 'APROVADA' && d.statusPagamento === 'ARQUIVADO');
+      nomeArquivo = 'despesas_arquivadas';
     } else if (filtroTipo === 'AGUARDANDO_APROVACAO') {
       dadosFiltrados = despesas.filter(d => d.status === 'AGUARDANDO_APROVACAO');
       nomeArquivo = 'despesas_aguardando_aprovacao';
@@ -534,7 +679,7 @@ export default function Financeiro({ currentUser }) {
       nomeArquivo = 'despesas_recusadas';
     }
 
-    const headers = ['ID', 'Empresa', 'Departamento', 'Descrição Despesa', 'Valor (R$)', 'Parcelas', 'Vencimento', 'Último Vencimento Est.', 'Tem OP', 'Num OP', 'Banco', 'Forma Pagamento', 'Prioridade', 'Status Aprovação', 'Status Pagamento', 'Data Pagamento', 'Obs Cadastro', 'Obs Análise'];
+    const headers = ['ID', 'Empresa', 'Departamento', 'Descrição Despesa', 'Valor (R$)', 'Parcelas', 'Vencimento', 'Último Vencimento Est.', 'Tem OP', 'Num OP', 'Banco', 'Forma Pagamento', 'Prioridade', 'Status Aprovação', 'Status Fluxo Pagamento', 'Data Pagamento', 'Data Conciliação', 'Data Arquivamento', 'Obs Cadastro', 'Obs Análise'];
     
     const rows = dadosFiltrados.map(item => [
       item.id,
@@ -551,8 +696,10 @@ export default function Financeiro({ currentUser }) {
       `"${item.formaPagamento || ''}"`,
       item.prioridade,
       item.status,
-      item.statusPagamento,
+      CONFIG_STATUS_PAGAMENTO[item.statusPagamento || 'PENDENTE_PAGAMENTO']?.label || item.statusPagamento,
       item.dataPagamento || '-',
+      item.dataConciliacao || '-',
+      item.dataArquivamento || '-',
       `"${item.observacao || ''}"`,
       `"${item.obsAprovacao || ''}"`
     ]);
@@ -613,15 +760,15 @@ export default function Financeiro({ currentUser }) {
       </div>
 
       {/* CARDS RESUMO / KPIS FINANCEIROS */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginBottom: '24px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '24px' }}>
         
         {/* Total Pendente Aprovação */}
-        <div style={{ background: 'rgba(30, 41, 59, 0.5)', padding: '18px', borderRadius: '14px', border: '1px solid rgba(245, 158, 11, 0.2)' }}>
+        <div style={{ background: 'rgba(30, 41, 59, 0.5)', padding: '16px', borderRadius: '14px', border: '1px solid rgba(245, 158, 11, 0.2)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
             <span style={{ fontSize: '12px', color: '#94a3b8', fontWeight: 600 }}>Aguardando Aprovação</span>
             <Clock size={18} color="#f59e0b" />
           </div>
-          <div style={{ fontSize: '20px', fontWeight: 800, color: '#fbbf24' }}>
+          <div style={{ fontSize: '18px', fontWeight: 800, color: '#fbbf24' }}>
             {formatMoney(estatisticas.valorPendentes)}
           </div>
           <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '4px' }}>
@@ -630,44 +777,72 @@ export default function Financeiro({ currentUser }) {
         </div>
 
         {/* Total Aprovadas Pendentes de Pagamento */}
-        <div style={{ background: 'rgba(30, 41, 59, 0.5)', padding: '18px', borderRadius: '14px', border: '1px solid rgba(59, 130, 246, 0.2)' }}>
+        <div style={{ background: 'rgba(30, 41, 59, 0.5)', padding: '16px', borderRadius: '14px', border: '1px solid rgba(245, 158, 11, 0.2)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-            <span style={{ fontSize: '12px', color: '#94a3b8', fontWeight: 600 }}>Aprovadas (Pendente Pagamento)</span>
-            <CreditCard size={18} color="#60a5fa" />
+            <span style={{ fontSize: '12px', color: '#94a3b8', fontWeight: 600 }}>Aprovadas (A Pagar)</span>
+            <CreditCard size={18} color="#fbbf24" />
           </div>
-          <div style={{ fontSize: '20px', fontWeight: 800, color: '#60a5fa' }}>
+          <div style={{ fontSize: '18px', fontWeight: 800, color: '#fbbf24' }}>
             {formatMoney(estatisticas.valorPendentesPagamento)}
           </div>
           <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '4px' }}>
-            {estatisticas.countPendentesPagamento} contas a pagar
+            {estatisticas.countPendentesPagamento} contas pendentes
           </div>
         </div>
 
         {/* Total Pago */}
-        <div style={{ background: 'rgba(30, 41, 59, 0.5)', padding: '18px', borderRadius: '14px', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+        <div style={{ background: 'rgba(30, 41, 59, 0.5)', padding: '16px', borderRadius: '14px', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-            <span style={{ fontSize: '12px', color: '#94a3b8', fontWeight: 600 }}>Total Pago (Quitadas)</span>
+            <span style={{ fontSize: '12px', color: '#94a3b8', fontWeight: 600 }}>Pagas (Liquidadas)</span>
             <CheckCircle2 size={18} color="#34d399" />
           </div>
-          <div style={{ fontSize: '20px', fontWeight: 800, color: '#34d399' }}>
+          <div style={{ fontSize: '18px', fontWeight: 800, color: '#34d399' }}>
             {formatMoney(estatisticas.valorPagas)}
           </div>
           <div style={{ fontSize: '11px', color: '#34d399', marginTop: '4px', fontWeight: 600 }}>
-            {estatisticas.countPagas} despesas liquidadas
+            {estatisticas.countPagas} despesas pagas
+          </div>
+        </div>
+
+        {/* Total Pendente de Conciliação */}
+        <div style={{ background: 'rgba(30, 41, 59, 0.5)', padding: '16px', borderRadius: '14px', border: '1px solid rgba(59, 130, 246, 0.2)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+            <span style={{ fontSize: '12px', color: '#94a3b8', fontWeight: 600 }}>Pendente Conciliação</span>
+            <Landmark size={18} color="#60a5fa" />
+          </div>
+          <div style={{ fontSize: '18px', fontWeight: 800, color: '#60a5fa' }}>
+            {formatMoney(estatisticas.valorConciliacao)}
+          </div>
+          <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '4px' }}>
+            {estatisticas.countConciliacao} para conciliar
+          </div>
+        </div>
+
+        {/* Total Arquivadas */}
+        <div style={{ background: 'rgba(30, 41, 59, 0.5)', padding: '16px', borderRadius: '14px', border: '1px solid rgba(148, 163, 184, 0.2)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+            <span style={{ fontSize: '12px', color: '#94a3b8', fontWeight: 600 }}>Arquivadas (Histórico)</span>
+            <Archive size={18} color="#94a3b8" />
+          </div>
+          <div style={{ fontSize: '18px', fontWeight: 800, color: '#94a3b8' }}>
+            {formatMoney(estatisticas.valorArquivadas)}
+          </div>
+          <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '4px' }}>
+            {estatisticas.countArquivadas} conciliadas e salvas
           </div>
         </div>
 
         {/* Total Recusadas */}
-        <div style={{ background: 'rgba(30, 41, 59, 0.5)', padding: '18px', borderRadius: '14px', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
+        <div style={{ background: 'rgba(30, 41, 59, 0.5)', padding: '16px', borderRadius: '14px', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-            <span style={{ fontSize: '12px', color: '#94a3b8', fontWeight: 600 }}>Recusadas / Reprovadas</span>
+            <span style={{ fontSize: '12px', color: '#94a3b8', fontWeight: 600 }}>Recusadas</span>
             <XCircle size={18} color="#f87171" />
           </div>
-          <div style={{ fontSize: '20px', fontWeight: 800, color: '#f87171' }}>
+          <div style={{ fontSize: '18px', fontWeight: 800, color: '#f87171' }}>
             {formatMoney(estatisticas.valorRecusadas)}
           </div>
           <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '4px' }}>
-            {estatisticas.countRecusadas} lançamentos recados
+            {estatisticas.countRecusadas} reprovadas
           </div>
         </div>
 
@@ -719,6 +894,48 @@ export default function Financeiro({ currentUser }) {
         </button>
 
         <button
+          onClick={() => setActiveTab('conciliacao')}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '10px 16px',
+            borderRadius: '8px 8px 0 0',
+            border: 'none',
+            background: activeTab === 'conciliacao' ? 'rgba(59, 130, 246, 0.15)' : 'transparent',
+            color: activeTab === 'conciliacao' ? '#60a5fa' : '#94a3b8',
+            fontWeight: 700,
+            fontSize: '13px',
+            cursor: 'pointer',
+            borderBottom: activeTab === 'conciliacao' ? '2px solid #60a5fa' : 'none'
+          }}
+        >
+          <Landmark size={16} />
+          <span>Pendente de Conciliação ({estatisticas.countConciliacao})</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('arquivadas')}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '10px 16px',
+            borderRadius: '8px 8px 0 0',
+            border: 'none',
+            background: activeTab === 'arquivadas' ? 'rgba(148, 163, 184, 0.15)' : 'transparent',
+            color: activeTab === 'arquivadas' ? '#94a3b8' : '#64748b',
+            fontWeight: 700,
+            fontSize: '13px',
+            cursor: 'pointer',
+            borderBottom: activeTab === 'arquivadas' ? '2px solid #94a3b8' : 'none'
+          }}
+        >
+          <Archive size={16} />
+          <span>Arquivadas ({estatisticas.countArquivadas})</span>
+        </button>
+
+        <button
           onClick={() => setActiveTab('recusadas')}
           style={{
             display: 'flex',
@@ -748,16 +965,16 @@ export default function Financeiro({ currentUser }) {
             padding: '10px 16px',
             borderRadius: '8px 8px 0 0',
             border: 'none',
-            background: activeTab === 'relatorio' ? 'rgba(59, 130, 246, 0.15)' : 'transparent',
-            color: activeTab === 'relatorio' ? '#60a5fa' : '#94a3b8',
+            background: activeTab === 'relatorio' ? 'rgba(139, 92, 246, 0.15)' : 'transparent',
+            color: activeTab === 'relatorio' ? '#c084fc' : '#94a3b8',
             fontWeight: 700,
             fontSize: '13px',
             cursor: 'pointer',
-            borderBottom: activeTab === 'relatorio' ? '2px solid #60a5fa' : 'none'
+            borderBottom: activeTab === 'relatorio' ? '2px solid #c084fc' : 'none'
           }}
         >
           <FileText size={16} />
-          <span>Relatório Mensal (Pago vs Pendente)</span>
+          <span>Relatório Mensal</span>
         </button>
 
         <button
@@ -1018,8 +1235,8 @@ export default function Financeiro({ currentUser }) {
         </div>
       )}
 
-      {/* ABAS 2, 3 E 4: TABELA DE DESPESAS (PENDENTES / APROVADAS / RECUSADAS) */}
-      {(activeTab === 'pendentes' || activeTab === 'aprovadas' || activeTab === 'recusadas') && (
+      {/* ABAS: TABELA DE DESPESAS (PENDENTES / APROVADAS / CONCILIAÇÃO / ARQUIVADAS / RECUSADAS) */}
+      {(activeTab === 'pendentes' || activeTab === 'aprovadas' || activeTab === 'conciliacao' || activeTab === 'arquivadas' || activeTab === 'recusadas') && (
         <div style={{ background: 'rgba(30, 41, 59, 0.5)', padding: '24px', borderRadius: '16px', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
           
           {/* BARRA DE FILTROS E EXPORTAÇÃO */}
@@ -1027,7 +1244,9 @@ export default function Financeiro({ currentUser }) {
             <div>
               <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#f8fafc', margin: 0 }}>
                 {activeTab === 'pendentes' && 'Despesas Aguardando Aprovação'}
-                {activeTab === 'aprovadas' && 'Despesas Aprovadas & Contas a Pagar'}
+                {activeTab === 'aprovadas' && 'Despesas Aprovadas (Contas a Pagar & Pagas)'}
+                {activeTab === 'conciliacao' && 'Despesas Pendentes de Conciliação Bancária'}
+                {activeTab === 'arquivadas' && 'Histórico de Despesas Arquivadas & Conciliadas'}
                 {activeTab === 'recusadas' && 'Despesas Recusadas / Reprovadas'}
                 {` (${listaExibicao.length})`}
               </h3>
@@ -1080,25 +1299,32 @@ export default function Financeiro({ currentUser }) {
                 {FORMAS_PAGAMENTO.map(fp => <option key={fp} value={fp}>{fp}</option>)}
               </select>
 
-              {/* Filtro Status Pagamento (Apenas na aba Aprovadas) */}
-              {activeTab === 'aprovadas' && (
+              {/* Filtro Status Pagamento */}
+              {(activeTab === 'aprovadas' || activeTab === 'conciliacao' || activeTab === 'arquivadas') && (
                 <select
                   value={filtroStatusPagamento}
                   onChange={(e) => setFiltroStatusPagamento(e.target.value)}
                   style={{ padding: '8px 12px', background: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(59, 130, 246, 0.3)', borderRadius: '8px', color: '#60a5fa', fontSize: '12px', fontWeight: 600 }}
                 >
-                  <option value="TODOS">Todos os Pagamentos</option>
+                  <option value="TODOS">Todos os Status do Fluxo</option>
                   <option value="PENDENTE_PAGAMENTO">Pendente de Pagamento</option>
                   <option value="PAGO">Pago / Quitado</option>
+                  <option value="PENDENTE_CONCILIACAO">Pendente de Conciliação</option>
+                  <option value="ARQUIVADO">Arquivada</option>
                 </select>
               )}
 
               {/* Exportar CSV da Lista Atual */}
               <button
-                onClick={() => exportarCSVGenerico(activeTab === 'pendentes' ? 'AGUARDANDO_APROVACAO' : (activeTab === 'aprovadas' ? 'PAGAS' : 'RECUSADAS'))}
+                onClick={() => exportarCSVGenerico(
+                  activeTab === 'pendentes' ? 'AGUARDANDO_APROVACAO' : 
+                  (activeTab === 'aprovadas' ? 'PAGAS' : 
+                  (activeTab === 'conciliacao' ? 'PENDENTES_CONCILIACAO' : 
+                  (activeTab === 'arquivadas' ? 'ARQUIVADAS' : 'RECUSADAS')))
+                )}
                 style={{ padding: '8px 12px', background: 'rgba(51, 65, 85, 0.6)', color: '#cbd5e1', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', fontSize: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
               >
-                <Download size={14} /> CSV
+                <Download size={14} /> Exportar CSV
               </button>
 
             </div>
@@ -1124,8 +1350,8 @@ export default function Financeiro({ currentUser }) {
                     <th style={{ padding: '12px 14px' }}>1ª Parcela</th>
                     <th style={{ padding: '12px 14px' }}>Última Parcela</th>
                     
-                    {activeTab === 'aprovadas' && (
-                      <th style={{ padding: '12px 14px', textAlign: 'center' }}>Status Pagamento</th>
+                    {activeTab !== 'pendentes' && activeTab !== 'recusadas' && (
+                      <th style={{ padding: '12px 14px', textAlign: 'center' }}>Status & Fluxo de Conciliação</th>
                     )}
 
                     <th style={{ padding: '12px 14px', textAlign: 'center' }}>Ações / Análise</th>
@@ -1134,6 +1360,8 @@ export default function Financeiro({ currentUser }) {
                 <tbody>
                   {listaExibicao.map((item, idx) => {
                     const prioObj = PRIORIDADES.find(p => p.value === item.prioridade) || PRIORIDADES[1];
+                    const stPag = item.statusPagamento || 'PENDENTE_PAGAMENTO';
+                    const configSt = CONFIG_STATUS_PAGAMENTO[stPag] || CONFIG_STATUS_PAGAMENTO.PENDENTE_PAGAMENTO;
 
                     return (
                       <tr 
@@ -1215,31 +1443,68 @@ export default function Financeiro({ currentUser }) {
                           {item.parcelas > 1 ? calcularUltimoVencimento(item.vencimento, item.parcelas) : '-'}
                         </td>
 
-                        {/* Status Pagamento (Só na aba Aprovadas) */}
-                        {activeTab === 'aprovadas' && (
-                          <td style={{ padding: '12px 14px', textAlign: 'center' }}>
-                            <button
-                              onClick={() => handleTogglePagamento(item.id)}
-                              style={{
-                                padding: '6px 12px',
-                                borderRadius: '20px',
+                        {/* Coluna Status & Fluxo de Conciliação */}
+                        {activeTab !== 'pendentes' && activeTab !== 'recusadas' && (
+                          <td style={{ padding: '12px 14px', textAlign: 'center', minWidth: '180px' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+                              
+                              {/* Badge de Status Atual */}
+                              <span style={{
+                                padding: '4px 10px',
+                                borderRadius: '16px',
                                 fontSize: '11px',
                                 fontWeight: 700,
-                                cursor: 'pointer',
-                                transition: 'all 0.2s',
-                                background: item.statusPagamento === 'PAGO' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(245, 158, 11, 0.2)',
-                                color: item.statusPagamento === 'PAGO' ? '#34d399' : '#fbbf24',
-                                border: item.statusPagamento === 'PAGO' ? '1px solid rgba(16, 185, 129, 0.4)' : '1px solid rgba(245, 158, 11, 0.4)'
-                              }}
-                              title="Clique para alternar o status de pagamento"
-                            >
-                              {item.statusPagamento === 'PAGO' ? '✓ PAGO' : '⏳ Pendente de Pagamento'}
-                            </button>
-                            {item.dataPagamento && (
-                              <div style={{ fontSize: '10px', color: '#64748b', marginTop: '2px' }}>
-                                Pago em: {formatDate(item.dataPagamento)}
-                              </div>
-                            )}
+                                background: configSt.bg,
+                                color: configSt.color,
+                                border: `1px solid ${configSt.border}`,
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '4px'
+                              }}>
+                                {configSt.badge}
+                              </span>
+
+                              {/* Botão de Avançar Fluxo */}
+                              <button
+                                onClick={() => handleAvancarStatusPagamento(item.id)}
+                                style={{
+                                  padding: '4px 10px',
+                                  borderRadius: '6px',
+                                  fontSize: '10px',
+                                  fontWeight: 700,
+                                  background: 'rgba(255, 255, 255, 0.05)',
+                                  color: '#cbd5e1',
+                                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                                  cursor: 'pointer',
+                                  marginTop: '2px',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '4px'
+                                }}
+                                title={`Clique para avançar para ${configSt.proximoBadge}`}
+                              >
+                                <span>{configSt.proximoBadge}</span>
+                                <ArrowRight size={10} />
+                              </button>
+
+                              {/* Datas do Fluxo */}
+                              {item.dataPagamento && (
+                                <span style={{ fontSize: '10px', color: '#64748b' }}>
+                                  Pago: {formatDate(item.dataPagamento)}
+                                </span>
+                              )}
+                              {item.dataConciliacao && (
+                                <span style={{ fontSize: '10px', color: '#60a5fa' }}>
+                                  Conciliado: {formatDate(item.dataConciliacao)}
+                                </span>
+                              )}
+                              {item.dataArquivamento && (
+                                <span style={{ fontSize: '10px', color: '#94a3b8' }}>
+                                  Arquivado: {formatDate(item.dataArquivamento)}
+                                </span>
+                              )}
+
+                            </div>
                           </td>
                         )}
 
@@ -1263,13 +1528,28 @@ export default function Financeiro({ currentUser }) {
                           )}
 
                           {activeTab !== 'pendentes' && (
-                            <button
-                              onClick={() => handleExcluirDespesa(item.id)}
-                              style={{ background: 'transparent', border: 'none', color: '#64748b', cursor: 'pointer', padding: '4px' }}
-                              title="Excluir despesa"
-                            >
-                              <Trash2 size={14} color="#f87171" />
-                            </button>
+                            <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', alignItems: 'center' }}>
+                              {/* Seletor Manual de Status se o usuário quiser forçar qualquer estado */}
+                              <select
+                                value={stPag}
+                                onChange={(e) => handleMudarStatusPagamento(item.id, e.target.value)}
+                                style={{ padding: '3px 6px', background: '#0f172a', border: '1px solid #334155', borderRadius: '6px', color: '#94a3b8', fontSize: '10px' }}
+                                title="Alterar status manualmente"
+                              >
+                                <option value="PENDENTE_PAGAMENTO">Pendente Pagamento</option>
+                                <option value="PAGO">Pago</option>
+                                <option value="PENDENTE_CONCILIACAO">Pendente Conciliação</option>
+                                <option value="ARQUIVADO">Arquivado</option>
+                              </select>
+
+                              <button
+                                onClick={() => handleExcluirDespesa(item.id)}
+                                style={{ background: 'transparent', border: 'none', color: '#64748b', cursor: 'pointer', padding: '4px' }}
+                                title="Excluir despesa"
+                              >
+                                <Trash2 size={14} color="#f87171" />
+                              </button>
+                            </div>
                           )}
                         </td>
 
@@ -1284,7 +1564,7 @@ export default function Financeiro({ currentUser }) {
         </div>
       )}
 
-      {/* ABA 5: RELATÓRIO MENSAL E OPÇÕES DE EXPORTAÇÃO CSV DEDICADAS */}
+      {/* ABA: RELATÓRIO MENSAL E OPÇÕES DE EXPORTAÇÃO CSV DEDICADAS */}
       {activeTab === 'relatorio' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
           
@@ -1296,23 +1576,37 @@ export default function Financeiro({ currentUser }) {
                 Exportação de Relatórios de Pagamentos em CSV
               </h3>
               <span style={{ fontSize: '12px', color: '#94a3b8' }}>
-                Baixe planilhas separadas de despesas pagas e contas pendentes
+                Baixe planilhas segmentadas por status de pagamento, conciliação e arquivo
               </span>
             </div>
 
-            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
               <button
                 onClick={() => exportarCSVGenerico('PAGAS')}
-                style={{ padding: '10px 16px', background: 'rgba(16, 185, 129, 0.2)', color: '#34d399', border: '1px solid rgba(16, 185, 129, 0.4)', borderRadius: '10px', fontSize: '13px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
+                style={{ padding: '8px 14px', background: 'rgba(16, 185, 129, 0.2)', color: '#34d399', border: '1px solid rgba(16, 185, 129, 0.4)', borderRadius: '8px', fontSize: '12px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
               >
-                <CheckCircle2 size={16} /> Exportar Apenas PAGAS (CSV)
+                <CheckCircle2 size={14} /> Exportar PAGAS
               </button>
 
               <button
                 onClick={() => exportarCSVGenerico('PENDENTES_PAGAMENTO')}
-                style={{ padding: '10px 16px', background: 'rgba(245, 158, 11, 0.2)', color: '#fbbf24', border: '1px solid rgba(245, 158, 11, 0.4)', borderRadius: '10px', fontSize: '13px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
+                style={{ padding: '8px 14px', background: 'rgba(245, 158, 11, 0.2)', color: '#fbbf24', border: '1px solid rgba(245, 158, 11, 0.4)', borderRadius: '8px', fontSize: '12px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
               >
-                <Clock size={16} /> Exportar Apenas PENDENTES (CSV)
+                <Clock size={14} /> Exportar A PAGAR
+              </button>
+
+              <button
+                onClick={() => exportarCSVGenerico('PENDENTES_CONCILIACAO')}
+                style={{ padding: '8px 14px', background: 'rgba(59, 130, 246, 0.2)', color: '#60a5fa', border: '1px solid rgba(59, 130, 246, 0.4)', borderRadius: '8px', fontSize: '12px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
+              >
+                <Landmark size={14} /> Exportar P/ CONCILIAR
+              </button>
+
+              <button
+                onClick={() => exportarCSVGenerico('ARQUIVADAS')}
+                style={{ padding: '8px 14px', background: 'rgba(148, 163, 184, 0.2)', color: '#94a3b8', border: '1px solid rgba(148, 163, 184, 0.4)', borderRadius: '8px', fontSize: '12px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
+              >
+                <Archive size={14} /> Exportar ARQUIVADAS
               </button>
             </div>
           </div>
