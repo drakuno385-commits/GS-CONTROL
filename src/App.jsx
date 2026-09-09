@@ -1705,7 +1705,7 @@ const App = () => {
                           style={{ cursor: 'pointer', padding: '8px 12px' }}
                         >
                           <Landmark size={16} />
-                          <span style={{ fontSize: '13px' }}>🏦 Conciliação Bancária</span>
+                          <span style={{ fontSize: '13px' }}>🏦 Bancos, Saldos & Aportes</span>
                         </a>
                       </motion.div>
                     )}

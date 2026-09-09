@@ -1739,7 +1739,7 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
             }}
           >
             <Landmark size={16} />
-            <span>🏦 2. Conciliação Bancária & Saldos</span>
+            <span>🏦 2. Gestão de Bancos, Saldos & Entradas de Recursos</span>
           </button>
         </div>
 
@@ -2066,7 +2066,7 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
             }}
           >
             <Landmark size={15} />
-            <span>7. Conciliação ({estatisticas.countConciliacao})</span>
+            <span>7. Conciliação & Abate de Saldo ({estatisticas.countConciliacao})</span>
           </button>
         )}
 
