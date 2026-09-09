@@ -133,13 +133,13 @@ export default function Login({ onLoginSuccess }) {
           </style>
           
           <div style={{ 
-            width: '120px', 
-            height: '120px', 
+            width: '140px', 
+            height: '140px', 
             margin: '0 auto 20px', 
-            borderRadius: '50%',
+            borderRadius: '16px',
             padding: '4px',
             background: 'linear-gradient(135deg, #60a5fa, #a78bfa)',
-            animation: 'slowSpin 20s linear infinite, pulseGlow 4s ease-in-out infinite'
+            animation: 'pulseGlow 4s ease-in-out infinite'
           }}>
             <img 
               src="/logo.jpg" 
@@ -147,10 +147,10 @@ export default function Login({ onLoginSuccess }) {
               style={{ 
                 width: '100%', 
                 height: '100%', 
-                objectFit: 'cover', 
-                borderRadius: '50%',
+                objectFit: 'contain', 
+                borderRadius: '12px',
                 border: '4px solid #0f172a',
-                animation: 'slowSpin 20s linear infinite reverse' /* Keeps image upright while border spins */
+                backgroundColor: '#fff'
               }} 
             />
           </div>

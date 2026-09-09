@@ -1439,8 +1439,8 @@ const App = () => {
     return (
       <div style={{ background: 'transparent', minHeight: '100vh' }}>
         <div style={{ padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#fff', fontWeight: 'bold', fontSize: '18px' }}>
-            <img src="/logo.jpg" alt="GSolimpio" style={{ width: '28px', height: '28px', borderRadius: '50%', objectFit: 'cover', border: '2px solid rgba(59, 130, 246, 0.5)' }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 700, fontSize: '18px' }}>
+            <img src="/logo.jpg" alt="GSolimpio" style={{ width: '32px', height: 'auto', objectFit: 'contain', borderRadius: '4px' }} />
             GS-Control App
           </div>
           <button onClick={handleLogout} style={{ color: '#ef4444', display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', background: 'transparent', border: 'none', fontWeight: 600 }}>
@@ -1539,7 +1539,7 @@ const App = () => {
 
       <aside className="sidebar">
         <div className="sidebar-logo" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <img src="/logo.jpg" alt="GSolimpio" style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover', border: '2px solid rgba(59, 130, 246, 0.5)' }} />
+          <img src="/logo.jpg" alt="GSolimpio" style={{ width: '40px', height: 'auto', objectFit: 'contain', borderRadius: '4px' }} />
           GS-Control
         </div>
         <nav className="nav-menu">
