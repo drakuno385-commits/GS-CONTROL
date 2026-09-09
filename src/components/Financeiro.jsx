@@ -2982,6 +2982,7 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
                       <th style={{ padding: '10px', textAlign: 'center' }}>Documentos / Anexos (PDF)</th>
                       <th style={{ padding: '10px', textAlign: 'center' }}>Status na Esteira</th>
                       <th style={{ padding: '10px', textAlign: 'center' }}>Situação Pagto</th>
+                      <th style={{ padding: '10px', textAlign: 'center' }}>Ações</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -3046,6 +3047,18 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
                             <span style={{ padding: '3px 8px', borderRadius: '12px', fontSize: '10px', fontWeight: 800, background: sit.bg, color: sit.color }}>
                               {sit.label}
                             </span>
+                          </td>
+                          <td style={{ padding: '10px', textAlign: 'center' }}>
+                            {currentUser?.role === 'MASTER' && (
+                              <button
+                                type="button"
+                                onClick={() => handleExcluirDespesa(item.id)}
+                                style={{ background: 'rgba(239, 68, 68, 0.15)', color: '#f87171', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '6px', padding: '6px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s' }}
+                                title="Excluir despesa definitivamente"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            )}
                           </td>
                         </tr>
                       );
