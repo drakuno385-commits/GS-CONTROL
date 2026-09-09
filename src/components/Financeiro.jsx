@@ -1547,6 +1547,27 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
     };
   }, [despesas, departamentos]);
 
+  const exportarExtratoCSV = () => {
+    const headers = ['Data', 'Tipo', 'Banco', 'Descrição da Movimentação', 'Valor (R$)', 'Saldo Resultante (R$)'];
+    const rows = historicoMovimentacoes.map(mov => [
+      formatDate(mov.data),
+      mov.tipo === 'ENTRADA' ? 'ENTRADA' : 'ABATE CONCILIACAO',
+      `"${mov.bancoNome || ''}"`,
+      `"${(mov.descricao || '').replace(/"/g, '""')}"`,
+      mov.valor.toFixed(2),
+      mov.saldoResultante.toFixed(2)
+    ]);
+    const csvContent = "\uFEFF" + [headers.join(';'), ...rows.map(r => r.join(';'))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `extrato_movimentacoes_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   // Função Geradora de CSV por Filtro Específico (Exporta todas as despesas por padrão, respeitando filtros ativos)
   const exportarCSVGenerico = (filtroTipo) => {
     let dadosFiltrados = despesas;
@@ -3582,14 +3603,24 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
           {/* SUB-ABA 4: EXTRATO & HISTÓRICO BANCÁRIO */}
           {subTabConciliacao === 'extrato' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              <div style={{ background: 'rgba(30, 41, 59, 0.5)', padding: '20px', borderRadius: '16px', border: '1px solid rgba(245, 158, 11, 0.2)' }}>
-                <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#fbbf24', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Database size={20} color="#fbbf24" />
-                  Extrato e Histórico das Movimentações Bancárias
-                </h3>
-                <span style={{ fontSize: '12px', color: '#94a3b8' }}>
-                  Registro cronológico de todas as entradas de recursos e abates por conciliação efetuados no sistema.
-                </span>
+              <div style={{ background: 'rgba(30, 41, 59, 0.5)', padding: '20px', borderRadius: '16px', border: '1px solid rgba(245, 158, 11, 0.2)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
+                <div>
+                  <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#fbbf24', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Database size={20} color="#fbbf24" />
+                    Extrato e Histórico das Movimentações Bancárias
+                  </h3>
+                  <span style={{ fontSize: '12px', color: '#94a3b8' }}>
+                    Registro cronológico de todas as entradas de recursos e abates por conciliação efetuados no sistema.
+                  </span>
+                </div>
+                <button 
+                  onClick={exportarExtratoCSV}
+                  style={{ background: 'rgba(16, 185, 129, 0.15)', border: '1px solid rgba(16, 185, 129, 0.3)', color: '#34d399', borderRadius: '8px', padding: '8px 16px', fontSize: '12px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', transition: 'all 0.2s' }}
+                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(16, 185, 129, 0.25)'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'rgba(16, 185, 129, 0.15)'}
+                >
+                  <Download size={14} /> Exportar CSV
+                </button>
               </div>
 
               <div style={{ overflowX: 'auto' }}>
