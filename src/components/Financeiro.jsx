@@ -646,6 +646,117 @@ export default function Financeiro({ currentUser }) {
   const [obsPagamentoInput, setObsPagamentoInput] = useState('');
   const [pdfComprovanteInput, setPdfComprovanteInput] = useState(null);
 
+  // Menu de Árvore Principal do Módulo Financeiro ('fluxo' | 'conciliacao_bancaria')
+  const [moduloSubSecao, setModuloSubSecao] = useState('fluxo');
+
+  // Sub-abas da Tela Nova de Conciliação Bancária ('conciliar' | 'entradas' | 'bancos' | 'extrato')
+  const [subTabConciliacao, setSubTabConciliacao] = useState('conciliar');
+
+  // Modais de Cadastro de Bancos com Saldo e Entradas de Recursos
+  const [showModalBancoSaldo, setShowModalBancoSaldo] = useState(false);
+  const [formBancoSaldo, setFormBancoSaldo] = useState({
+    id: null,
+    nome: '',
+    agencia: '',
+    conta: '',
+    saldoInicial: '',
+    saldoAtual: '',
+    cor: '#38bdf8'
+  });
+
+  const [showModalEntradaRecursos, setShowModalEntradaRecursos] = useState(false);
+  const [formEntradaRecursos, setFormEntradaRecursos] = useState({
+    descricao: '',
+    valor: '',
+    bancoId: '',
+    dataEntrada: new Date().toISOString().slice(0, 10),
+    categoria: 'Faturamento / Vendas',
+    observacao: ''
+  });
+
+  // Lista de Bancos com Saldos Reais Cadastrados
+  const BANCOS_SALDO_PADRAO = [
+    { id: 'b_itau', nome: 'Itaú Unibanco', agencia: '0412', conta: '48201-9', saldoInicial: 150000.00, saldoAtual: 150000.00, cor: '#f97316' },
+    { id: 'b_bradesco', nome: 'Bradesco', agencia: '1204', conta: '19402-3', saldoInicial: 85000.00, saldoAtual: 85000.00, cor: '#ef4444' },
+    { id: 'b_santander', nome: 'Santander', agencia: '0089', conta: '99201-8', saldoInicial: 42500.00, saldoAtual: 42500.00, cor: '#dc2626' },
+    { id: 'b_bb', nome: 'Banco do Brasil', agencia: '3410', conta: '88301-4', saldoInicial: 25000.00, saldoAtual: 25000.00, cor: '#eab308' },
+    { id: 'b_caixa', nome: 'Caixa Econômica', agencia: '0150', conta: '11029-5', saldoInicial: 10000.00, saldoAtual: 10000.00, cor: '#0284c7' }
+  ];
+
+  const [bancosComSaldo, setBancosComSaldo] = useState(() => {
+    try {
+      const saved = localStorage.getItem('acoweb_bancos_saldo_v2');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch(e){}
+    return BANCOS_SALDO_PADRAO;
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('acoweb_bancos_saldo_v2', JSON.stringify(bancosComSaldo));
+    } catch(e){}
+  }, [bancosComSaldo]);
+
+  // Lista de Entradas de Recursos (Receitas / Aportes)
+  const [entradasRecursos, setEntradasRecursos] = useState(() => {
+    try {
+      const saved = localStorage.getItem('acoweb_entradas_recursos_v2');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch(e){}
+    return [
+      {
+        id: 'ent_101',
+        descricao: 'Faturamento Venda Lote Aço Estrutural',
+        valor: 45000.00,
+        bancoId: 'b_itau',
+        bancoNome: 'Itaú Unibanco',
+        dataEntrada: new Date().toISOString().slice(0, 10),
+        categoria: 'Faturamento / Vendas',
+        observacao: 'Crédito NF 99201 via Pix'
+      },
+      {
+        id: 'ent_102',
+        descricao: 'Aporte de Capital dos Sócios',
+        valor: 25000.00,
+        bancoId: 'b_bradesco',
+        bancoNome: 'Bradesco',
+        dataEntrada: new Date().toISOString().slice(0, 10),
+        categoria: 'Aporte / Capital',
+        observacao: 'Reforço de saldo bancário'
+      }
+    ];
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('acoweb_entradas_recursos_v2', JSON.stringify(entradasRecursos));
+    } catch(e){}
+  }, [entradasRecursos]);
+
+  // Histórico de Movimentações Bancárias (Entradas & Abates de Conciliação)
+  const [historicoMovimentacoes, setHistoricoMovimentacoes] = useState(() => {
+    try {
+      const saved = localStorage.getItem('acoweb_historico_bancario_v2');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch(e){}
+    return [];
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('acoweb_historico_bancario_v2', JSON.stringify(historicoMovimentacoes));
+    } catch(e){}
+  }, [historicoMovimentacoes]);
+
   // Formulário de Nova Despesa
   const [formNovaDespesa, setFormNovaDespesa] = useState({
     empresa: 'AÇOFORTE',
@@ -657,7 +768,7 @@ export default function Financeiro({ currentUser }) {
     temOP: false,
     numeroOP: '',
     pdfOP: null,
-    banco: 'Itaú',
+    banco: 'Itaú Unibanco',
     formaPagamento: 'Boleto',
     prioridade: 'MÉDIA',
     observacao: ''
@@ -908,6 +1019,151 @@ export default function Financeiro({ currentUser }) {
       return d;
     }));
     alert('↩️ Despesa reenviada para a aba "Cadastro de Despesas"!');
+  };
+
+  // HANDLERS DO MÓDULO DE CONCILIAÇÃO BANCÁRIA & SALDOS
+
+  // 1. Cadastrar / Editar Banco e Saldo
+  const handleSalvarBancoSaldo = (e) => {
+    e.preventDefault();
+    if (!formBancoSaldo.nome.trim()) return alert('Por favor, informe o nome do banco.');
+    const sInicial = parseFloat(formBancoSaldo.saldoInicial) || 0;
+
+    if (formBancoSaldo.id) {
+      setBancosComSaldo(prev => prev.map(b => {
+        if (b.id === formBancoSaldo.id) {
+          const difInicial = sInicial - b.saldoInicial;
+          return {
+            ...b,
+            nome: formBancoSaldo.nome.trim(),
+            agencia: formBancoSaldo.agencia.trim(),
+            conta: formBancoSaldo.conta.trim(),
+            saldoInicial: sInicial,
+            saldoAtual: b.saldoAtual + difInicial,
+            cor: formBancoSaldo.cor
+          };
+        }
+        return b;
+      }));
+      alert('✅ Banco e saldo atualizados com sucesso!');
+    } else {
+      const novo = {
+        id: `b_${Date.now()}`,
+        nome: formBancoSaldo.nome.trim(),
+        agencia: formBancoSaldo.agencia.trim() || '0001',
+        conta: formBancoSaldo.conta.trim() || '00000-0',
+        saldoInicial: sInicial,
+        saldoAtual: sInicial,
+        cor: formBancoSaldo.cor || '#38bdf8'
+      };
+      setBancosComSaldo(prev => [...prev, novo]);
+      alert(`✅ Banco ${novo.nome} cadastrado com saldo inicial de ${formatMoney(sInicial)}!`);
+    }
+
+    setShowModalBancoSaldo(false);
+    setFormBancoSaldo({ id: null, nome: '', agencia: '', conta: '', saldoInicial: '', saldoAtual: '', cor: '#38bdf8' });
+  };
+
+  // 2. Cadastrar Entrada de Recursos (Aportes / Receitas)
+  const handleCadastrarEntradaRecursos = (e) => {
+    e.preventDefault();
+    if (!formEntradaRecursos.descricao.trim()) return alert('Informe a descrição da entrada de recursos.');
+    const val = parseFloat(formEntradaRecursos.valor);
+    if (isNaN(val) || val <= 0) return alert('Informe um valor válido.');
+    if (!formEntradaRecursos.bancoId) return alert('Selecione o banco de destino para o crédito.');
+
+    const bancoDestino = bancosComSaldo.find(b => b.id === formEntradaRecursos.bancoId);
+    if (!bancoDestino) return alert('Banco de destino não encontrado.');
+
+    const novaEntrada = {
+      id: `ent_${Date.now()}`,
+      descricao: formEntradaRecursos.descricao.trim(),
+      valor: val,
+      bancoId: bancoDestino.id,
+      bancoNome: bancoDestino.nome,
+      dataEntrada: formEntradaRecursos.dataEntrada,
+      categoria: formEntradaRecursos.categoria,
+      observacao: formEntradaRecursos.observacao.trim()
+    };
+
+    setBancosComSaldo(prev => prev.map(b => b.id === bancoDestino.id ? { ...b, saldoAtual: b.saldoAtual + val } : b));
+    setEntradasRecursos(prev => [novaEntrada, ...prev]);
+
+    setHistoricoMovimentacoes(prev => [
+      {
+        id: `mov_${Date.now()}`,
+        data: formEntradaRecursos.dataEntrada,
+        tipo: 'ENTRADA',
+        bancoId: bancoDestino.id,
+        bancoNome: bancoDestino.nome,
+        descricao: `📥 ${novaEntrada.descricao} (${novaEntrada.categoria})`,
+        valor: val,
+        saldoResultante: bancoDestino.saldoAtual + val
+      },
+      ...prev
+    ]);
+
+    alert(`🎉 Entrada de ${formatMoney(val)} creditada com sucesso no banco ${bancoDestino.nome}!\nNovo Saldo: ${formatMoney(bancoDestino.saldoAtual + val)}`);
+    setShowModalEntradaRecursos(false);
+    setFormEntradaRecursos({ descricao: '', valor: '', bancoId: '', dataEntrada: new Date().toISOString().slice(0, 10), categoria: 'Faturamento / Vendas', observacao: '' });
+  };
+
+  // 3. Conciliação com Abate Real do Saldo Bancário
+  const handleConciliarComAbateSaldo = (despesaId, bancoIdSelecionado) => {
+    if (!bancoIdSelecionado) return alert('Por favor, selecione o banco com saldo de onde o valor será descontado.');
+    
+    const itemDespesa = despesas.find(d => d.id === despesaId);
+    if (!itemDespesa) return alert('Despesa não encontrada.');
+
+    const bancoPagador = bancosComSaldo.find(b => b.id === bancoIdSelecionado);
+    if (!bancoPagador) return alert('Banco selecionado não encontrado.');
+
+    const valorAbater = itemDespesa.valorExecutado !== undefined ? itemDespesa.valorExecutado : itemDespesa.valor;
+    const novoSaldo = bancoPagador.saldoAtual - valorAbater;
+
+    if (novoSaldo < 0) {
+      if (!window.confirm(`⚠️ O saldo do banco "${bancoPagador.nome}" ficará NEGATIVO em ${formatMoney(Math.abs(novoSaldo))}.\n\nDeseja confirmar a conciliação e abater mesmo assim?`)) {
+        return;
+      }
+    }
+
+    const hoje = new Date().toISOString().slice(0, 10);
+
+    // Atualizar saldo do banco
+    setBancosComSaldo(prev => prev.map(b => b.id === bancoPagador.id ? { ...b, saldoAtual: novoSaldo } : b));
+
+    // Atualizar despesa
+    setDespesas(prev => prev.map(d => {
+      if (d.id === despesaId) {
+        return {
+          ...d,
+          status: 'FINALIZADO',
+          statusPagamento: 'FINALIZADO',
+          banco: bancoPagador.nome,
+          bancoIdConciliado: bancoPagador.id,
+          dataConciliacao: d.dataConciliacao || hoje,
+          dataFinalizacao: hoje
+        };
+      }
+      return d;
+    }));
+
+    // Registrar histórico
+    setHistoricoMovimentacoes(prev => [
+      {
+        id: `mov_${Date.now()}`,
+        data: hoje,
+        tipo: 'SAIDA_CONCILIACAO',
+        bancoId: bancoPagador.id,
+        bancoNome: bancoPagador.nome,
+        descricao: `⚖️ Conciliação & Abate Despesa: ${itemDespesa.nome} (${itemDespesa.empresa})`,
+        valor: -valorAbater,
+        saldoResultante: novoSaldo
+      },
+      ...prev
+    ]);
+
+    alert(`✅ Despesa "${itemDespesa.nome}" conciliar e finalizada com sucesso!\n\n💸 Valor de ${formatMoney(valorAbater)} descontado do banco ${bancoPagador.nome}.\n🏦 NOVO SALDO EM CONTA: ${formatMoney(novoSaldo)}`);
   };
 
   // Handler de envio do formulário de nova despesa
@@ -1384,46 +1640,104 @@ export default function Financeiro({ currentUser }) {
     <div style={{ color: '#f8fafc', padding: '24px', maxWidth: '1600px', margin: '0 auto', fontFamily: 'Inter, system-ui, sans-serif' }}>
       
       {/* CABEÇALHO PRINCIPAL DA TELA FINANCEIRO */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '16px' }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{ padding: '10px', background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(139, 92, 246, 0.2))', borderRadius: '12px', border: '1px solid rgba(59, 130, 246, 0.3)' }}>
-              <DollarSign size={28} color="#60a5fa" />
+            <div style={{ padding: '10px', background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(16, 185, 129, 0.2))', borderRadius: '12px', border: '1px solid rgba(59, 130, 246, 0.3)' }}>
+              <Landmark size={28} color="#60a5fa" />
             </div>
             <div>
               <h1 style={{ fontSize: '24px', fontWeight: 800, color: '#f8fafc', letterSpacing: '-0.02em', margin: 0 }}>
-                Módulo Financeiro & Fluxo de Caixa
+                Módulo Financeiro & Conciliação
               </h1>
               <p style={{ fontSize: '13px', color: '#94a3b8', margin: '2px 0 0 0' }}>
-                Controle de despesas
+                {moduloSubSecao === 'fluxo' ? '📊 Fluxo de Despesas — Esteira Operacional & Relatórios' : '🏦 Conciliação Bancária, Entrada de Recursos & Abate de Saldos em Conta'}
               </p>
             </div>
           </div>
         </div>
 
-        {/* Botão Novo Lançamento Rápido */}
-        <button
-          onClick={() => setActiveTab('nova')}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
-            color: '#fff',
-            padding: '10px 18px',
-            borderRadius: '10px',
-            fontWeight: 700,
-            fontSize: '13px',
-            border: 'none',
-            cursor: 'pointer',
-            boxShadow: '0 4px 14px rgba(59, 130, 246, 0.4)',
-            transition: 'all 0.2s'
-          }}
-        >
-          <PlusCircle size={18} />
-          <span>Cadastrar Nova Despesa</span>
-        </button>
+        {moduloSubSecao === 'fluxo' && (
+          <button
+            onClick={() => setActiveTab('nova')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
+              color: '#fff',
+              padding: '10px 18px',
+              borderRadius: '10px',
+              fontWeight: 700,
+              fontSize: '13px',
+              border: 'none',
+              cursor: 'pointer',
+              boxShadow: '0 4px 14px rgba(59, 130, 246, 0.4)',
+              transition: 'all 0.2s'
+            }}
+          >
+            <PlusCircle size={18} />
+            <span>Cadastrar Nova Despesa</span>
+          </button>
+        )}
       </div>
+
+      {/* MENU ÁRVORE DE NAVEGAÇÃO DO MÓDULO FINANCEIRO */}
+      <div style={{ background: '#0f172a', padding: '10px 14px', borderRadius: '14px', border: '1px solid #334155', marginBottom: '24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px', boxShadow: '0 4px 14px rgba(0,0,0,0.2)' }}>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button
+            onClick={() => setModuloSubSecao('fluxo')}
+            style={{
+              padding: '10px 18px',
+              borderRadius: '10px',
+              border: 'none',
+              background: moduloSubSecao === 'fluxo' ? 'linear-gradient(135deg, #3b82f6, #1d4ed8)' : 'rgba(30, 41, 59, 0.8)',
+              color: moduloSubSecao === 'fluxo' ? '#fff' : '#cbd5e1',
+              fontWeight: 800,
+              fontSize: '13px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              border: moduloSubSecao === 'fluxo' ? 'none' : '1px solid #334155',
+              boxShadow: moduloSubSecao === 'fluxo' ? '0 4px 14px rgba(59, 130, 246, 0.4)' : 'none'
+            }}
+          >
+            <Layers size={16} />
+            <span>📊 1. Fluxo de Despesas (Esteira & Relatórios)</span>
+          </button>
+
+          <button
+            onClick={() => setModuloSubSecao('conciliacao_bancaria')}
+            style={{
+              padding: '10px 18px',
+              borderRadius: '10px',
+              border: 'none',
+              background: moduloSubSecao === 'conciliacao_bancaria' ? 'linear-gradient(135deg, #10b981, #047857)' : 'rgba(30, 41, 59, 0.8)',
+              color: moduloSubSecao === 'conciliacao_bancaria' ? '#fff' : '#cbd5e1',
+              fontWeight: 800,
+              fontSize: '13px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              border: moduloSubSecao === 'conciliacao_bancaria' ? 'none' : '1px solid #334155',
+              boxShadow: moduloSubSecao === 'conciliacao_bancaria' ? '0 4px 14px rgba(16, 185, 129, 0.4)' : 'none'
+            }}
+          >
+            <Landmark size={16} />
+            <span>🏦 2. Conciliação Bancária & Saldos</span>
+          </button>
+        </div>
+
+        <div style={{ fontSize: '12px', color: '#94a3b8', fontWeight: 600 }}>
+          {bancosComSaldo.length} bancos cadastrados | Saldo Liquido: <strong style={{ color: '#34d399' }}>{formatMoney(bancosComSaldo.reduce((acc, b) => acc + b.saldoAtual, 0))}</strong>
+        </div>
+      </div>
+
+      {/* SEÇÃO 1: FLUXO DE DESPESAS (TELA ATUAL DA ESTEIRA) */}
+      {moduloSubSecao === 'fluxo' && (
+        <>
 
       {/* CARDS RESUMO / KPIS DAS SITUAÇÕES FINANCEIRAS — CLICÁVEIS PARA ABRIR DETALHES DE CADA VALOR */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '14px', marginBottom: '24px' }}>
@@ -2943,6 +3257,478 @@ export default function Financeiro({ currentUser }) {
                 </table>
               </div>
 
+        </div>
+      )}
+        </div>
+      )}
+      </>
+      )}
+
+      {/* SEÇÃO 2: CONCILIAÇÃO BANCÁRIA & GESTÃO DE SALDOS */}
+      {moduloSubSecao === 'conciliacao_bancaria' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          
+          {/* CARDS RESUMO DE CONCILIAÇÃO & SALDOS */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px' }}>
+            
+            {/* Card 1: Saldo Total em Caixa */}
+            <div style={{ background: 'rgba(16, 185, 129, 0.1)', padding: '18px', borderRadius: '16px', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                <span style={{ fontSize: '11px', color: '#34d399', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  🏦 Saldo Total Líquido em Caixa
+                </span>
+                <Landmark size={20} color="#34d399" />
+              </div>
+              <div style={{ fontSize: '24px', fontWeight: 800, color: '#34d399', fontFamily: 'monospace' }}>
+                {formatMoney(bancosComSaldo.reduce((acc, b) => acc + b.saldoAtual, 0))}
+              </div>
+              <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '6px' }}>
+                Soma dos saldos disponíveis em {bancosComSaldo.length} contas bancárias
+              </div>
+            </div>
+
+            {/* Card 2: Entradas de Recursos */}
+            <div style={{ background: 'rgba(59, 130, 246, 0.1)', padding: '18px', borderRadius: '16px', border: '1px solid rgba(59, 130, 246, 0.3)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                <span style={{ fontSize: '11px', color: '#60a5fa', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  📥 Entradas de Recursos (Receitas)
+                </span>
+                <ArrowUpRight size={20} color="#60a5fa" />
+              </div>
+              <div style={{ fontSize: '24px', fontWeight: 800, color: '#60a5fa', fontFamily: 'monospace' }}>
+                {formatMoney(entradasRecursos.reduce((acc, e) => acc + e.valor, 0))}
+              </div>
+              <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '6px' }}>
+                {entradasRecursos.length} entradas de recursos cadastradas
+              </div>
+            </div>
+
+            {/* Card 3: Despesas Conciliadas */}
+            <div style={{ background: 'rgba(168, 85, 247, 0.1)', padding: '18px', borderRadius: '16px', border: '1px solid rgba(168, 85, 247, 0.3)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                <span style={{ fontSize: '11px', color: '#c084fc', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  ⚖️ Despesas Conciliadas / Liquidadas
+                </span>
+                <CheckCircle2 size={20} color="#c084fc" />
+              </div>
+              <div style={{ fontSize: '24px', fontWeight: 800, color: '#c084fc', fontFamily: 'monospace' }}>
+                {formatMoney(despesas.filter(d => d.status === 'FINALIZADO' || d.statusPagamento === 'FINALIZADO').reduce((acc, d) => acc + (d.valorExecutado !== undefined ? d.valorExecutado : d.valor), 0))}
+              </div>
+              <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '6px' }}>
+                {despesas.filter(d => d.status === 'FINALIZADO' || d.statusPagamento === 'FINALIZADO').length} despesas conciliadas com abate em conta
+              </div>
+            </div>
+
+            {/* Card 4: A Conciliar */}
+            <div style={{ background: 'rgba(245, 158, 11, 0.1)', padding: '18px', borderRadius: '16px', border: '1px solid rgba(245, 158, 11, 0.3)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                <span style={{ fontSize: '11px', color: '#fbbf24', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  ⏳ Despesas Pendentes de Conciliação
+                </span>
+                <Clock size={20} color="#fbbf24" />
+              </div>
+              <div style={{ fontSize: '24px', fontWeight: 800, color: '#fbbf24', fontFamily: 'monospace' }}>
+                {formatMoney(despesas.filter(d => d.statusPagamento === 'PENDENTE_CONCILIACAO' || d.statusPagamento === 'PAGO' || d.status === 'LANCADA').reduce((acc, d) => acc + (d.valorExecutado !== undefined ? d.valorExecutado : d.valor), 0))}
+              </div>
+              <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '6px' }}>
+                {despesas.filter(d => d.statusPagamento === 'PENDENTE_CONCILIACAO' || d.statusPagamento === 'PAGO' || d.status === 'LANCADA').length} aguardando apontamento de banco para abate
+              </div>
+            </div>
+
+          </div>
+
+          {/* BARRA DE SUB-ABAS DA CONCILIAÇÃO BANCÁRIA */}
+          <div style={{ display: 'flex', gap: '10px', borderBottom: '1px solid rgba(255, 255, 255, 0.1)', paddingBottom: '8px', overflowX: 'auto' }}>
+            
+            <button
+              onClick={() => setSubTabConciliacao('conciliar')}
+              style={{
+                padding: '10px 18px',
+                borderRadius: '8px',
+                border: 'none',
+                background: subTabConciliacao === 'conciliar' ? 'rgba(16, 185, 129, 0.25)' : 'rgba(30, 41, 59, 0.5)',
+                color: subTabConciliacao === 'conciliar' ? '#34d399' : '#94a3b8',
+                fontWeight: 800,
+                fontSize: '13px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                borderBottom: subTabConciliacao === 'conciliar' ? '3px solid #34d399' : 'none'
+              }}
+            >
+              <CheckCircle2 size={16} />
+              <span>1. Conciliação & Abate de Despesas em Conta</span>
+            </button>
+
+            <button
+              onClick={() => setSubTabConciliacao('entradas')}
+              style={{
+                padding: '10px 18px',
+                borderRadius: '8px',
+                border: 'none',
+                background: subTabConciliacao === 'entradas' ? 'rgba(59, 130, 246, 0.25)' : 'rgba(30, 41, 59, 0.5)',
+                color: subTabConciliacao === 'entradas' ? '#60a5fa' : '#94a3b8',
+                fontWeight: 800,
+                fontSize: '13px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                borderBottom: subTabConciliacao === 'entradas' ? '3px solid #60a5fa' : 'none'
+              }}
+            >
+              <ArrowUpRight size={16} />
+              <span>2. Entrada de Recursos (Receitas & Aportes)</span>
+            </button>
+
+            <button
+              onClick={() => setSubTabConciliacao('bancos')}
+              style={{
+                padding: '10px 18px',
+                borderRadius: '8px',
+                border: 'none',
+                background: subTabConciliacao === 'bancos' ? 'rgba(168, 85, 247, 0.25)' : 'rgba(30, 41, 59, 0.5)',
+                color: subTabConciliacao === 'bancos' ? '#c084fc' : '#94a3b8',
+                fontWeight: 800,
+                fontSize: '13px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                borderBottom: subTabConciliacao === 'bancos' ? '3px solid #c084fc' : 'none'
+              }}
+            >
+              <Landmark size={16} />
+              <span>3. Cadastro & Gestão de Bancos e Saldos</span>
+            </button>
+
+            <button
+              onClick={() => setSubTabConciliacao('extrato')}
+              style={{
+                padding: '10px 18px',
+                borderRadius: '8px',
+                border: 'none',
+                background: subTabConciliacao === 'extrato' ? 'rgba(245, 158, 11, 0.25)' : 'rgba(30, 41, 59, 0.5)',
+                color: subTabConciliacao === 'extrato' ? '#fbbf24' : '#94a3b8',
+                fontWeight: 800,
+                fontSize: '13px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                borderBottom: subTabConciliacao === 'extrato' ? '3px solid #fbbf24' : 'none'
+              }}
+            >
+              <Database size={16} />
+              <span>4. Extrato & Histórico de Movimentações</span>
+            </button>
+
+          </div>
+
+          {/* CONTEÚDO DAS SUB-ABAS DA CONCILIAÇÃO BANCÁRIA */}
+
+          {/* SUB-ABA 1: CONCILIAÇÃO DE DESPESAS COM ABATE DE SALDO */}
+          {subTabConciliacao === 'conciliar' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              <div style={{ background: 'rgba(30, 41, 59, 0.5)', padding: '20px', borderRadius: '16px', border: '1px solid rgba(16, 185, 129, 0.2)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
+                <div>
+                  <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#34d399', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <CheckCircle2 size={20} color="#34d399" />
+                    Conciliação de Despesas com Abate do Saldo Bancário
+                  </h3>
+                  <span style={{ fontSize: '12px', color: '#94a3b8' }}>
+                    Selecione de qual banco cadastrado o valor da despesa paga deve ser descontado. O saldo do banco será atualizado automaticamente ao conciliar.
+                  </span>
+                </div>
+              </div>
+
+              {/* Tabela de Despesas Prontas para Conciliação */}
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', textAlign: 'left' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.1)', color: '#94a3b8', fontSize: '10px', textTransform: 'uppercase' }}>
+                      <th style={{ padding: '12px' }}>Descrição da Despesa</th>
+                      <th style={{ padding: '12px' }}>Empresa / Depto</th>
+                      <th style={{ padding: '12px', textAlign: 'right' }}>Valor Efetivo (R$)</th>
+                      <th style={{ padding: '12px' }}>Venc. / Data Pagto</th>
+                      <th style={{ padding: '12px', textAlign: 'center' }}>Documentos (PDF)</th>
+                      <th style={{ padding: '12px' }}>Apontar Banco com Saldo para Abate</th>
+                      <th style={{ padding: '12px', textAlign: 'center' }}>Ação de Conciliação</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {despesas.filter(d => d.statusPagamento === 'PENDENTE_CONCILIACAO' || d.statusPagamento === 'PAGO' || d.status === 'LANCADA').length === 0 ? (
+                      <tr>
+                        <td colSpan={7} style={{ padding: '32px', textAlign: 'center', color: '#64748b' }}>
+                          Nenhuma despesa pendente de conciliação no momento.
+                        </td>
+                      </tr>
+                    ) : (
+                      despesas.filter(d => d.statusPagamento === 'PENDENTE_CONCILIACAO' || d.statusPagamento === 'PAGO' || d.status === 'LANCADA').map((item, idx) => {
+                        return (
+                          <tr key={item.id} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.04)', background: idx % 2 === 0 ? 'transparent' : 'rgba(255, 255, 255, 0.01)' }}>
+                            <td style={{ padding: '12px', fontWeight: 700, color: '#f8fafc' }}>
+                              <div>{item.nome}</div>
+                              {item.temOP && <span style={{ color: '#38bdf8', fontSize: '10px' }}>OP: {item.numeroOP}</span>}
+                            </td>
+                            <td style={{ padding: '12px', color: '#cbd5e1' }}>
+                              <div>{item.empresa}</div>
+                              <span style={{ color: '#94a3b8', fontSize: '10px' }}>{item.departamento}</span>
+                            </td>
+                            <td style={{ padding: '12px', textAlign: 'right', fontWeight: 800, color: '#34d399', fontFamily: 'monospace', fontSize: '14px' }}>
+                              {formatMoney(item.valorExecutado !== undefined ? item.valorExecutado : item.valor)}
+                              {item.valorExecutado !== undefined && item.valorExecutado !== item.valor && (
+                                <div style={{ fontSize: '10px', color: '#94a3b8' }}>Previsto: {formatMoney(item.valor)}</div>
+                              )}
+                            </td>
+                            <td style={{ padding: '12px', color: '#cbd5e1', fontSize: '11px' }}>
+                              <div>Venc: {formatDate(item.vencimento)}</div>
+                              {item.dataPagamento && <div style={{ color: '#34d399' }}>Pago: {formatDate(item.dataPagamento)}</div>}
+                            </td>
+                            <td style={{ padding: '12px', textAlign: 'center' }}>
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'center' }}>
+                                {item.pdfOP && (
+                                  <button type="button" onClick={() => abrirPDF(item.pdfOP)} style={{ background: 'rgba(56, 189, 248, 0.15)', color: '#38bdf8', border: '1px solid rgba(56, 189, 248, 0.35)', borderRadius: '4px', padding: '2px 6px', fontSize: '10px', fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                                    <FileText size={10} /> PDF OP
+                                  </button>
+                                )}
+                                {item.pdfComprovante && (
+                                  <button type="button" onClick={() => abrirPDF(item.pdfComprovante)} style={{ background: 'rgba(52, 211, 153, 0.15)', color: '#34d399', border: '1px solid rgba(52, 211, 153, 0.35)', borderRadius: '4px', padding: '2px 6px', fontSize: '10px', fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                                    <FileText size={10} /> Comprovante PDF
+                                  </button>
+                                )}
+                                {!item.pdfOP && !item.pdfComprovante && <span style={{ color: '#64748b', fontSize: '10px' }}>—</span>}
+                              </div>
+                            </td>
+                            <td style={{ padding: '12px' }}>
+                              <select
+                                id={`select_banco_${item.id}`}
+                                defaultValue={bancosComSaldo.find(b => b.nome.toLowerCase().includes((item.banco || '').toLowerCase()))?.id || bancosComSaldo[0]?.id || ''}
+                                style={{ width: '100%', padding: '8px 10px', background: '#0f172a', border: '1px solid #10b981', borderRadius: '8px', color: '#34d399', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}
+                              >
+                                {bancosComSaldo.map(b => (
+                                  <option key={b.id} value={b.id}>
+                                    {b.nome} — Saldo Disp: {formatMoney(b.saldoAtual)}
+                                  </option>
+                                ))}
+                              </select>
+                            </td>
+                            <td style={{ padding: '12px', textAlign: 'center' }}>
+                              <button
+                                onClick={() => {
+                                  const sel = document.getElementById(`select_banco_${item.id}`);
+                                  const bId = sel ? sel.value : (bancosComSaldo[0]?.id || '');
+                                  handleConciliarComAbateSaldo(item.id, bId);
+                                }}
+                                style={{ padding: '8px 14px', background: 'linear-gradient(135deg, #10b981, #047857)', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '12px', fontWeight: 800, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px', boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)' }}
+                              >
+                                <CheckCircle2 size={14} /> ⚖️ Conciliar & Abater Saldo
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* SUB-ABA 2: ENTRADA DE RECURSOS (RECEITAS / APORTES) */}
+          {subTabConciliacao === 'entradas' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              <div style={{ background: 'rgba(30, 41, 59, 0.5)', padding: '20px', borderRadius: '16px', border: '1px solid rgba(59, 130, 246, 0.2)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
+                <div>
+                  <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#60a5fa', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <ArrowUpRight size={20} color="#60a5fa" />
+                    Gestão de Entrada de Recursos (Receitas & Aportes)
+                  </h3>
+                  <span style={{ fontSize: '12px', color: '#94a3b8' }}>
+                    Cadastre novos créditos para alimentar os saldos das contas bancárias da empresa.
+                  </span>
+                </div>
+                <button
+                  onClick={() => {
+                    setFormEntradaRecursos({
+                      descricao: '',
+                      valor: '',
+                      bancoId: bancosComSaldo[0]?.id || '',
+                      dataEntrada: new Date().toISOString().slice(0, 10),
+                      categoria: 'Faturamento / Vendas',
+                      observacao: ''
+                    });
+                    setShowModalEntradaRecursos(true);
+                  }}
+                  style={{ padding: '10px 18px', background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', boxShadow: '0 4px 14px rgba(59, 130, 246, 0.4)' }}
+                >
+                  <PlusCircle size={16} /> + Lançar Entrada de Recursos
+                </button>
+              </div>
+
+              {/* Tabela de Entradas Cadastradas */}
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', textAlign: 'left' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.1)', color: '#94a3b8', fontSize: '10px', textTransform: 'uppercase' }}>
+                      <th style={{ padding: '12px' }}>Data</th>
+                      <th style={{ padding: '12px' }}>Descrição da Entrada</th>
+                      <th style={{ padding: '12px' }}>Categoria</th>
+                      <th style={{ padding: '12px' }}>Banco de Destino (Creditado)</th>
+                      <th style={{ padding: '12px', textAlign: 'right' }}>Valor Creditado (R$)</th>
+                      <th style={{ padding: '12px' }}>Observações</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {entradasRecursos.length === 0 ? (
+                      <tr><td colSpan={6} style={{ padding: '32px', textAlign: 'center', color: '#64748b' }}>Nenhuma entrada de recursos cadastrada.</td></tr>
+                    ) : (
+                      entradasRecursos.map((ent, idx) => (
+                        <tr key={ent.id} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.04)', background: idx % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.01)' }}>
+                          <td style={{ padding: '12px', color: '#cbd5e1', fontWeight: 600 }}>{formatDate(ent.dataEntrada)}</td>
+                          <td style={{ padding: '12px', fontWeight: 700, color: '#f8fafc' }}>{ent.descricao}</td>
+                          <td style={{ padding: '12px' }}>
+                            <span style={{ padding: '3px 8px', borderRadius: '12px', fontSize: '10px', fontWeight: 700, background: 'rgba(59, 130, 246, 0.15)', color: '#60a5fa' }}>
+                              {ent.categoria}
+                            </span>
+                          </td>
+                          <td style={{ padding: '12px', color: '#34d399', fontWeight: 700 }}>{ent.bancoNome}</td>
+                          <td style={{ padding: '12px', textAlign: 'right', fontWeight: 800, color: '#34d399', fontFamily: 'monospace', fontSize: '14px' }}>
+                            +{formatMoney(ent.valor)}
+                          </td>
+                          <td style={{ padding: '12px', color: '#94a3b8', fontSize: '11px' }}>{ent.observacao || '—'}</td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* SUB-ABA 3: BANCOS & SALDOS */}
+          {subTabConciliacao === 'bancos' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              <div style={{ background: 'rgba(30, 41, 59, 0.5)', padding: '20px', borderRadius: '16px', border: '1px solid rgba(168, 85, 247, 0.2)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
+                <div>
+                  <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#c084fc', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Landmark size={20} color="#c084fc" />
+                    Cadastro & Gestão de Bancos e Saldos em Conta
+                  </h3>
+                  <span style={{ fontSize: '12px', color: '#94a3b8' }}>
+                    Cadastre e atualize as contas bancárias com seus respectivos saldos reais.
+                  </span>
+                </div>
+                <button
+                  onClick={() => {
+                    setFormBancoSaldo({ id: null, nome: '', agencia: '', conta: '', saldoInicial: '', saldoAtual: '', cor: '#38bdf8' });
+                    setShowModalBancoSaldo(true);
+                  }}
+                  style={{ padding: '10px 18px', background: 'linear-gradient(135deg, #a78bfa, #7c3aed)', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', boxShadow: '0 4px 14px rgba(139, 92, 246, 0.4)' }}
+                >
+                  <PlusCircle size={16} /> + Cadastrar Novo Banco com Saldo
+                </button>
+              </div>
+
+              {/* Grid de Cards de Bancos com Saldo Live */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
+                {bancosComSaldo.map(banco => (
+                  <div key={banco.id} style={{ background: 'rgba(15, 23, 42, 0.8)', padding: '20px', borderRadius: '16px', border: `1px solid ${banco.cor || '#334155'}`, boxShadow: '0 4px 14px rgba(0,0,0,0.3)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                      <div style={{ fontWeight: 800, fontSize: '16px', color: '#f8fafc' }}>{banco.nome}</div>
+                      <button
+                        onClick={() => {
+                          setFormBancoSaldo({
+                            id: banco.id,
+                            nome: banco.nome,
+                            agencia: banco.agencia || '',
+                            conta: banco.conta || '',
+                            saldoInicial: banco.saldoInicial,
+                            saldoAtual: banco.saldoAtual,
+                            cor: banco.cor || '#38bdf8'
+                          });
+                          setShowModalBancoSaldo(true);
+                        }}
+                        style={{ background: 'rgba(255,255,255,0.08)', border: 'none', color: '#cbd5e1', borderRadius: '6px', padding: '4px 8px', fontSize: '11px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                      >
+                        <Edit2 size={12} /> Editar
+                      </button>
+                    </div>
+
+                    <div style={{ fontSize: '11px', color: '#94a3b8', marginBottom: '12px' }}>
+                      Agência: <strong style={{ color: '#cbd5e1' }}>{banco.agencia}</strong> | Conta: <strong style={{ color: '#cbd5e1' }}>{banco.conta}</strong>
+                    </div>
+
+                    <div style={{ background: 'rgba(30, 41, 59, 0.6)', padding: '12px', borderRadius: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div>
+                        <div style={{ fontSize: '10px', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 700 }}>Saldo Atual Disponível</div>
+                        <div style={{ fontSize: '20px', fontWeight: 800, color: banco.saldoAtual >= 0 ? '#34d399' : '#f87171', fontFamily: 'monospace' }}>
+                          {formatMoney(banco.saldoAtual)}
+                        </div>
+                      </div>
+                      <div style={{ textAlign: 'right' }}>
+                        <div style={{ fontSize: '10px', color: '#64748b' }}>Saldo Inicial</div>
+                        <div style={{ fontSize: '11px', color: '#cbd5e1', fontWeight: 700 }}>{formatMoney(banco.saldoInicial)}</div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* SUB-ABA 4: EXTRATO & HISTÓRICO BANCÁRIO */}
+          {subTabConciliacao === 'extrato' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              <div style={{ background: 'rgba(30, 41, 59, 0.5)', padding: '20px', borderRadius: '16px', border: '1px solid rgba(245, 158, 11, 0.2)' }}>
+                <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#fbbf24', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Database size={20} color="#fbbf24" />
+                  Extrato e Histórico das Movimentações Bancárias
+                </h3>
+                <span style={{ fontSize: '12px', color: '#94a3b8' }}>
+                  Registro cronológico de todas as entradas de recursos e abates por conciliação efetuados no sistema.
+                </span>
+              </div>
+
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', textAlign: 'left' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.1)', color: '#94a3b8', fontSize: '10px', textTransform: 'uppercase' }}>
+                      <th style={{ padding: '12px' }}>Data</th>
+                      <th style={{ padding: '12px' }}>Tipo</th>
+                      <th style={{ padding: '12px' }}>Banco</th>
+                      <th style={{ padding: '12px' }}>Descrição da Movimentação</th>
+                      <th style={{ padding: '12px', textAlign: 'right' }}>Valor (R$)</th>
+                      <th style={{ padding: '12px', textAlign: 'right' }}>Saldo Resultante (R$)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {historicoMovimentacoes.length === 0 ? (
+                      <tr><td colSpan={6} style={{ padding: '32px', textAlign: 'center', color: '#64748b' }}>Nenhuma movimentação registrada no extrato até o momento.</td></tr>
+                    ) : (
+                      historicoMovimentacoes.map((mov, idx) => (
+                        <tr key={mov.id} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.04)', background: idx % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.01)' }}>
+                          <td style={{ padding: '12px', color: '#cbd5e1' }}>{formatDate(mov.data)}</td>
+                          <td style={{ padding: '12px' }}>
+                            <span style={{ padding: '3px 8px', borderRadius: '12px', fontSize: '10px', fontWeight: 800, background: mov.tipo === 'ENTRADA' ? 'rgba(52, 211, 153, 0.2)' : 'rgba(239, 68, 68, 0.2)', color: mov.tipo === 'ENTRADA' ? '#34d399' : '#f87171' }}>
+                              {mov.tipo === 'ENTRADA' ? '📥 ENTRADA' : '⚖️ ABATE CONCILIAÇÃO'}
+                            </span>
+                          </td>
+                          <td style={{ padding: '12px', fontWeight: 700, color: '#f8fafc' }}>{mov.bancoNome}</td>
+                          <td style={{ padding: '12px', color: '#cbd5e1' }}>{mov.descricao}</td>
+                          <td style={{ padding: '12px', textAlign: 'right', fontWeight: 800, color: mov.valor >= 0 ? '#34d399' : '#f87171', fontFamily: 'monospace', fontSize: '13px' }}>
+                            {mov.valor >= 0 ? `+${formatMoney(mov.valor)}` : formatMoney(mov.valor)}
+                          </td>
+                          <td style={{ padding: '12px', textAlign: 'right', fontWeight: 800, color: '#60a5fa', fontFamily: 'monospace' }}>
+                            {formatMoney(mov.saldoResultante)}
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
 
@@ -3599,6 +4385,225 @@ export default function Financeiro({ currentUser }) {
                 </button>
               </div>
 
+            </form>
+
+          </div>
+        </div>
+      )}
+
+      {/* MODAL CADASTRAR / EDITAR BANCO COM SALDO */}
+      {showModalBancoSaldo && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: '16px' }}>
+          <div style={{ background: '#0f172a', border: '1px solid rgba(168, 85, 247, 0.4)', borderRadius: '16px', padding: '24px', maxWidth: '480px', width: '100%', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.5)' }}>
+            
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '12px' }}>
+              <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#c084fc', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Landmark size={20} color="#c084fc" />
+                {formBancoSaldo.id ? 'Editar Banco & Saldo' : 'Cadastrar Novo Banco com Saldo'}
+              </h3>
+              <button onClick={() => setShowModalBancoSaldo(false)} style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer' }}><X size={20} /></button>
+            </div>
+
+            <form onSubmit={handleSalvarBancoSaldo} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#f8fafc', marginBottom: '6px' }}>
+                  Nome da Instituição Bancária *
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Ex: Itaú Unibanco, Bradesco, Santander..."
+                  value={formBancoSaldo.nome}
+                  onChange={(e) => setFormBancoSaldo({ ...formBancoSaldo, nome: e.target.value })}
+                  style={{ width: '100%', padding: '10px 14px', background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', color: '#fff', fontSize: '13px' }}
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#94a3b8', marginBottom: '6px' }}>
+                    Agência
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Ex: 0412"
+                    value={formBancoSaldo.agencia}
+                    onChange={(e) => setFormBancoSaldo({ ...formBancoSaldo, agencia: e.target.value })}
+                    style={{ width: '100%', padding: '10px 14px', background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', color: '#fff', fontSize: '13px' }}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#94a3b8', marginBottom: '6px' }}>
+                    Número da Conta
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Ex: 48201-9"
+                    value={formBancoSaldo.conta}
+                    onChange={(e) => setFormBancoSaldo({ ...formBancoSaldo, conta: e.target.value })}
+                    style={{ width: '100%', padding: '10px 14px', background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', color: '#fff', fontSize: '13px' }}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#34d399', marginBottom: '6px' }}>
+                  Saldo Inicial da Conta (R$) *
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  required
+                  placeholder="Ex: 150000.00"
+                  value={formBancoSaldo.saldoInicial}
+                  onChange={(e) => setFormBancoSaldo({ ...formBancoSaldo, saldoInicial: e.target.value })}
+                  style={{ width: '100%', padding: '10px 14px', background: '#1e293b', border: '2px solid #34d399', borderRadius: '8px', color: '#34d399', fontSize: '16px', fontWeight: 800, fontFamily: 'monospace' }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '10px' }}>
+                <button
+                  type="button"
+                  onClick={() => setShowModalBancoSaldo(false)}
+                  style={{ padding: '10px 16px', background: 'rgba(148, 163, 184, 0.15)', color: '#cbd5e1', border: 'none', borderRadius: '8px', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  style={{ padding: '10px 20px', background: 'linear-gradient(135deg, #a78bfa, #7c3aed)', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 800, cursor: 'pointer' }}
+                >
+                  Salvar Banco & Saldo
+                </button>
+              </div>
+            </form>
+
+          </div>
+        </div>
+      )}
+
+      {/* MODAL LANÇAR ENTRADA DE RECURSOS */}
+      {showModalEntradaRecursos && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: '16px' }}>
+          <div style={{ background: '#0f172a', border: '1px solid rgba(59, 130, 246, 0.4)', borderRadius: '16px', padding: '24px', maxWidth: '500px', width: '100%', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.5)' }}>
+            
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '12px' }}>
+              <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#60a5fa', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <ArrowUpRight size={20} color="#60a5fa" />
+                Lançar Entrada de Recursos (Aporte / Receita)
+              </h3>
+              <button onClick={() => setShowModalEntradaRecursos(false)} style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer' }}><X size={20} /></button>
+            </div>
+
+            <form onSubmit={handleCadastrarEntradaRecursos} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#f8fafc', marginBottom: '6px' }}>
+                  Descrição da Entrada *
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Ex: Faturamento Cliente Obra X / Aporte dos Sócios..."
+                  value={formEntradaRecursos.descricao}
+                  onChange={(e) => setFormEntradaRecursos({ ...formEntradaRecursos, descricao: e.target.value })}
+                  style={{ width: '100%', padding: '10px 14px', background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', color: '#fff', fontSize: '13px' }}
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#34d399', marginBottom: '6px' }}>
+                    Valor Creditado (R$) *
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    required
+                    placeholder="Ex: 50000.00"
+                    value={formEntradaRecursos.valor}
+                    onChange={(e) => setFormEntradaRecursos({ ...formEntradaRecursos, valor: e.target.value })}
+                    style={{ width: '100%', padding: '10px 14px', background: '#1e293b', border: '2px solid #34d399', borderRadius: '8px', color: '#34d399', fontSize: '15px', fontWeight: 800, fontFamily: 'monospace' }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#cbd5e1', marginBottom: '6px' }}>
+                    Data da Entrada *
+                  </label>
+                  <input
+                    type="date"
+                    required
+                    value={formEntradaRecursos.dataEntrada}
+                    onChange={(e) => setFormEntradaRecursos({ ...formEntradaRecursos, dataEntrada: e.target.value })}
+                    style={{ width: '100%', padding: '10px 14px', background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', color: '#fff', fontSize: '13px' }}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#60a5fa', marginBottom: '6px' }}>
+                  Banco de Destino (Creditado) *
+                </label>
+                <select
+                  required
+                  value={formEntradaRecursos.bancoId}
+                  onChange={(e) => setFormEntradaRecursos({ ...formEntradaRecursos, bancoId: e.target.value })}
+                  style={{ width: '100%', padding: '10px 14px', background: '#1e293b', border: '1px solid #60a5fa', borderRadius: '8px', color: '#60a5fa', fontSize: '13px', fontWeight: 700 }}
+                >
+                  <option value="">Selecione a Conta Bancária...</option>
+                  {bancosComSaldo.map(b => (
+                    <option key={b.id} value={b.id}>
+                      {b.nome} (Saldo Atual: {formatMoney(b.saldoAtual)})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#94a3b8', marginBottom: '6px' }}>
+                  Categoria de Origem
+                </label>
+                <select
+                  value={formEntradaRecursos.categoria}
+                  onChange={(e) => setFormEntradaRecursos({ ...formEntradaRecursos, categoria: e.target.value })}
+                  style={{ width: '100%', padding: '10px 14px', background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', color: '#fff', fontSize: '13px' }}
+                >
+                  <option value="Faturamento / Vendas">Faturamento / Vendas</option>
+                  <option value="Aporte / Capital">Aporte / Capital de Sócios</option>
+                  <option value="Rendimento Aplicação">Rendimento de Aplicação</option>
+                  <option value="Reembolso / Estorno">Reembolso / Estorno</option>
+                  <option value="Outros">Outros</option>
+                </select>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#94a3b8', marginBottom: '6px' }}>
+                  Observações
+                </label>
+                <input
+                  type="text"
+                  placeholder="Ex: Ref NFe #8841..."
+                  value={formEntradaRecursos.observacao}
+                  onChange={(e) => setFormEntradaRecursos({ ...formEntradaRecursos, observacao: e.target.value })}
+                  style={{ width: '100%', padding: '10px 14px', background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', color: '#fff', fontSize: '13px' }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '10px' }}>
+                <button
+                  type="button"
+                  onClick={() => setShowModalEntradaRecursos(false)}
+                  style={{ padding: '10px 16px', background: 'rgba(148, 163, 184, 0.15)', color: '#cbd5e1', border: 'none', borderRadius: '8px', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  style={{ padding: '10px 20px', background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 800, cursor: 'pointer', boxShadow: '0 4px 14px rgba(59, 130, 246, 0.4)' }}
+                >
+                  Confirmar Crédito na Conta
+                </button>
+              </div>
             </form>
 
           </div>
