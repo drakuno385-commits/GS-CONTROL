@@ -874,6 +874,42 @@ export default function Financeiro({ currentUser }) {
     alert('✅ Despesa conciliada e finalizada com sucesso!');
   };
 
+  // Handler para Estorno de Despesa de Pagas de volta para Lançadas
+  const handleEstornarParaLancadas = (id) => {
+    if (!window.confirm('Tem certeza que deseja estornar este pagamento e retornar a despesa para a aba "Lançadas"?')) return;
+    setDespesas(prev => prev.map(d => {
+      if (d.id === id) {
+        const copy = { ...d };
+        delete copy.valorExecutado;
+        return {
+          ...copy,
+          status: 'LANCADA',
+          statusPagamento: 'PENDENTE_PAGAMENTO',
+          dataPagamento: null,
+          obsPagamento: ''
+        };
+      }
+      return d;
+    }));
+    alert('🔄 Despesa estornada com sucesso! Retornou para a aba "Lançadas".');
+  };
+
+  // Handler para Reenviar Despesa Recusada/Reprovada para a Tela 1 (Cadastro)
+  const handleReenviarParaCadastro = (id) => {
+    setDespesas(prev => prev.map(d => {
+      if (d.id === id) {
+        return {
+          ...d,
+          status: 'CADASTRADA',
+          statusPagamento: 'PENDENTE_PAGAMENTO',
+          obsAprovacao: ''
+        };
+      }
+      return d;
+    }));
+    alert('↩️ Despesa reenviada para a aba "Cadastro de Despesas"!');
+  };
+
   // Handler de envio do formulário de nova despesa
   const handleCadastrarDespesa = (e) => {
     e.preventDefault();
@@ -2277,7 +2313,36 @@ export default function Financeiro({ currentUser }) {
                           ) : (
                             <span style={{ color: '#64748b', display: 'block' }}>Sem OP</span>
                           )}
-                          <span style={{ color: '#cbd5e1', display: 'block', marginTop: '2px' }}>{item.banco}</span>
+                          {activeTab === 'aprovadas' ? (
+                            <div style={{ marginTop: '4px' }}>
+                              <label style={{ display: 'block', fontSize: '10px', color: '#38bdf8', fontWeight: 700, marginBottom: '2px' }}>
+                                ✏️ Banco Pagador:
+                              </label>
+                              <select
+                                value={item.banco || bancos[0] || 'Itaú'}
+                                onChange={(e) => {
+                                  const novoBanco = e.target.value;
+                                  setDespesas(prev => prev.map(d => d.id === item.id ? { ...d, banco: novoBanco } : d));
+                                }}
+                                style={{
+                                  padding: '4px 8px',
+                                  background: '#0f172a',
+                                  border: '1px solid #38bdf8',
+                                  borderRadius: '6px',
+                                  color: '#38bdf8',
+                                  fontSize: '11px',
+                                  fontWeight: 700,
+                                  cursor: 'pointer'
+                                }}
+                              >
+                                {bancos.map(b => (
+                                  <option key={b} value={b}>{b}</option>
+                                ))}
+                              </select>
+                            </div>
+                          ) : (
+                            <span style={{ color: '#cbd5e1', display: 'block', marginTop: '2px' }}>{item.banco}</span>
+                          )}
                           {item.formaPagamento && (
                             <span style={{ color: '#a78bfa', display: 'block', fontSize: '10px' }}>• {item.formaPagamento}</span>
                           )}
@@ -2399,13 +2464,20 @@ export default function Financeiro({ currentUser }) {
 
                           {/* 5. PAGAS */}
                           {activeTab === 'pagas' && (
-                            <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', alignItems: 'center' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', alignItems: 'center' }}>
                               <button
                                 onClick={() => handleEnviarParaConciliacao(item.id)}
-                                style={{ padding: '6px 12px', background: 'rgba(59, 130, 246, 0.2)', color: '#60a5fa', border: '1px solid rgba(59, 130, 246, 0.4)', borderRadius: '6px', fontSize: '11px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                                style={{ width: '100%', padding: '6px 12px', background: 'rgba(59, 130, 246, 0.2)', color: '#60a5fa', border: '1px solid rgba(59, 130, 246, 0.4)', borderRadius: '6px', fontSize: '11px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}
                                 title="Enviar para a aba Pendente de Conciliação"
                               >
                                 <Landmark size={12} /> 🏦 Enviar p/ Conciliação
+                              </button>
+                              <button
+                                onClick={() => handleEstornarParaLancadas(item.id)}
+                                style={{ width: '100%', padding: '6px 12px', background: 'rgba(239, 68, 68, 0.2)', color: '#f87171', border: '1px solid rgba(239, 68, 68, 0.4)', borderRadius: '6px', fontSize: '11px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}
+                                title="Estornar pagamento e retornar a despesa para a aba 5 (Lançadas)"
+                              >
+                                <RotateCcw size={12} /> 🔄 ESTORNO DE DESPESA
                               </button>
                             </div>
                           )}
@@ -2426,6 +2498,13 @@ export default function Financeiro({ currentUser }) {
                           {/* 7. RECUSADAS */}
                           {activeTab === 'recusadas' && (
                             <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', alignItems: 'center' }}>
+                              <button
+                                onClick={() => handleReenviarParaCadastro(item.id)}
+                                style={{ padding: '6px 12px', background: 'rgba(167, 139, 250, 0.2)', color: '#a78bfa', border: '1px solid rgba(167, 139, 250, 0.4)', borderRadius: '6px', fontSize: '11px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                                title="Reenviar despesa reprovada de volta para a aba Cadastro de Despesas"
+                              >
+                                <RotateCcw size={12} /> ↩️ Reenviar p/ Cadastro
+                              </button>
                               <button
                                 onClick={() => handleExcluirDespesa(item.id)}
                                 style={{ background: 'transparent', border: 'none', color: '#64748b', cursor: 'pointer', padding: '4px' }}
@@ -2789,6 +2868,7 @@ export default function Financeiro({ currentUser }) {
                       <th style={{ padding: '10px', textAlign: 'right' }}>Valor (R$)</th>
                       <th style={{ padding: '10px' }}>Banco / Forma</th>
                       <th style={{ padding: '10px' }}>Vencimento</th>
+                      <th style={{ padding: '10px', textAlign: 'center' }}>Documentos / Anexos (PDF)</th>
                       <th style={{ padding: '10px', textAlign: 'center' }}>Status na Esteira</th>
                       <th style={{ padding: '10px', textAlign: 'center' }}>Situação Pagto</th>
                     </tr>
@@ -2801,16 +2881,6 @@ export default function Financeiro({ currentUser }) {
                           <td style={{ padding: '10px', color: '#94a3b8', fontFamily: 'monospace' }}>
                             <div>{item.id}</div>
                             {item.temOP && <span style={{ color: '#38bdf8', fontWeight: 700, fontSize: '10px', display: 'block' }}>{item.numeroOP}</span>}
-                            {item.pdfOP && (
-                              <button
-                                type="button"
-                                onClick={() => abrirPDF(item.pdfOP)}
-                                style={{ marginTop: '2px', background: 'rgba(56, 189, 248, 0.15)', color: '#38bdf8', border: '1px solid rgba(56, 189, 248, 0.35)', borderRadius: '4px', padding: '1px 5px', fontSize: '9px', fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '2px' }}
-                                title={item.pdfOP.name || 'Ver PDF OP'}
-                              >
-                                <FileText size={9} /> PDF OP
-                              </button>
-                            )}
                           </td>
                           <td style={{ padding: '10px', fontWeight: 700, color: '#f8fafc' }}>{item.empresa}</td>
                           <td style={{ padding: '10px', color: '#cbd5e1' }}>{item.departamento}</td>
@@ -2822,18 +2892,40 @@ export default function Financeiro({ currentUser }) {
                           <td style={{ padding: '10px', color: '#cbd5e1' }}>
                             <div>{item.banco}</div>
                             <span style={{ color: '#94a3b8', fontSize: '10px', display: 'block' }}>{item.formaPagamento}</span>
-                            {item.pdfComprovante && (
-                              <button
-                                type="button"
-                                onClick={() => abrirPDF(item.pdfComprovante)}
-                                style={{ marginTop: '3px', background: 'rgba(52, 211, 153, 0.15)', color: '#34d399', border: '1px solid rgba(52, 211, 153, 0.35)', borderRadius: '4px', padding: '1px 5px', fontSize: '9px', fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '2px' }}
-                                title={item.pdfComprovante.name || 'Ver Comprovante PDF'}
-                              >
-                                <FileText size={9} /> Comprovante PDF
-                              </button>
-                            )}
                           </td>
                           <td style={{ padding: '10px', color: '#cbd5e1' }}>{formatDate(item.vencimento)}</td>
+                          
+                          {/* Coluna dedicada para Anexos PDF no Relatório Mensal */}
+                          <td style={{ padding: '10px', textAlign: 'center' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'center' }}>
+                              {item.pdfOP ? (
+                                <button
+                                  type="button"
+                                  onClick={() => abrirPDF(item.pdfOP)}
+                                  style={{ background: 'rgba(56, 189, 248, 0.15)', color: '#38bdf8', border: '1px solid rgba(56, 189, 248, 0.4)', borderRadius: '6px', padding: '3px 8px', fontSize: '10px', fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                                  title={item.pdfOP.name || 'Ver Documento OP'}
+                                >
+                                  <FileText size={11} /> 📄 PDF OP
+                                </button>
+                              ) : null}
+
+                              {item.pdfComprovante ? (
+                                <button
+                                  type="button"
+                                  onClick={() => abrirPDF(item.pdfComprovante)}
+                                  style={{ background: 'rgba(52, 211, 153, 0.15)', color: '#34d399', border: '1px solid rgba(52, 211, 153, 0.4)', borderRadius: '6px', padding: '3px 8px', fontSize: '10px', fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                                  title={item.pdfComprovante.name || 'Ver Comprovante de Pagamento'}
+                                >
+                                  <FileText size={11} /> 📑 Comprovante PDF
+                                </button>
+                              ) : null}
+
+                              {!item.pdfOP && !item.pdfComprovante && (
+                                <span style={{ color: '#64748b', fontSize: '11px' }}>Sem anexos</span>
+                              )}
+                            </div>
+                          </td>
+
                           <td style={{ padding: '10px', textAlign: 'center' }}>
                             <span style={{ padding: '3px 8px', borderRadius: '6px', fontSize: '10px', fontWeight: 700, background: 'rgba(51, 65, 85, 0.6)', color: '#cbd5e1', border: '1px solid rgba(255,255,255,0.1)' }}>
                               {item.status}
@@ -2890,6 +2982,7 @@ export default function Financeiro({ currentUser }) {
                       <th style={{ padding: '10px', textAlign: 'right' }}>Valor (R$)</th>
                       <th style={{ padding: '10px' }}>Banco / OP</th>
                       <th style={{ padding: '10px' }}>Vencimento</th>
+                      <th style={{ padding: '10px', textAlign: 'center' }}>Anexos PDF</th>
                       <th style={{ padding: '10px', textAlign: 'center' }}>Situação</th>
                     </tr>
                   </thead>
@@ -2918,28 +3011,40 @@ export default function Financeiro({ currentUser }) {
                           <td style={{ padding: '10px', color: '#cbd5e1' }}>
                             <div>{item.banco}</div>
                             {item.temOP && <span style={{ color: '#38bdf8', fontSize: '10px', display: 'block' }}>OP: {item.numeroOP}</span>}
-                            {item.pdfOP && (
-                              <button
-                                type="button"
-                                onClick={() => abrirPDF(item.pdfOP)}
-                                style={{ marginTop: '2px', background: 'rgba(56, 189, 248, 0.15)', color: '#38bdf8', border: '1px solid rgba(56, 189, 248, 0.35)', borderRadius: '4px', padding: '1px 5px', fontSize: '9px', fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '2px' }}
-                                title={item.pdfOP.name || 'Ver PDF OP'}
-                              >
-                                <FileText size={9} /> PDF OP
-                              </button>
-                            )}
-                            {item.pdfComprovante && (
-                              <button
-                                type="button"
-                                onClick={() => abrirPDF(item.pdfComprovante)}
-                                style={{ marginTop: '3px', background: 'rgba(52, 211, 153, 0.15)', color: '#34d399', border: '1px solid rgba(52, 211, 153, 0.35)', borderRadius: '4px', padding: '1px 5px', fontSize: '9px', fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '2px' }}
-                                title={item.pdfComprovante.name || 'Ver Comprovante PDF'}
-                              >
-                                <FileText size={9} /> Comprovante PDF
-                              </button>
-                            )}
                           </td>
                           <td style={{ padding: '10px', color: '#cbd5e1' }}>{formatDate(item.vencimento)}</td>
+
+                          {/* Anexos PDF */}
+                          <td style={{ padding: '10px', textAlign: 'center' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'center' }}>
+                              {item.pdfOP ? (
+                                <button
+                                  type="button"
+                                  onClick={() => abrirPDF(item.pdfOP)}
+                                  style={{ background: 'rgba(56, 189, 248, 0.15)', color: '#38bdf8', border: '1px solid rgba(56, 189, 248, 0.4)', borderRadius: '6px', padding: '3px 8px', fontSize: '10px', fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                                  title={item.pdfOP.name || 'Ver Documento OP'}
+                                >
+                                  <FileText size={11} /> 📄 PDF OP
+                                </button>
+                              ) : null}
+
+                              {item.pdfComprovante ? (
+                                <button
+                                  type="button"
+                                  onClick={() => abrirPDF(item.pdfComprovante)}
+                                  style={{ background: 'rgba(52, 211, 153, 0.15)', color: '#34d399', border: '1px solid rgba(52, 211, 153, 0.4)', borderRadius: '6px', padding: '3px 8px', fontSize: '10px', fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                                  title={item.pdfComprovante.name || 'Ver Comprovante de Pagamento'}
+                                >
+                                  <FileText size={11} /> 📑 Comprovante PDF
+                                </button>
+                              ) : null}
+
+                              {!item.pdfOP && !item.pdfComprovante && (
+                                <span style={{ color: '#64748b', fontSize: '11px' }}>Sem anexos</span>
+                              )}
+                            </div>
+                          </td>
+
                           <td style={{ padding: '10px', textAlign: 'center' }}>
                             <span style={{ padding: '3px 8px', borderRadius: '12px', fontSize: '10px', fontWeight: 800, background: sit.bg, color: sit.color }}>
                               {sit.label}
