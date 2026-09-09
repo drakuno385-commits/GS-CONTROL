@@ -662,8 +662,8 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
     }
   };
 
-  // Sub-abas da Tela Nova de Conciliação Bancária ('conciliar' | 'entradas' | 'bancos' | 'extrato')
-  const [subTabConciliacao, setSubTabConciliacao] = useState('conciliar');
+  // Sub-abas da Tela Nova de Conciliação Bancária ('entradas' | 'bancos' | 'extrato')
+  const [subTabConciliacao, setSubTabConciliacao] = useState('entradas');
 
   // Modais de Cadastro de Bancos com Saldo e Entradas de Recursos
   const [showModalBancoSaldo, setShowModalBancoSaldo] = useState(false);
@@ -2809,15 +2809,57 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
                             </div>
                           )}
 
-                          {/* 6. CONCILIAÇÃO */}
+                          {/* 6. CONCILIAÇÃO BANCÁRIA — SELEÇÃO DE BANCO E ABATE REAL DE SALDO */}
                           {activeTab === 'conciliacao' && (
-                            <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', alignItems: 'center' }}>
-                              <button
-                                onClick={() => handleConciliarEArquivar(item.id)}
-                                style={{ padding: '6px 12px', background: 'rgba(16, 185, 129, 0.2)', color: '#34d399', border: '1px solid rgba(16, 185, 129, 0.4)', borderRadius: '6px', fontSize: '11px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
-                                title="Conciliar e finalizar despesa no histórico"
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', alignItems: 'center', minWidth: '220px' }}>
+                              <select
+                                id={`select_banco_fluxo_${item.id}`}
+                                defaultValue={bancosComSaldo.find(b => b.nome.toLowerCase().includes((item.banco || '').toLowerCase()))?.id || bancosComSaldo[0]?.id || ''}
+                                style={{
+                                  width: '100%',
+                                  padding: '6px 8px',
+                                  background: '#0f172a',
+                                  border: '1px solid #10b981',
+                                  borderRadius: '6px',
+                                  color: '#34d399',
+                                  fontSize: '11px',
+                                  fontWeight: 700,
+                                  cursor: 'pointer'
+                                }}
+                                title="Selecione de qual banco o saldo será abatido"
                               >
-                                <CheckCircle2 size={12} /> ✅ Conciliar & Finalizar
+                                {bancosComSaldo.map(b => (
+                                  <option key={b.id} value={b.id}>
+                                    🏦 {b.nome} (Saldo: {formatMoney(b.saldoAtual)})
+                                  </option>
+                                ))}
+                              </select>
+
+                              <button
+                                onClick={() => {
+                                  const sel = document.getElementById(`select_banco_fluxo_${item.id}`);
+                                  const bId = sel ? sel.value : (bancosComSaldo[0]?.id || '');
+                                  handleConciliarComAbateSaldo(item.id, bId);
+                                }}
+                                style={{
+                                  width: '100%',
+                                  padding: '6px 12px',
+                                  background: 'linear-gradient(135deg, #10b981, #047857)',
+                                  color: '#fff',
+                                  border: 'none',
+                                  borderRadius: '6px',
+                                  fontSize: '11px',
+                                  fontWeight: 800,
+                                  cursor: 'pointer',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  gap: '4px',
+                                  boxShadow: '0 2px 8px rgba(16, 185, 129, 0.3)'
+                                }}
+                                title="Conciliar esta despesa e abater o valor do saldo do banco selecionado"
+                              >
+                                <CheckCircle2 size={13} /> ⚖️ Conciliar & Abater Saldo
                               </button>
                             </div>
                           )}
@@ -3354,27 +3396,6 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
           <div style={{ display: 'flex', gap: '10px', borderBottom: '1px solid rgba(255, 255, 255, 0.1)', paddingBottom: '8px', overflowX: 'auto' }}>
             
             <button
-              onClick={() => setSubTabConciliacao('conciliar')}
-              style={{
-                padding: '10px 18px',
-                borderRadius: '8px',
-                border: 'none',
-                background: subTabConciliacao === 'conciliar' ? 'rgba(16, 185, 129, 0.25)' : 'rgba(30, 41, 59, 0.5)',
-                color: subTabConciliacao === 'conciliar' ? '#34d399' : '#94a3b8',
-                fontWeight: 800,
-                fontSize: '13px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                borderBottom: subTabConciliacao === 'conciliar' ? '3px solid #34d399' : 'none'
-              }}
-            >
-              <CheckCircle2 size={16} />
-              <span>1. Conciliação & Abate de Despesas em Conta</span>
-            </button>
-
-            <button
               onClick={() => setSubTabConciliacao('entradas')}
               style={{
                 padding: '10px 18px',
@@ -3392,7 +3413,7 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
               }}
             >
               <ArrowUpRight size={16} />
-              <span>2. Entrada de Recursos (Receitas & Aportes)</span>
+              <span>1. Entrada de Recursos (Receitas & Aportes)</span>
             </button>
 
             <button
@@ -3413,7 +3434,7 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
               }}
             >
               <Landmark size={16} />
-              <span>3. Cadastro & Gestão de Bancos e Saldos</span>
+              <span>2. Cadastro & Gestão de Bancos e Saldos</span>
             </button>
 
             <button
@@ -3434,120 +3455,12 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
               }}
             >
               <Database size={16} />
-              <span>4. Extrato & Histórico de Movimentações</span>
+              <span>3. Extrato & Histórico de Movimentações</span>
             </button>
 
           </div>
 
           {/* CONTEÚDO DAS SUB-ABAS DA CONCILIAÇÃO BANCÁRIA */}
-
-          {/* SUB-ABA 1: CONCILIAÇÃO DE DESPESAS COM ABATE DE SALDO */}
-          {subTabConciliacao === 'conciliar' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              <div style={{ background: 'rgba(30, 41, 59, 0.5)', padding: '20px', borderRadius: '16px', border: '1px solid rgba(16, 185, 129, 0.2)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
-                <div>
-                  <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#34d399', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <CheckCircle2 size={20} color="#34d399" />
-                    Conciliação de Despesas com Abate do Saldo Bancário
-                  </h3>
-                  <span style={{ fontSize: '12px', color: '#94a3b8' }}>
-                    Selecione de qual banco cadastrado o valor da despesa paga deve ser descontado. O saldo do banco será atualizado automaticamente ao conciliar.
-                  </span>
-                </div>
-              </div>
-
-              {/* Tabela de Despesas Prontas para Conciliação */}
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', textAlign: 'left' }}>
-                  <thead>
-                    <tr style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.1)', color: '#94a3b8', fontSize: '10px', textTransform: 'uppercase' }}>
-                      <th style={{ padding: '12px' }}>Descrição da Despesa</th>
-                      <th style={{ padding: '12px' }}>Empresa / Depto</th>
-                      <th style={{ padding: '12px', textAlign: 'right' }}>Valor Efetivo (R$)</th>
-                      <th style={{ padding: '12px' }}>Venc. / Data Pagto</th>
-                      <th style={{ padding: '12px', textAlign: 'center' }}>Documentos (PDF)</th>
-                      <th style={{ padding: '12px' }}>Apontar Banco com Saldo para Abate</th>
-                      <th style={{ padding: '12px', textAlign: 'center' }}>Ação de Conciliação</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {despesas.filter(d => d.statusPagamento === 'PENDENTE_CONCILIACAO' || d.statusPagamento === 'PAGO' || d.status === 'LANCADA').length === 0 ? (
-                      <tr>
-                        <td colSpan={7} style={{ padding: '32px', textAlign: 'center', color: '#64748b' }}>
-                          Nenhuma despesa pendente de conciliação no momento.
-                        </td>
-                      </tr>
-                    ) : (
-                      despesas.filter(d => d.statusPagamento === 'PENDENTE_CONCILIACAO' || d.statusPagamento === 'PAGO' || d.status === 'LANCADA').map((item, idx) => {
-                        return (
-                          <tr key={item.id} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.04)', background: idx % 2 === 0 ? 'transparent' : 'rgba(255, 255, 255, 0.01)' }}>
-                            <td style={{ padding: '12px', fontWeight: 700, color: '#f8fafc' }}>
-                              <div>{item.nome}</div>
-                              {item.temOP && <span style={{ color: '#38bdf8', fontSize: '10px' }}>OP: {item.numeroOP}</span>}
-                            </td>
-                            <td style={{ padding: '12px', color: '#cbd5e1' }}>
-                              <div>{item.empresa}</div>
-                              <span style={{ color: '#94a3b8', fontSize: '10px' }}>{item.departamento}</span>
-                            </td>
-                            <td style={{ padding: '12px', textAlign: 'right', fontWeight: 800, color: '#34d399', fontFamily: 'monospace', fontSize: '14px' }}>
-                              {formatMoney(item.valorExecutado !== undefined ? item.valorExecutado : item.valor)}
-                              {item.valorExecutado !== undefined && item.valorExecutado !== item.valor && (
-                                <div style={{ fontSize: '10px', color: '#94a3b8' }}>Previsto: {formatMoney(item.valor)}</div>
-                              )}
-                            </td>
-                            <td style={{ padding: '12px', color: '#cbd5e1', fontSize: '11px' }}>
-                              <div>Venc: {formatDate(item.vencimento)}</div>
-                              {item.dataPagamento && <div style={{ color: '#34d399' }}>Pago: {formatDate(item.dataPagamento)}</div>}
-                            </td>
-                            <td style={{ padding: '12px', textAlign: 'center' }}>
-                              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'center' }}>
-                                {item.pdfOP && (
-                                  <button type="button" onClick={() => abrirPDF(item.pdfOP)} style={{ background: 'rgba(56, 189, 248, 0.15)', color: '#38bdf8', border: '1px solid rgba(56, 189, 248, 0.35)', borderRadius: '4px', padding: '2px 6px', fontSize: '10px', fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
-                                    <FileText size={10} /> PDF OP
-                                  </button>
-                                )}
-                                {item.pdfComprovante && (
-                                  <button type="button" onClick={() => abrirPDF(item.pdfComprovante)} style={{ background: 'rgba(52, 211, 153, 0.15)', color: '#34d399', border: '1px solid rgba(52, 211, 153, 0.35)', borderRadius: '4px', padding: '2px 6px', fontSize: '10px', fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
-                                    <FileText size={10} /> Comprovante PDF
-                                  </button>
-                                )}
-                                {!item.pdfOP && !item.pdfComprovante && <span style={{ color: '#64748b', fontSize: '10px' }}>—</span>}
-                              </div>
-                            </td>
-                            <td style={{ padding: '12px' }}>
-                              <select
-                                id={`select_banco_${item.id}`}
-                                defaultValue={bancosComSaldo.find(b => b.nome.toLowerCase().includes((item.banco || '').toLowerCase()))?.id || bancosComSaldo[0]?.id || ''}
-                                style={{ width: '100%', padding: '8px 10px', background: '#0f172a', border: '1px solid #10b981', borderRadius: '8px', color: '#34d399', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}
-                              >
-                                {bancosComSaldo.map(b => (
-                                  <option key={b.id} value={b.id}>
-                                    {b.nome} — Saldo Disp: {formatMoney(b.saldoAtual)}
-                                  </option>
-                                ))}
-                              </select>
-                            </td>
-                            <td style={{ padding: '12px', textAlign: 'center' }}>
-                              <button
-                                onClick={() => {
-                                  const sel = document.getElementById(`select_banco_${item.id}`);
-                                  const bId = sel ? sel.value : (bancosComSaldo[0]?.id || '');
-                                  handleConciliarComAbateSaldo(item.id, bId);
-                                }}
-                                style={{ padding: '8px 14px', background: 'linear-gradient(135deg, #10b981, #047857)', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '12px', fontWeight: 800, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px', boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)' }}
-                              >
-                                <CheckCircle2 size={14} /> ⚖️ Conciliar & Abater Saldo
-                              </button>
-                            </td>
-                          </tr>
-                        );
-                      })
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
 
           {/* SUB-ABA 2: ENTRADA DE RECURSOS (RECEITAS / APORTES) */}
           {subTabConciliacao === 'entradas' && (
