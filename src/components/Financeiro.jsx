@@ -1077,6 +1077,19 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
     setFormBancoSaldo({ id: null, nome: '', agencia: '', conta: '', saldoInicial: '', saldoAtual: '', cor: '#38bdf8' });
   };
 
+  // Excluir Banco Cadastrado (APENAS USUÁRIO MASTER)
+  const handleExcluirBanco = (bancoId, bancoNome) => {
+    if (!currentUser || currentUser.role !== 'MASTER') {
+      alert('🔒 Apenas usuários com perfil MASTER têm permissão para excluir contas bancárias.');
+      return;
+    }
+
+    if (window.confirm(`⚠️ AVISO MASTER: Deseja realmente EXCLUIR o banco "${bancoNome}"?\n\nEsta ação removerá o banco e seu saldo da gestão bancária.`)) {
+      setBancosComSaldo(prev => prev.filter(b => b.id !== bancoId));
+      alert(`✅ Banco "${bancoNome}" excluído com sucesso!`);
+    }
+  };
+
   // 2. Cadastrar Entrada de Recursos (Aportes / Receitas)
   const handleCadastrarEntradaRecursos = (e) => {
     e.preventDefault();
@@ -3514,23 +3527,34 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
                   <div key={banco.id} style={{ background: 'rgba(15, 23, 42, 0.8)', padding: '20px', borderRadius: '16px', border: `1px solid ${banco.cor || '#334155'}`, boxShadow: '0 4px 14px rgba(0,0,0,0.3)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
                       <div style={{ fontWeight: 800, fontSize: '16px', color: '#f8fafc' }}>{banco.nome}</div>
-                      <button
-                        onClick={() => {
-                          setFormBancoSaldo({
-                            id: banco.id,
-                            nome: banco.nome,
-                            agencia: banco.agencia || '',
-                            conta: banco.conta || '',
-                            saldoInicial: banco.saldoInicial,
-                            saldoAtual: banco.saldoAtual,
-                            cor: banco.cor || '#38bdf8'
-                          });
-                          setShowModalBancoSaldo(true);
-                        }}
-                        style={{ background: 'rgba(255,255,255,0.08)', border: 'none', color: '#cbd5e1', borderRadius: '6px', padding: '4px 8px', fontSize: '11px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
-                      >
-                        <Edit2 size={12} /> Editar
-                      </button>
+                      <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                        <button
+                          onClick={() => {
+                            setFormBancoSaldo({
+                              id: banco.id,
+                              nome: banco.nome,
+                              agencia: banco.agencia || '',
+                              conta: banco.conta || '',
+                              saldoInicial: banco.saldoInicial,
+                              saldoAtual: banco.saldoAtual,
+                              cor: banco.cor || '#38bdf8'
+                            });
+                            setShowModalBancoSaldo(true);
+                          }}
+                          style={{ background: 'rgba(255,255,255,0.08)', border: 'none', color: '#cbd5e1', borderRadius: '6px', padding: '4px 8px', fontSize: '11px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                        >
+                          <Edit2 size={12} /> Editar
+                        </button>
+                        {currentUser?.role === 'MASTER' && (
+                          <button
+                            onClick={() => handleExcluirBanco(banco.id, banco.nome)}
+                            style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#f87171', borderRadius: '6px', padding: '4px 8px', fontSize: '11px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                            title="Apenas usuários com perfil MASTER podem excluir contas bancárias"
+                          >
+                            <Trash2 size={12} color="#f87171" /> Excluir
+                          </button>
+                        )}
+                      </div>
                     </div>
 
                     <div style={{ fontSize: '11px', color: '#94a3b8', marginBottom: '12px' }}>
