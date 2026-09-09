@@ -490,13 +490,42 @@ export default function Financeiro({ currentUser }) {
   // Sub-aba na tela de Relatório Mensal ('fluxo' ou 'consulta')
   const [subTabRelatorio, setSubTabRelatorio] = useState('fluxo');
 
-  // Filtros Globais da Tabela
-  const [filtroEmpresa, setFiltroEmpresa] = useState('');
-  const [filtroDepartamento, setFiltroDepartamento] = useState('');
-  const [filtroBusca, setFiltroBusca] = useState('');
-  const [filtroStatusPagamento, setFiltroStatusPagamento] = useState('TODOS');
-  const [filtroFormaPagamento, setFiltroFormaPagamento] = useState('');
-  const [filtroMes, setFiltroMes] = useState(''); // Filtro por Mês 'YYYY-MM'
+  // Filtros Independentes por Aba (Garante que os filtros de uma aba NUNCA interfiram na outra)
+  const [filtrosPorAba, setFiltrosPorAba] = useState({
+    cadastradas: { empresa: '', departamento: '', busca: '', formaPagamento: '', statusPagamento: 'TODOS', mes: '' },
+    aguardando: { empresa: '', departamento: '', busca: '', formaPagamento: '', statusPagamento: 'TODOS', mes: '' },
+    aprovadas: { empresa: '', departamento: '', busca: '', formaPagamento: '', statusPagamento: 'TODOS', mes: '' },
+    lancadas: { empresa: '', departamento: '', busca: '', formaPagamento: '', statusPagamento: 'TODOS', mes: '' },
+    pagas: { empresa: '', departamento: '', busca: '', formaPagamento: '', statusPagamento: 'TODOS', mes: '' },
+    conciliacao: { empresa: '', departamento: '', busca: '', formaPagamento: '', statusPagamento: 'TODOS', mes: '' },
+    recusadas: { empresa: '', departamento: '', busca: '', formaPagamento: '', statusPagamento: 'TODOS', mes: '' },
+    relatorio: { empresa: '', departamento: '', busca: '', formaPagamento: '', statusPagamento: 'TODOS', mes: '' },
+    consulta: { empresa: '', departamento: '', busca: '', formaPagamento: '', statusPagamento: 'TODOS', mes: '' }
+  });
+
+  // Obter estado de filtro da aba ativa atual
+  const tabChaveAtual = activeTab === 'relatorio' ? (subTabRelatorio === 'consulta' ? 'consulta' : 'relatorio') : activeTab;
+  
+  const filtroAtual = useMemo(() => {
+    return filtrosPorAba[tabChaveAtual] || {
+      empresa: '',
+      departamento: '',
+      busca: '',
+      formaPagamento: '',
+      statusPagamento: 'TODOS',
+      mes: ''
+    };
+  }, [filtrosPorAba, tabChaveAtual]);
+
+  const setFiltroAtual = (field, value) => {
+    setFiltrosPorAba(prev => ({
+      ...prev,
+      [tabChaveAtual]: {
+        ...(prev[tabChaveAtual] || { empresa: '', departamento: '', busca: '', formaPagamento: '', statusPagamento: 'TODOS', mes: '' }),
+        [field]: value
+      }
+    }));
+  };
 
   // Modal de Detalhes ao Clicar nos Cards de KPI de Resumo
   const [modalDetalhesCard, setModalDetalhesCard] = useState(null);
@@ -860,9 +889,10 @@ export default function Financeiro({ currentUser }) {
   // Estatísticas Globais & Resumo por Mês (Balanço Mensal)
   const estatisticas = useMemo(() => {
     const hoje = new Date().toISOString().slice(0, 10);
+    const mesFiltro = filtroAtual.mes;
 
-    const despesasEscopo = filtroMes 
-      ? despesas.filter(d => d.vencimento && d.vencimento.startsWith(filtroMes))
+    const despesasEscopo = mesFiltro 
+      ? despesas.filter(d => d.vencimento && d.vencimento.startsWith(mesFiltro))
       : despesas;
 
     const cadastradas = despesasEscopo.filter(d => d.status === 'CADASTRADA');
@@ -912,11 +942,12 @@ export default function Financeiro({ currentUser }) {
       listaAguardando: aguardando,
       listaConciliacaoEArquivo: [...conciliacao, ...arquivadas]
     };
-  }, [despesas, filtroMes]);
+  }, [despesas, filtroAtual.mes]);
 
   // Lista Filtrada para a Aba Ativa da Tabela Principal
   const listaExibicao = useMemo(() => {
     const hoje = new Date().toISOString().slice(0, 10);
+    const { mes, statusPagamento, empresa, departamento, formaPagamento, busca } = filtroAtual;
 
     return despesas.filter(d => {
       if (activeTab === 'cadastradas') {
@@ -947,26 +978,26 @@ export default function Financeiro({ currentUser }) {
         if (d.status !== 'RECUSADA') return false;
       }
 
-      if (filtroMes) {
-        if (!d.vencimento || !d.vencimento.startsWith(filtroMes)) return false;
+      if (mes) {
+        if (!d.vencimento || !d.vencimento.startsWith(mes)) return false;
       }
 
-      if (filtroStatusPagamento !== 'TODOS') {
-        if (filtroStatusPagamento === 'VENCIDA') {
+      if (statusPagamento && statusPagamento !== 'TODOS') {
+        if (statusPagamento === 'VENCIDA') {
           if (d.statusPagamento === 'PAGO' || d.statusPagamento === 'PENDENTE_CONCILIACAO' || d.statusPagamento === 'ARQUIVADO' || !d.vencimento || d.vencimento >= hoje) return false;
-        } else if (filtroStatusPagamento === 'A_VENCER') {
+        } else if (statusPagamento === 'A_VENCER') {
           if (d.statusPagamento === 'PAGO' || d.statusPagamento === 'PENDENTE_CONCILIACAO' || d.statusPagamento === 'ARQUIVADO' || (d.vencimento && d.vencimento < hoje)) return false;
-        } else if (d.statusPagamento !== filtroStatusPagamento) {
+        } else if (d.statusPagamento !== statusPagamento) {
           return false;
         }
       }
 
-      if (filtroEmpresa && d.empresa !== filtroEmpresa) return false;
-      if (filtroDepartamento && d.departamento !== filtroDepartamento) return false;
-      if (filtroFormaPagamento && d.formaPagamento !== filtroFormaPagamento) return false;
+      if (empresa && d.empresa !== empresa) return false;
+      if (departamento && d.departamento !== departamento) return false;
+      if (formaPagamento && d.formaPagamento !== formaPagamento) return false;
       
-      if (filtroBusca) {
-        const term = filtroBusca.toLowerCase();
+      if (busca) {
+        const term = busca.toLowerCase();
         const matchNome = (d.nome || '').toLowerCase().includes(term);
         const matchOP = (d.numeroOP || '').toLowerCase().includes(term);
         const matchObs = (d.observacao || '').toLowerCase().includes(term);
@@ -977,33 +1008,34 @@ export default function Financeiro({ currentUser }) {
 
       return true;
     });
-  }, [despesas, activeTab, filtroEmpresa, filtroDepartamento, filtroFormaPagamento, filtroBusca, filtroStatusPagamento, filtroMes]);
+  }, [despesas, activeTab, filtroAtual]);
 
   // Lista para a Consulta Geral de TODAS as Despesas (Na Aba de Relatório)
   const listaConsultaGeral = useMemo(() => {
     const hoje = new Date().toISOString().slice(0, 10);
+    const { mes, statusPagamento, empresa, departamento, formaPagamento, busca } = filtroAtual;
 
     return despesas.filter(d => {
-      if (filtroMes) {
-        if (!d.vencimento || !d.vencimento.startsWith(filtroMes)) return false;
+      if (mes) {
+        if (!d.vencimento || !d.vencimento.startsWith(mes)) return false;
       }
 
-      if (filtroStatusPagamento !== 'TODOS') {
-        if (filtroStatusPagamento === 'VENCIDA') {
+      if (statusPagamento && statusPagamento !== 'TODOS') {
+        if (statusPagamento === 'VENCIDA') {
           if (d.statusPagamento === 'PAGO' || d.statusPagamento === 'PENDENTE_CONCILIACAO' || d.statusPagamento === 'ARQUIVADO' || !d.vencimento || d.vencimento >= hoje) return false;
-        } else if (filtroStatusPagamento === 'A_VENCER') {
+        } else if (statusPagamento === 'A_VENCER') {
           if (d.statusPagamento === 'PAGO' || d.statusPagamento === 'PENDENTE_CONCILIACAO' || d.statusPagamento === 'ARQUIVADO' || (d.vencimento && d.vencimento < hoje)) return false;
-        } else if (d.statusPagamento !== filtroStatusPagamento) {
+        } else if (d.statusPagamento !== statusPagamento) {
           return false;
         }
       }
 
-      if (filtroEmpresa && d.empresa !== filtroEmpresa) return false;
-      if (filtroDepartamento && d.departamento !== filtroDepartamento) return false;
-      if (filtroFormaPagamento && d.formaPagamento !== filtroFormaPagamento) return false;
+      if (empresa && d.empresa !== empresa) return false;
+      if (departamento && d.departamento !== departamento) return false;
+      if (formaPagamento && d.formaPagamento !== formaPagamento) return false;
 
-      if (filtroBusca) {
-        const term = filtroBusca.toLowerCase();
+      if (busca) {
+        const term = busca.toLowerCase();
         const matchNome = (d.nome || '').toLowerCase().includes(term);
         const matchOP = (d.numeroOP || '').toLowerCase().includes(term);
         const matchObs = (d.observacao || '').toLowerCase().includes(term);
@@ -1014,7 +1046,7 @@ export default function Financeiro({ currentUser }) {
 
       return true;
     });
-  }, [despesas, filtroEmpresa, filtroDepartamento, filtroFormaPagamento, filtroBusca, filtroStatusPagamento, filtroMes]);
+  }, [despesas, filtroAtual]);
 
   // Relatório Mensal Comparativo (Com mesFormatado "NomeMês / Ano" para o Gráfico de Colunas)
   const dadosRelatorioMensal = useMemo(() => {
@@ -1219,7 +1251,73 @@ export default function Financeiro({ currentUser }) {
       {/* CARDS RESUMO / KPIS DAS SITUAÇÕES FINANCEIRAS — CLICÁVEIS PARA ABRIR DETALHES DE CADA VALOR */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '14px', marginBottom: '24px' }}>
         
-        {/* Card 1: CONTAS VENCIDAS */}
+        {/* Card 1: TOTAL EM ABERTO */}
+        <div 
+          onClick={() => setModalDetalhesCard({
+            titulo: '💳 Total de Despesas em Aberto (A Pagar)',
+            cor: '#60a5fa',
+            icone: <CreditCard size={20} color="#60a5fa" />,
+            listaDespesas: estatisticas.listaEmAberto,
+            valorTotal: estatisticas.valorEmAberto,
+            targetTab: 'lancadas'
+          })}
+          style={{ 
+            background: 'rgba(30, 41, 59, 0.5)', 
+            padding: '14px', 
+            borderRadius: '14px', 
+            border: '1px solid rgba(59, 130, 246, 0.3)',
+            cursor: 'pointer',
+            transition: 'transform 0.2s, border-color 0.2s'
+          }}
+          title="Clique para ver todas as despesas em aberto que compõem este valor"
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+            <span style={{ fontSize: '11px', color: '#60a5fa', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>💳 Total em Aberto</span>
+            <CreditCard size={16} color="#60a5fa" />
+          </div>
+          <div style={{ fontSize: '18px', fontWeight: 800, color: '#60a5fa' }}>
+            {formatMoney(estatisticas.valorEmAberto)}
+          </div>
+          <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '4px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span>{estatisticas.countEmAberto} contas a pagar</span>
+            <ChevronRight size={14} color="#60a5fa" />
+          </div>
+        </div>
+
+        {/* Card 2: CONTAS A VENCER */}
+        <div 
+          onClick={() => setModalDetalhesCard({
+            titulo: '⏳ Despesas A Vencer (No Prazo)',
+            cor: '#fbbf24',
+            icone: <Clock size={20} color="#f59e0b" />,
+            listaDespesas: estatisticas.listaAVencer,
+            valorTotal: estatisticas.valorAVencer,
+            targetTab: 'lancadas'
+          })}
+          style={{ 
+            background: 'rgba(245, 158, 11, 0.1)', 
+            padding: '14px', 
+            borderRadius: '14px', 
+            border: '1px solid rgba(245, 158, 11, 0.3)',
+            cursor: 'pointer',
+            transition: 'transform 0.2s, border-color 0.2s'
+          }}
+          title="Clique para ver todas as despesas a vencer que compõem este valor"
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+            <span style={{ fontSize: '11px', color: '#fbbf24', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>⏳ A Vencer (No Prazo)</span>
+            <Clock size={16} color="#f59e0b" />
+          </div>
+          <div style={{ fontSize: '18px', fontWeight: 800, color: '#fbbf24' }}>
+            {formatMoney(estatisticas.valorAVencer)}
+          </div>
+          <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '4px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span>{estatisticas.countAVencer} contas a vencer</span>
+            <ChevronRight size={14} color="#fbbf24" />
+          </div>
+        </div>
+
+        {/* Card 3: CONTAS VENCIDAS */}
         <div 
           onClick={() => setModalDetalhesCard({
             titulo: '🚨 Despesas Vencidas (Em Atraso)',
@@ -1253,106 +1351,7 @@ export default function Financeiro({ currentUser }) {
           </div>
         </div>
 
-        {/* Card 2: CONTAS A VENCER */}
-        <div 
-          onClick={() => setModalDetalhesCard({
-            titulo: '⏳ Despesas A Vencer (No Prazo)',
-            cor: '#fbbf24',
-            icone: <Clock size={20} color="#f59e0b" />,
-            listaDespesas: estatisticas.listaAVencer,
-            valorTotal: estatisticas.valorAVencer,
-            targetTab: 'lancadas'
-          })}
-          style={{ 
-            background: 'rgba(245, 158, 11, 0.1)', 
-            padding: '14px', 
-            borderRadius: '14px', 
-            border: '1px solid rgba(245, 158, 11, 0.3)',
-            cursor: 'pointer',
-            transition: 'transform 0.2s, border-color 0.2s'
-          }}
-          title="Clique para ver todas as despesas a vencer que compõem este valor"
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-            <span style={{ fontSize: '11px', color: '#fbbf24', fontWeight: 700 }}>⏳ A Vencer (No Prazo)</span>
-            <Clock size={16} color="#f59e0b" />
-          </div>
-          <div style={{ fontSize: '18px', fontWeight: 800, color: '#fbbf24' }}>
-            {formatMoney(estatisticas.valorAVencer)}
-          </div>
-          <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '4px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span>{estatisticas.countAVencer} contas a vencer</span>
-            <ChevronRight size={14} color="#fbbf24" />
-          </div>
-        </div>
-
-        {/* Card 3: TOTAL EM ABERTO */}
-        <div 
-          onClick={() => setModalDetalhesCard({
-            titulo: '💳 Total de Despesas em Aberto (A Pagar)',
-            cor: '#60a5fa',
-            icone: <CreditCard size={20} color="#60a5fa" />,
-            listaDespesas: estatisticas.listaEmAberto,
-            valorTotal: estatisticas.valorEmAberto,
-            targetTab: 'lancadas'
-          })}
-          style={{ 
-            background: 'rgba(30, 41, 59, 0.5)', 
-            padding: '14px', 
-            borderRadius: '14px', 
-            border: '1px solid rgba(59, 130, 246, 0.2)',
-            cursor: 'pointer',
-            transition: 'transform 0.2s, border-color 0.2s'
-          }}
-          title="Clique para ver todas as despesas em aberto que compõem este valor"
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-            <span style={{ fontSize: '11px', color: '#94a3b8', fontWeight: 600 }}>💳 Total em Aberto</span>
-            <CreditCard size={16} color="#60a5fa" />
-          </div>
-          <div style={{ fontSize: '18px', fontWeight: 800, color: '#60a5fa' }}>
-            {formatMoney(estatisticas.valorEmAberto)}
-          </div>
-          <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '4px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span>{estatisticas.countEmAberto} contas a pagar</span>
-            <ChevronRight size={14} color="#60a5fa" />
-          </div>
-        </div>
-
-        {/* Card 4: TOTAL PAGO (DESPESAS PAGAS) */}
-        <div 
-          onClick={() => setModalDetalhesCard({
-            titulo: '✓ Despesas Pagas (Quitadas & Liquidadas)',
-            cor: '#34d399',
-            icone: <CheckCircle2 size={20} color="#34d399" />,
-            listaDespesas: estatisticas.listaPagas,
-            valorTotal: estatisticas.valorPagas,
-            targetTab: 'pagas'
-          })}
-          style={{ 
-            background: 'rgba(16, 185, 129, 0.1)', 
-            padding: '14px', 
-            borderRadius: '14px', 
-            border: '1px solid rgba(16, 185, 129, 0.3)',
-            cursor: 'pointer',
-            transition: 'transform 0.2s, border-color 0.2s'
-          }}
-          title="Clique para ver todas as despesas pagas que compõem este valor"
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-            <span style={{ fontSize: '11px', color: '#34d399', fontWeight: 700 }}>✓ Pagas (Quitadas)</span>
-            <CheckCircle2 size={16} color="#34d399" />
-          </div>
-          <div style={{ fontSize: '18px', fontWeight: 800, color: '#34d399' }}>
-            {formatMoney(estatisticas.valorPagas)}
-          </div>
-          <div style={{ fontSize: '11px', color: '#34d399', marginTop: '4px', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span>{estatisticas.countPagas} despesas liquidadas</span>
-            <ChevronRight size={14} color="#34d399" />
-          </div>
-        </div>
-
-        {/* Card 5: AGUARDANDO APROVAÇÃO */}
+        {/* Card 4: AGUARDANDO APROVAÇÃO */}
         <div 
           onClick={() => setModalDetalhesCard({
             titulo: '⏱️ Despesas Aguardando Aprovação',
@@ -1373,7 +1372,7 @@ export default function Financeiro({ currentUser }) {
           title="Clique para ver todas as despesas aguardando aprovação"
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-            <span style={{ fontSize: '11px', color: '#fbbf24', fontWeight: 600 }}>Aguardando Aprovação</span>
+            <span style={{ fontSize: '11px', color: '#fbbf24', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>⏱️ Aguardando Aprovação</span>
             <Clock size={16} color="#fbbf24" />
           </div>
           <div style={{ fontSize: '18px', fontWeight: 800, color: '#fde047' }}>
@@ -1385,36 +1384,36 @@ export default function Financeiro({ currentUser }) {
           </div>
         </div>
 
-        {/* Card 6: CONCILIAÇÃO & ARQUIVADAS */}
+        {/* Card 5: TOTAL PAGO (DESPESAS PAGAS) POR ÚLTIMO */}
         <div 
           onClick={() => setModalDetalhesCard({
-            titulo: '🏦 Despesas em Conciliação & Arquivadas',
-            cor: '#cbd5e1',
-            icone: <Landmark size={20} color="#cbd5e1" />,
-            listaDespesas: estatisticas.listaConciliacaoEArquivo,
-            valorTotal: estatisticas.valorConciliacao + estatisticas.valorArquivadas,
-            targetTab: 'conciliacao'
+            titulo: '✓ Despesas Pagas (Quitadas & Liquidadas)',
+            cor: '#34d399',
+            icone: <CheckCircle2 size={20} color="#34d399" />,
+            listaDespesas: estatisticas.listaPagas,
+            valorTotal: estatisticas.valorPagas,
+            targetTab: 'pagas'
           })}
           style={{ 
-            background: 'rgba(30, 41, 59, 0.5)', 
+            background: 'rgba(16, 185, 129, 0.1)', 
             padding: '14px', 
             borderRadius: '14px', 
-            border: '1px solid rgba(255, 255, 255, 0.08)',
+            border: '1px solid rgba(16, 185, 129, 0.3)',
             cursor: 'pointer',
             transition: 'transform 0.2s, border-color 0.2s'
           }}
-          title="Clique para ver todas as despesas em conciliação ou arquivadas"
+          title="Clique para ver todas as despesas pagas que compõem este valor"
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-            <span style={{ fontSize: '11px', color: '#94a3b8', fontWeight: 600 }}>Conciliação / Arquivo</span>
-            <Landmark size={16} color="#94a3b8" />
+            <span style={{ fontSize: '11px', color: '#34d399', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>✓ Pagas (Quitadas)</span>
+            <CheckCircle2 size={16} color="#34d399" />
           </div>
-          <div style={{ fontSize: '18px', fontWeight: 800, color: '#cbd5e1' }}>
-            {formatMoney(estatisticas.valorConciliacao + estatisticas.valorArquivadas)}
+          <div style={{ fontSize: '18px', fontWeight: 800, color: '#34d399' }}>
+            {formatMoney(estatisticas.valorPagas)}
           </div>
-          <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '4px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span>{estatisticas.countConciliacao} conciliação / {estatisticas.countArquivadas} arquivadas</span>
-            <ChevronRight size={14} color="#cbd5e1" />
+          <div style={{ fontSize: '11px', color: '#34d399', marginTop: '4px', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span>{estatisticas.countPagas} despesas liquidadas</span>
+            <ChevronRight size={14} color="#34d399" />
           </div>
         </div>
 
@@ -1877,12 +1876,12 @@ export default function Financeiro({ currentUser }) {
               </h3>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '4px' }}>
                 <span style={{ fontSize: '12px', color: '#94a3b8' }}>
-                  Total na visualização: <strong>{formatMoney(listaExibicao.reduce((a,b) => a + b.valor, 0))}</strong>
+                  Total na visualização: <strong>{formatMoney(listaExibicao.reduce((a,b) => a + (b.valorExecutado !== undefined ? b.valorExecutado : b.valor), 0))}</strong>
                 </span>
-                {filtroMes && (
+                {filtroAtual.mes && (
                   <span style={{ fontSize: '11px', color: '#a78bfa', background: 'rgba(139, 92, 246, 0.15)', padding: '2px 8px', borderRadius: '6px', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                    <Calendar size={12} /> Mês: {formatarMesExtenso(filtroMes)}
-                    <button onClick={() => setFiltroMes('')} style={{ background: 'none', border: 'none', color: '#a78bfa', cursor: 'pointer', padding: 0, marginLeft: '4px' }}>✕</button>
+                    <Calendar size={12} /> Mês: {formatarMesExtenso(filtroAtual.mes)}
+                    <button onClick={() => setFiltroAtual('mes', '')} style={{ background: 'none', border: 'none', color: '#a78bfa', cursor: 'pointer', padding: 0, marginLeft: '4px' }}>✕</button>
                   </span>
                 )}
               </div>
@@ -1894,8 +1893,8 @@ export default function Financeiro({ currentUser }) {
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <Calendar size={14} color="#a78bfa" />
                 <select
-                  value={filtroMes}
-                  onChange={(e) => setFiltroMes(e.target.value)}
+                  value={filtroAtual.mes}
+                  onChange={(e) => setFiltroAtual('mes', e.target.value)}
                   style={{ padding: '8px 12px', background: 'rgba(139, 92, 246, 0.15)', border: '1px solid rgba(139, 92, 246, 0.4)', borderRadius: '8px', color: '#c084fc', fontSize: '12px', fontWeight: 700 }}
                 >
                   <option value="">Todos os Meses</option>
@@ -1911,16 +1910,16 @@ export default function Financeiro({ currentUser }) {
                 <input 
                   type="text"
                   placeholder="Buscar despesa ou OP..."
-                  value={filtroBusca}
-                  onChange={(e) => setFiltroBusca(e.target.value)}
+                  value={filtroAtual.busca}
+                  onChange={(e) => setFiltroAtual('busca', e.target.value)}
                   style={{ width: '100%', padding: '8px 12px 8px 32px', background: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '8px', color: '#f8fafc', fontSize: '12px' }}
                 />
               </div>
 
               {/* Filtro Empresa */}
               <select
-                value={filtroEmpresa}
-                onChange={(e) => setFiltroEmpresa(e.target.value)}
+                value={filtroAtual.empresa}
+                onChange={(e) => setFiltroAtual('empresa', e.target.value)}
                 style={{ padding: '8px 12px', background: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '8px', color: '#f8fafc', fontSize: '12px' }}
               >
                 <option value="">Todas as Empresas</option>
@@ -1929,8 +1928,8 @@ export default function Financeiro({ currentUser }) {
 
               {/* Filtro Departamento */}
               <select
-                value={filtroDepartamento}
-                onChange={(e) => setFiltroDepartamento(e.target.value)}
+                value={filtroAtual.departamento}
+                onChange={(e) => setFiltroAtual('departamento', e.target.value)}
                 style={{ padding: '8px 12px', background: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '8px', color: '#f8fafc', fontSize: '12px' }}
               >
                 <option value="">Todos os Deptos</option>
@@ -1939,8 +1938,8 @@ export default function Financeiro({ currentUser }) {
 
               {/* Filtro Forma de Pagamento */}
               <select
-                value={filtroFormaPagamento}
-                onChange={(e) => setFiltroFormaPagamento(e.target.value)}
+                value={filtroAtual.formaPagamento}
+                onChange={(e) => setFiltroAtual('formaPagamento', e.target.value)}
                 style={{ padding: '8px 12px', background: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '8px', color: '#f8fafc', fontSize: '12px' }}
               >
                 <option value="">Forma Pagto</option>
@@ -2513,16 +2512,16 @@ export default function Financeiro({ currentUser }) {
                     <input 
                       type="text"
                       placeholder="Pesquisar por nome, OP ou obs..."
-                      value={filtroBusca}
-                      onChange={(e) => setFiltroBusca(e.target.value)}
+                      value={filtroAtual.busca}
+                      onChange={(e) => setFiltroAtual('busca', e.target.value)}
                       style={{ width: '100%', padding: '8px 12px 8px 32px', background: '#0f172a', border: '1px solid #334155', borderRadius: '8px', color: '#fff', fontSize: '12px' }}
                     />
                   </div>
 
                   {/* Filtro Empresa */}
                   <select
-                    value={filtroEmpresa}
-                    onChange={(e) => setFiltroEmpresa(e.target.value)}
+                    value={filtroAtual.empresa}
+                    onChange={(e) => setFiltroAtual('empresa', e.target.value)}
                     style={{ padding: '8px 12px', background: '#0f172a', border: '1px solid #334155', borderRadius: '8px', color: '#fff', fontSize: '12px' }}
                   >
                     <option value="">Todas as Empresas</option>
@@ -2531,8 +2530,8 @@ export default function Financeiro({ currentUser }) {
 
                   {/* Filtro Departamento */}
                   <select
-                    value={filtroDepartamento}
-                    onChange={(e) => setFiltroDepartamento(e.target.value)}
+                    value={filtroAtual.departamento}
+                    onChange={(e) => setFiltroAtual('departamento', e.target.value)}
                     style={{ padding: '8px 12px', background: '#0f172a', border: '1px solid #334155', borderRadius: '8px', color: '#fff', fontSize: '12px' }}
                   >
                     <option value="">Todos os Deptos</option>
