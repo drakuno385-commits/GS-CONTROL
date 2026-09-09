@@ -1739,13 +1739,15 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
             }}
           >
             <Landmark size={16} />
-            <span>🏦 2. Gestão de Bancos, Saldos & Entradas de Recursos</span>
+            <span>🏦 2. Conciliação Bancária</span>
           </button>
         </div>
 
-        <div style={{ fontSize: '12px', color: '#94a3b8', fontWeight: 600 }}>
-          {bancosComSaldo.length} bancos cadastrados | Saldo Liquido: <strong style={{ color: '#34d399' }}>{formatMoney(bancosComSaldo.reduce((acc, b) => acc + b.saldoAtual, 0))}</strong>
-        </div>
+        {moduloSubSecao === 'conciliacao_bancaria' && (
+          <div style={{ fontSize: '12px', color: '#94a3b8', fontWeight: 600 }}>
+            {bancosComSaldo.length} bancos cadastrados | Saldo Líquido em Caixa: <strong style={{ color: '#34d399' }}>{formatMoney(bancosComSaldo.reduce((acc, b) => acc + b.saldoAtual, 0))}</strong>
+          </div>
+        )}
       </div>
 
       {/* SEÇÃO 1: FLUXO DE DESPESAS (TELA ATUAL DA ESTEIRA) */}

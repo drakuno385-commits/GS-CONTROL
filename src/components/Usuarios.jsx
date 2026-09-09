@@ -352,7 +352,7 @@ const Usuarios = ({ currentUser }) => {
                       titulo: '💰 Sub-telas e Abas do Módulo Financeiro',
                       opcoes: [
                         { id: 'fin_fluxo', label: '📊 Fluxo de Despesas' },
-                        { id: 'fin_conciliacao', label: '🏦 Conciliação Bancária & Saldos' },
+                        { id: 'fin_conciliacao', label: '🏦 Conciliação Bancária' },
                         { id: 'fin_cadastradas', label: '1. Cadastro de Despesas' },
                         { id: 'fin_aguardando', label: '2. Aguardando Aprovação' },
                         { id: 'fin_aprovadas', label: '3. Despesas Aprovadas' },
