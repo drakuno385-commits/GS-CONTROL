@@ -6,7 +6,7 @@ import {
   Search, Download, Trash2, Eye, MessageSquare, Check, X, ArrowUpRight,
   TrendingUp, TrendingDown, Layers, Percent, Tag, RefreshCw, Plus, Sparkles,
   Archive, Landmark, CheckCheck, RotateCcw, ArrowRight, Edit2, Send, AlertOctagon,
-  ListFilter, Database, BarChart2
+  ListFilter, Database, BarChart2, Edit
 } from 'lucide-react';
 import { 
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, 
@@ -507,9 +507,8 @@ export default function Financeiro({ currentUser }) {
   const [filtroFormaPagamento, setFiltroFormaPagamento] = useState('');
   const [filtroMes, setFiltroMes] = useState(''); // Filtro por Mês 'YYYY-MM'
 
-  // Modal de Edição de Valor da Despesa
-  const [modalEditarValor, setModalEditarValor] = useState(null);
-  const [novoValorInput, setNovoValorInput] = useState('');
+  // Modal de Edição Completa da Despesa Cadastrada (Na Aba 1)
+  const [modalEditarDespesa, setModalEditarDespesa] = useState(null);
 
   // Modais de Cadastro Rápido de Novo Departamento e Novo Banco
   const [showNovoDeptoModal, setShowNovoDeptoModal] = useState(false);
@@ -562,6 +561,9 @@ export default function Financeiro({ currentUser }) {
     }
     setDepartamentos(prev => [...prev, nome]);
     setFormNovaDespesa(prev => ({ ...prev, departamento: nome }));
+    if (modalEditarDespesa) {
+      setModalEditarDespesa(prev => ({ ...prev, departamento: nome }));
+    }
     setNovoDeptoInput('');
     setShowNovoDeptoModal(false);
   };
@@ -577,28 +579,63 @@ export default function Financeiro({ currentUser }) {
     }
     setBancos(prev => [...prev, nome]);
     setFormNovaDespesa(prev => ({ ...prev, banco: nome }));
+    if (modalEditarDespesa) {
+      setModalEditarDespesa(prev => ({ ...prev, banco: nome }));
+    }
     setNovoBancoInput('');
     setShowNovoBancoModal(false);
   };
 
-  // Salvar Novo Valor Editado (Disponível na 1ª Aba: Despesas Cadastradas)
-  const handleSalvarNovoValor = (e) => {
+  // Abrir Modal de Edição Completa da Despesa
+  const handleAbrirEdicaoCompleta = (item) => {
+    setModalEditarDespesa({
+      id: item.id,
+      empresa: item.empresa || 'AÇOFORTE',
+      departamento: item.departamento || 'Operacional',
+      nome: item.nome || '',
+      valor: item.valor || '',
+      parcelas: item.parcelas || 1,
+      vencimento: item.vencimento || new Date().toISOString().slice(0, 10),
+      temOP: !!item.temOP,
+      numeroOP: item.numeroOP || '',
+      banco: item.banco || 'Itaú',
+      formaPagamento: item.formaPagamento || 'Boleto',
+      prioridade: item.prioridade || 'MÉDIA',
+      observacao: item.observacao || ''
+    });
+  };
+
+  // Salvar Edição Completa da Despesa (Na 1ª Aba)
+  const handleSalvarEdicaoCompleta = (e) => {
     e.preventDefault();
-    if (!modalEditarValor) return;
-    const num = parseFloat(novoValorInput);
-    if (isNaN(num) || num <= 0) {
-      alert('Por favor, digite um valor numérico válido.');
-      return;
-    }
+    if (!modalEditarDespesa) return;
+    if (!modalEditarDespesa.nome.trim()) return alert('Por favor, informe a descrição/nome da despesa.');
+    if (!modalEditarDespesa.valor || Number(modalEditarDespesa.valor) <= 0) return alert('Por favor, informe um valor válido para a despesa.');
+    if (modalEditarDespesa.temOP && !modalEditarDespesa.numeroOP.trim()) return alert('Por favor, informe o Número da OP.');
+
     setDespesas(prev => prev.map(d => {
-      if (d.id === modalEditarValor.id) {
-        return { ...d, valor: num };
+      if (d.id === modalEditarDespesa.id) {
+        return {
+          ...d,
+          empresa: modalEditarDespesa.empresa,
+          departamento: modalEditarDespesa.departamento,
+          nome: modalEditarDespesa.nome.trim(),
+          valor: parseFloat(modalEditarDespesa.valor) || 0,
+          parcelas: Math.max(1, parseInt(modalEditarDespesa.parcelas, 10) || 1),
+          vencimento: modalEditarDespesa.vencimento,
+          temOP: modalEditarDespesa.temOP,
+          numeroOP: modalEditarDespesa.temOP ? modalEditarDespesa.numeroOP.trim() : '',
+          banco: modalEditarDespesa.banco,
+          formaPagamento: modalEditarDespesa.formaPagamento,
+          prioridade: modalEditarDespesa.prioridade,
+          observacao: modalEditarDespesa.observacao.trim()
+        };
       }
       return d;
     }));
-    alert('✅ Valor da despesa atualizado com sucesso!');
-    setModalEditarValor(null);
-    setNovoValorInput('');
+
+    alert('✅ Despesa cadastrada alterada por completo com sucesso!');
+    setModalEditarDespesa(null);
   };
 
   // Transições da Esteira Financeira
@@ -1691,7 +1728,7 @@ export default function Financeiro({ currentUser }) {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '16px' }}>
             <div>
               <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#f8fafc', margin: 0 }}>
-                {activeTab === 'cadastradas' && '1. Cadastro de Despesas (Edição de Valor & Envio p/ Aprovação)'}
+                {activeTab === 'cadastradas' && '1. Cadastro de Despesas (Edição Completa & Envio p/ Aprovação)'}
                 {activeTab === 'aguardando' && '2. Aguardando Aprovação (Gestão / Diretoria)'}
                 {activeTab === 'aprovadas' && '3. Despesas Aprovadas (Prontas p/ Lançamento Bancário)'}
                 {activeTab === 'lancadas' && '5. Lançadas no Banco (Confirmação de Pagamento)'}
@@ -1817,7 +1854,6 @@ export default function Financeiro({ currentUser }) {
                   {listaExibicao.map((item, idx) => {
                     const prioObj = PRIORIDADES.find(p => p.value === item.prioridade) || PRIORIDADES[1];
                     const sit = getSituacaoItem(item);
-                    const stPag = item.statusPagamento || 'PENDENTE_PAGAMENTO';
 
                     return (
                       <tr 
@@ -1866,26 +1902,10 @@ export default function Financeiro({ currentUser }) {
                           )}
                         </td>
 
-                        {/* Valor (Com opção de Editar na 1ª Aba: Cadastradas) */}
+                        {/* Valor */}
                         <td style={{ padding: '12px 14px', textAlign: 'right', fontFamily: 'monospace' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '6px' }}>
-                            <div style={{ fontWeight: 800, color: '#60a5fa', fontSize: '14px' }}>
-                              {formatMoney(item.valor)}
-                            </div>
-                            {/* Botão de Editar Valor na 1ª Aba */}
-                            {activeTab === 'cadastradas' && (
-                              <button
-                                onClick={() => {
-                                  setModalEditarValor(item);
-                                  setNovoValorInput(String(item.valor));
-                                }}
-                                style={{ background: 'rgba(59, 130, 246, 0.15)', border: '1px solid rgba(59, 130, 246, 0.3)', color: '#60a5fa', borderRadius: '4px', padding: '3px 6px', cursor: 'pointer', fontSize: '10px', display: 'inline-flex', alignItems: 'center', gap: '2px' }}
-                                title="Editar o valor desta despesa antes de enviar para aprovação"
-                              >
-                                <Edit2 size={10} />
-                                <span>Editar</span>
-                              </button>
-                            )}
+                          <div style={{ fontWeight: 800, color: '#60a5fa', fontSize: '14px' }}>
+                            {formatMoney(item.valor)}
                           </div>
                           <div style={{ fontSize: '10px', color: '#64748b', marginTop: '2px' }}>
                             {item.parcelas > 1 ? `Parc. ${item.parcelaNumero || 1}/${item.parcelas}` : '1x (À vista)'}
@@ -1934,9 +1954,17 @@ export default function Financeiro({ currentUser }) {
                         {/* Coluna Ações Específicas por Aba da Esteira */}
                         <td style={{ padding: '12px 14px', textAlign: 'center' }}>
                           
-                          {/* 1. CADASTRO DE DESPESAS */}
+                          {/* 1. CADASTRO DE DESPESAS — PERMITE EDIÇÃO COMPLETA */}
                           {activeTab === 'cadastradas' && (
                             <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', alignItems: 'center' }}>
+                              <button
+                                onClick={() => handleAbrirEdicaoCompleta(item)}
+                                style={{ padding: '6px 12px', background: 'rgba(59, 130, 246, 0.2)', color: '#60a5fa', border: '1px solid rgba(59, 130, 246, 0.4)', borderRadius: '6px', fontSize: '11px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                                title="Editar esta despesa cadastrada por completo (Empresa, Depto, Nome, Valor, Vencimento, Banco, OP, etc.)"
+                              >
+                                <Edit2 size={12} /> Editar Despesa
+                              </button>
+
                               <button
                                 onClick={() => handleEnviarParaAprovacao(item.id)}
                                 style={{ padding: '6px 12px', background: 'linear-gradient(135deg, #f59e0b, #d97706)', color: '#fff', border: 'none', borderRadius: '6px', fontSize: '11px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', boxShadow: '0 2px 8px rgba(245, 158, 11, 0.3)' }}
@@ -2473,56 +2501,225 @@ export default function Financeiro({ currentUser }) {
         </div>
       )}
 
-      {/* MODAL DE EDIÇÃO DE VALOR DA DESPESA */}
-      {modalEditarValor && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: '16px' }}>
-          <div style={{ background: '#0f172a', border: '1px solid #334155', borderRadius: '16px', padding: '24px', maxWidth: '420px', width: '100%', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.5)' }}>
+      {/* MODAL DE EDIÇÃO COMPLETA DA DESPESA (DISPONÍVEL NA ABA 1) */}
+      {modalEditarDespesa && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: '16px' }}>
+          <div style={{ background: '#0f172a', border: '1px solid #334155', borderRadius: '16px', padding: '24px', maxWidth: '850px', width: '100%', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.5)' }}>
             
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-              <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#60a5fa', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Edit2 size={18} />
-                Editar Valor da Despesa
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#60a5fa', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Edit2 size={20} />
+                Editar Despesa Cadastrada por Completo
               </h3>
-              <button onClick={() => setModalEditarValor(null)} style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer' }}><X size={20} /></button>
+              <button onClick={() => setModalEditarDespesa(null)} style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer' }}><X size={20} /></button>
             </div>
 
-            <div style={{ background: 'rgba(30, 41, 59, 0.5)', padding: '12px', borderRadius: '10px', marginBottom: '16px', fontSize: '12px' }}>
-              <div style={{ fontWeight: 700, color: '#f8fafc' }}>{modalEditarValor.nome}</div>
-              <div style={{ color: '#94a3b8', marginTop: '2px' }}>Empresa: <strong>{modalEditarValor.empresa}</strong> ({modalEditarValor.departamento})</div>
-              <div style={{ color: '#a78bfa', fontWeight: 600, marginTop: '2px' }}>Valor Atual: {formatMoney(modalEditarValor.valor)}</div>
-            </div>
-
-            <form onSubmit={handleSalvarNovoValor}>
-              <div style={{ marginBottom: '20px' }}>
+            <form onSubmit={handleSalvarEdicaoCompleta} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '16px' }}>
+              
+              {/* Empresa */}
+              <div>
                 <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#94a3b8', marginBottom: '6px' }}>
-                  Novo Valor da Parcela/Despesa (R$) *
+                  Empresa do Grupo *
+                </label>
+                <select
+                  value={modalEditarDespesa.empresa}
+                  onChange={(e) => setModalEditarDespesa({ ...modalEditarDespesa, empresa: e.target.value })}
+                  style={{ width: '100%', padding: '10px 12px', background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', color: '#fff', fontSize: '13px', fontWeight: 700 }}
+                >
+                  {EMPRESAS.map(emp => <option key={emp} value={emp}>{emp}</option>)}
+                </select>
+              </div>
+
+              {/* Departamento */}
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#94a3b8', marginBottom: '6px' }}>
+                  Departamento *
+                </label>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <select
+                    value={modalEditarDespesa.departamento}
+                    onChange={(e) => setModalEditarDespesa({ ...modalEditarDespesa, departamento: e.target.value })}
+                    style={{ width: '100%', padding: '10px 12px', background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', color: '#fff', fontSize: '13px' }}
+                  >
+                    {departamentos.map(dep => <option key={dep} value={dep}>{dep}</option>)}
+                  </select>
+                  <button
+                    type="button"
+                    onClick={() => setShowNovoDeptoModal(true)}
+                    style={{ padding: '8px 10px', background: 'rgba(59, 130, 246, 0.2)', color: '#60a5fa', border: '1px solid rgba(59, 130, 246, 0.4)', borderRadius: '8px', cursor: 'pointer' }}
+                    title="Cadastrar Novo Departamento"
+                  >
+                    <Plus size={16} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Nome / Descrição */}
+              <div style={{ gridColumn: '1 / -1' }}>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#94a3b8', marginBottom: '6px' }}>
+                  Nome / Descrição da Despesa *
+                </label>
+                <input
+                  type="text"
+                  value={modalEditarDespesa.nome}
+                  onChange={(e) => setModalEditarDespesa({ ...modalEditarDespesa, nome: e.target.value })}
+                  style={{ width: '100%', padding: '10px 12px', background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', color: '#fff', fontSize: '13px', fontWeight: 600 }}
+                />
+              </div>
+
+              {/* Valor */}
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#94a3b8', marginBottom: '6px' }}>
+                  Valor (R$) *
                 </label>
                 <input
                   type="number"
                   step="0.01"
                   min="0.01"
-                  value={novoValorInput}
-                  onChange={(e) => setNovoValorInput(e.target.value)}
-                  style={{ width: '100%', padding: '12px', background: '#1e293b', border: '1px solid #3b82f6', borderRadius: '8px', color: '#fff', fontSize: '16px', fontWeight: 800 }}
-                  autoFocus
+                  value={modalEditarDespesa.valor}
+                  onChange={(e) => setModalEditarDespesa({ ...modalEditarDespesa, valor: e.target.value })}
+                  style={{ width: '100%', padding: '10px 12px', background: '#1e293b', border: '1px solid #3b82f6', borderRadius: '8px', color: '#fff', fontSize: '14px', fontWeight: 800 }}
                 />
               </div>
 
-              <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+              {/* Parcelas */}
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#94a3b8', marginBottom: '6px' }}>
+                  Quantidade de Parcelas *
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  max="120"
+                  value={modalEditarDespesa.parcelas}
+                  onChange={(e) => setModalEditarDespesa({ ...modalEditarDespesa, parcelas: e.target.value })}
+                  style={{ width: '100%', padding: '10px 12px', background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', color: '#fff', fontSize: '13px' }}
+                />
+              </div>
+
+              {/* Data de Vencimento */}
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#94a3b8', marginBottom: '6px' }}>
+                  Data de Vencimento *
+                </label>
+                <input
+                  type="date"
+                  value={modalEditarDespesa.vencimento}
+                  onChange={(e) => setModalEditarDespesa({ ...modalEditarDespesa, vencimento: e.target.value })}
+                  style={{ width: '100%', padding: '10px 12px', background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', color: '#fff', fontSize: '13px', colorScheme: 'dark' }}
+                />
+              </div>
+
+              {/* Banco Pagador */}
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#94a3b8', marginBottom: '6px' }}>
+                  Banco Pagador *
+                </label>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <select
+                    value={modalEditarDespesa.banco}
+                    onChange={(e) => setModalEditarDespesa({ ...modalEditarDespesa, banco: e.target.value })}
+                    style={{ width: '100%', padding: '10px 12px', background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', color: '#fff', fontSize: '13px' }}
+                  >
+                    {bancos.map(b => <option key={b} value={b}>{b}</option>)}
+                  </select>
+                  <button
+                    type="button"
+                    onClick={() => setShowNovoBancoModal(true)}
+                    style={{ padding: '8px 10px', background: 'rgba(59, 130, 246, 0.2)', color: '#60a5fa', border: '1px solid rgba(59, 130, 246, 0.4)', borderRadius: '8px', cursor: 'pointer' }}
+                    title="Cadastrar Novo Banco"
+                  >
+                    <Plus size={16} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Forma de Pagamento */}
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#94a3b8', marginBottom: '6px' }}>
+                  Forma de Pagamento *
+                </label>
+                <select
+                  value={modalEditarDespesa.formaPagamento}
+                  onChange={(e) => setModalEditarDespesa({ ...modalEditarDespesa, formaPagamento: e.target.value })}
+                  style={{ width: '100%', padding: '10px 12px', background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', color: '#fff', fontSize: '13px' }}
+                >
+                  {FORMAS_PAGAMENTO.map(fp => <option key={fp} value={fp}>{fp}</option>)}
+                </select>
+              </div>
+
+              {/* Prioridade */}
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#94a3b8', marginBottom: '6px' }}>
+                  Prioridade *
+                </label>
+                <select
+                  value={modalEditarDespesa.prioridade}
+                  onChange={(e) => setModalEditarDespesa({ ...modalEditarDespesa, prioridade: e.target.value })}
+                  style={{ width: '100%', padding: '10px 12px', background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', color: '#fff', fontSize: '13px', fontWeight: 700 }}
+                >
+                  {PRIORIDADES.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
+                </select>
+              </div>
+
+              {/* Possui OP? */}
+              <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: 600, color: '#f8fafc', marginTop: '14px' }}>
+                  <input
+                    type="checkbox"
+                    checked={modalEditarDespesa.temOP}
+                    onChange={(e) => setModalEditarDespesa({ ...modalEditarDespesa, temOP: e.target.checked })}
+                    style={{ width: '18px', height: '18px', accentColor: '#3b82f6' }}
+                  />
+                  <span>Possui OP (Ordem de Pagamento)?</span>
+                </label>
+              </div>
+
+              {/* Número da OP (Condicional) */}
+              {modalEditarDespesa.temOP && (
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#60a5fa', marginBottom: '6px' }}>
+                    Número da OP *
+                  </label>
+                  <input
+                    type="text"
+                    value={modalEditarDespesa.numeroOP}
+                    onChange={(e) => setModalEditarDespesa({ ...modalEditarDespesa, numeroOP: e.target.value })}
+                    style={{ width: '100%', padding: '10px 12px', background: '#1e293b', border: '1px solid #3b82f6', borderRadius: '8px', color: '#fff', fontSize: '13px', fontWeight: 600 }}
+                  />
+                </div>
+              )}
+
+              {/* Observações */}
+              <div style={{ gridColumn: '1 / -1' }}>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#94a3b8', marginBottom: '6px' }}>
+                  Observações do Lançamento
+                </label>
+                <textarea
+                  rows={3}
+                  value={modalEditarDespesa.observacao}
+                  onChange={(e) => setModalEditarDespesa({ ...modalEditarDespesa, observacao: e.target.value })}
+                  style={{ width: '100%', padding: '10px 12px', background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', color: '#fff', fontSize: '13px', resize: 'vertical' }}
+                />
+              </div>
+
+              {/* Botões do Modal */}
+              <div style={{ gridColumn: '1 / -1', display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '12px' }}>
                 <button
                   type="button"
-                  onClick={() => setModalEditarValor(null)}
-                  style={{ padding: '10px 16px', background: 'rgba(51, 65, 85, 0.6)', color: '#cbd5e1', border: 'none', borderRadius: '8px', fontSize: '12px', cursor: 'pointer' }}
+                  onClick={() => setModalEditarDespesa(null)}
+                  style={{ padding: '10px 18px', background: 'rgba(51, 65, 85, 0.6)', color: '#cbd5e1', border: 'none', borderRadius: '8px', fontSize: '13px', cursor: 'pointer' }}
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  style={{ padding: '10px 20px', background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}
+                  style={{ padding: '10px 24px', background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 700, cursor: 'pointer' }}
                 >
-                  Salvar Novo Valor
+                  Salvar Alterações da Despesa
                 </button>
               </div>
+
             </form>
 
           </div>
