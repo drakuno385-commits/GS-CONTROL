@@ -496,6 +496,14 @@ export default function Financeiro({ currentUser }) {
   const filterStorageKey = `acoweb_financeiro_filtros_${userId}`;
   const tabStorageKey = `acoweb_financeiro_tab_${userId}`;
 
+  // Helper para verificar permissão individual por sub-aba
+  const checkTabAccess = (tabKey) => {
+    if (!currentUser) return true;
+    if (currentUser.role === 'MASTER') return true;
+    if (!currentUser.allowed_screens || currentUser.allowed_screens.length === 0) return true;
+    return currentUser.allowed_screens.includes(tabKey);
+  };
+
   // Aba Ativa (Salva por Usuário)
   const [activeTab, setActiveTab] = useState(() => {
     try {
@@ -1497,203 +1505,221 @@ export default function Financeiro({ currentUser }) {
       <div style={{ display: 'flex', gap: '6px', borderBottom: '1px solid rgba(255, 255, 255, 0.1)', marginBottom: '24px', overflowX: 'auto', paddingBottom: '4px' }}>
         
         {/* 1. CADASTRO DE DESPESAS */}
-        <button
-          onClick={() => setActiveTab('cadastradas')}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            padding: '10px 14px',
-            borderRadius: '8px 8px 0 0',
-            border: 'none',
-            background: activeTab === 'cadastradas' ? 'rgba(139, 92, 246, 0.2)' : 'transparent',
-            color: activeTab === 'cadastradas' ? '#c084fc' : '#94a3b8',
-            fontWeight: 800,
-            fontSize: '13px',
-            cursor: 'pointer',
-            borderBottom: activeTab === 'cadastradas' ? '3px solid #a78bfa' : 'none'
-          }}
-        >
-          <FileText size={15} />
-          <span>1. Cadastro de Despesas ({estatisticas.countCadastradas})</span>
-        </button>
+        {checkTabAccess('fin_cadastradas') && (
+          <button
+            onClick={() => setActiveTab('cadastradas')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '10px 14px',
+              borderRadius: '8px 8px 0 0',
+              border: 'none',
+              background: activeTab === 'cadastradas' ? 'rgba(139, 92, 246, 0.2)' : 'transparent',
+              color: activeTab === 'cadastradas' ? '#c084fc' : '#94a3b8',
+              fontWeight: 800,
+              fontSize: '13px',
+              cursor: 'pointer',
+              borderBottom: activeTab === 'cadastradas' ? '3px solid #a78bfa' : 'none'
+            }}
+          >
+            <FileText size={15} />
+            <span>1. Cadastro de Despesas ({estatisticas.countCadastradas})</span>
+          </button>
+        )}
 
         {/* 2. AGUARDANDO APROVAÇÃO */}
-        <button
-          onClick={() => setActiveTab('aguardando')}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            padding: '10px 14px',
-            borderRadius: '8px 8px 0 0',
-            border: 'none',
-            background: activeTab === 'aguardando' ? 'rgba(245, 158, 11, 0.2)' : 'transparent',
-            color: activeTab === 'aguardando' ? '#fbbf24' : '#94a3b8',
-            fontWeight: 800,
-            fontSize: '13px',
-            cursor: 'pointer',
-            borderBottom: activeTab === 'aguardando' ? '3px solid #fbbf24' : 'none'
-          }}
-        >
-          <Clock size={15} />
-          <span>2. Aguardando Aprovação ({estatisticas.countAguardando})</span>
-        </button>
+        {checkTabAccess('fin_aguardando') && (
+          <button
+            onClick={() => setActiveTab('aguardando')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '10px 14px',
+              borderRadius: '8px 8px 0 0',
+              border: 'none',
+              background: activeTab === 'aguardando' ? 'rgba(245, 158, 11, 0.2)' : 'transparent',
+              color: activeTab === 'aguardando' ? '#fbbf24' : '#94a3b8',
+              fontWeight: 800,
+              fontSize: '13px',
+              cursor: 'pointer',
+              borderBottom: activeTab === 'aguardando' ? '3px solid #fbbf24' : 'none'
+            }}
+          >
+            <Clock size={15} />
+            <span>2. Aguardando Aprovação ({estatisticas.countAguardando})</span>
+          </button>
+        )}
 
         {/* 3. APROVADAS */}
-        <button
-          onClick={() => setActiveTab('aprovadas')}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            padding: '10px 14px',
-            borderRadius: '8px 8px 0 0',
-            border: 'none',
-            background: activeTab === 'aprovadas' ? 'rgba(16, 185, 129, 0.2)' : 'transparent',
-            color: activeTab === 'aprovadas' ? '#34d399' : '#94a3b8',
-            fontWeight: 800,
-            fontSize: '13px',
-            cursor: 'pointer',
-            borderBottom: activeTab === 'aprovadas' ? '3px solid #34d399' : 'none'
-          }}
-        >
-          <CheckCircle2 size={15} />
-          <span>3. Aprovadas ({estatisticas.countAprovadas})</span>
-        </button>
+        {checkTabAccess('fin_aprovadas') && (
+          <button
+            onClick={() => setActiveTab('aprovadas')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '10px 14px',
+              borderRadius: '8px 8px 0 0',
+              border: 'none',
+              background: activeTab === 'aprovadas' ? 'rgba(16, 185, 129, 0.2)' : 'transparent',
+              color: activeTab === 'aprovadas' ? '#34d399' : '#94a3b8',
+              fontWeight: 800,
+              fontSize: '13px',
+              cursor: 'pointer',
+              borderBottom: activeTab === 'aprovadas' ? '3px solid #34d399' : 'none'
+            }}
+          >
+            <CheckCircle2 size={15} />
+            <span>3. Aprovadas ({estatisticas.countAprovadas})</span>
+          </button>
+        )}
 
         {/* 4. LANÇADAS */}
-        <button
-          onClick={() => setActiveTab('lancadas')}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            padding: '10px 14px',
-            borderRadius: '8px 8px 0 0',
-            border: 'none',
-            background: activeTab === 'lancadas' ? 'rgba(59, 130, 246, 0.2)' : 'transparent',
-            color: activeTab === 'lancadas' ? '#60a5fa' : '#94a3b8',
-            fontWeight: 800,
-            fontSize: '13px',
-            cursor: 'pointer',
-            borderBottom: activeTab === 'lancadas' ? '3px solid #60a5fa' : 'none'
-          }}
-        >
-          <Send size={15} />
-          <span>5. Lançadas ({estatisticas.countLancadas})</span>
-        </button>
+        {checkTabAccess('fin_lancadas') && (
+          <button
+            onClick={() => setActiveTab('lancadas')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '10px 14px',
+              borderRadius: '8px 8px 0 0',
+              border: 'none',
+              background: activeTab === 'lancadas' ? 'rgba(59, 130, 246, 0.2)' : 'transparent',
+              color: activeTab === 'lancadas' ? '#60a5fa' : '#94a3b8',
+              fontWeight: 800,
+              fontSize: '13px',
+              cursor: 'pointer',
+              borderBottom: activeTab === 'lancadas' ? '3px solid #60a5fa' : 'none'
+            }}
+          >
+            <Send size={15} />
+            <span>5. Lançadas ({estatisticas.countLancadas})</span>
+          </button>
+        )}
 
         {/* 5. PAGAS */}
-        <button
-          onClick={() => setActiveTab('pagas')}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            padding: '10px 14px',
-            borderRadius: '8px 8px 0 0',
-            border: 'none',
-            background: activeTab === 'pagas' ? 'rgba(52, 211, 153, 0.2)' : 'transparent',
-            color: activeTab === 'pagas' ? '#34d399' : '#94a3b8',
-            fontWeight: 800,
-            fontSize: '13px',
-            cursor: 'pointer',
-            borderBottom: activeTab === 'pagas' ? '3px solid #34d399' : 'none'
-          }}
-        >
-          <CheckCheck size={15} />
-          <span>6. Pagas ({estatisticas.countPagas})</span>
-        </button>
+        {checkTabAccess('fin_pagas') && (
+          <button
+            onClick={() => setActiveTab('pagas')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '10px 14px',
+              borderRadius: '8px 8px 0 0',
+              border: 'none',
+              background: activeTab === 'pagas' ? 'rgba(52, 211, 153, 0.2)' : 'transparent',
+              color: activeTab === 'pagas' ? '#34d399' : '#94a3b8',
+              fontWeight: 800,
+              fontSize: '13px',
+              cursor: 'pointer',
+              borderBottom: activeTab === 'pagas' ? '3px solid #34d399' : 'none'
+            }}
+          >
+            <CheckCheck size={15} />
+            <span>6. Pagas ({estatisticas.countPagas})</span>
+          </button>
+        )}
 
         {/* 6. CONCILIAÇÃO */}
-        <button
-          onClick={() => setActiveTab('conciliacao')}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            padding: '10px 14px',
-            borderRadius: '8px 8px 0 0',
-            border: 'none',
-            background: activeTab === 'conciliacao' ? 'rgba(59, 130, 246, 0.15)' : 'transparent',
-            color: activeTab === 'conciliacao' ? '#60a5fa' : '#94a3b8',
-            fontWeight: 700,
-            fontSize: '13px',
-            cursor: 'pointer',
-            borderBottom: activeTab === 'conciliacao' ? '2px solid #60a5fa' : 'none'
-          }}
-        >
-          <Landmark size={15} />
-          <span>7. Conciliação ({estatisticas.countConciliacao})</span>
-        </button>
+        {checkTabAccess('fin_conciliacao') && (
+          <button
+            onClick={() => setActiveTab('conciliacao')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '10px 14px',
+              borderRadius: '8px 8px 0 0',
+              border: 'none',
+              background: activeTab === 'conciliacao' ? 'rgba(59, 130, 246, 0.15)' : 'transparent',
+              color: activeTab === 'conciliacao' ? '#60a5fa' : '#94a3b8',
+              fontWeight: 700,
+              fontSize: '13px',
+              cursor: 'pointer',
+              borderBottom: activeTab === 'conciliacao' ? '2px solid #60a5fa' : 'none'
+            }}
+          >
+            <Landmark size={15} />
+            <span>7. Conciliação ({estatisticas.countConciliacao})</span>
+          </button>
+        )}
 
         {/* 7. RECUSADAS */}
-        <button
-          onClick={() => setActiveTab('recusadas')}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            padding: '10px 14px',
-            borderRadius: '8px 8px 0 0',
-            border: 'none',
-            background: activeTab === 'recusadas' ? 'rgba(239, 68, 68, 0.15)' : 'transparent',
-            color: activeTab === 'recusadas' ? '#f87171' : '#94a3b8',
-            fontWeight: 700,
-            fontSize: '13px',
-            cursor: 'pointer',
-            borderBottom: activeTab === 'recusadas' ? '2px solid #f87171' : 'none'
-          }}
-        >
-          <XCircle size={15} />
-          <span>8. Recusadas ({estatisticas.countRecusadas})</span>
-        </button>
+        {checkTabAccess('fin_recusadas') && (
+          <button
+            onClick={() => setActiveTab('recusadas')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '10px 14px',
+              borderRadius: '8px 8px 0 0',
+              border: 'none',
+              background: activeTab === 'recusadas' ? 'rgba(239, 68, 68, 0.15)' : 'transparent',
+              color: activeTab === 'recusadas' ? '#f87171' : '#94a3b8',
+              fontWeight: 700,
+              fontSize: '13px',
+              cursor: 'pointer',
+              borderBottom: activeTab === 'recusadas' ? '2px solid #f87171' : 'none'
+            }}
+          >
+            <XCircle size={15} />
+            <span>8. Recusadas ({estatisticas.countRecusadas})</span>
+          </button>
+        )}
 
         {/* 8. RELATÓRIO MENSAL & CONSULTA GERAL */}
-        <button
-          onClick={() => setActiveTab('relatorio')}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            padding: '10px 14px',
-            borderRadius: '8px 8px 0 0',
-            border: 'none',
-            background: activeTab === 'relatorio' ? 'rgba(139, 92, 246, 0.15)' : 'transparent',
-            color: activeTab === 'relatorio' ? '#c084fc' : '#94a3b8',
-            fontWeight: 800,
-            fontSize: '13px',
-            cursor: 'pointer',
-            borderBottom: activeTab === 'relatorio' ? '2px solid #c084fc' : 'none'
-          }}
-        >
-          <BarChart2 size={15} />
-          <span>Relatório Mensal & Consulta</span>
-        </button>
+        {checkTabAccess('fin_relatorio') && (
+          <button
+            onClick={() => setActiveTab('relatorio')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '10px 14px',
+              borderRadius: '8px 8px 0 0',
+              border: 'none',
+              background: activeTab === 'relatorio' ? 'rgba(139, 92, 246, 0.15)' : 'transparent',
+              color: activeTab === 'relatorio' ? '#c084fc' : '#94a3b8',
+              fontWeight: 800,
+              fontSize: '13px',
+              cursor: 'pointer',
+              borderBottom: activeTab === 'relatorio' ? '2px solid #c084fc' : 'none'
+            }}
+          >
+            <BarChart2 size={15} />
+            <span>Relatório Mensal & Consulta</span>
+          </button>
+        )}
 
         {/* ABA FORMULÁRIO: CADASTRAR NOVA DESPESA */}
-        <button
-          onClick={() => setActiveTab('nova')}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            padding: '10px 14px',
-            borderRadius: '8px 8px 0 0',
-            border: 'none',
-            background: activeTab === 'nova' ? 'rgba(59, 130, 246, 0.15)' : 'transparent',
-            color: activeTab === 'nova' ? '#60a5fa' : '#94a3b8',
-            fontWeight: 700,
-            fontSize: '13px',
-            cursor: 'pointer',
-            borderBottom: activeTab === 'nova' ? '2px solid #60a5fa' : 'none',
-            marginLeft: 'auto'
-          }}
-        >
-          <PlusCircle size={15} />
-          <span>+ Nova Despesa</span>
-        </button>
+        {checkTabAccess('fin_nova') && (
+          <button
+            onClick={() => setActiveTab('nova')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '10px 14px',
+              borderRadius: '8px 8px 0 0',
+              border: 'none',
+              background: activeTab === 'nova' ? 'rgba(59, 130, 246, 0.15)' : 'transparent',
+              color: activeTab === 'nova' ? '#60a5fa' : '#94a3b8',
+              fontWeight: 700,
+              fontSize: '13px',
+              cursor: 'pointer',
+              borderBottom: activeTab === 'nova' ? '2px solid #60a5fa' : 'none',
+              marginLeft: 'auto'
+            }}
+          >
+            <PlusCircle size={15} />
+            <span>+ Nova Despesa</span>
+          </button>
+        )}
 
       </div>
 

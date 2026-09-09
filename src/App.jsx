@@ -89,11 +89,10 @@ const COLORS = ['url(#metalSteel)', 'url(#metalBlue)', 'url(#metalSilver)', 'url
 const FALTAS_COLORS = ['url(#metalBronze)', 'url(#metalGold)', 'url(#metalPurple)', 'url(#metalCyan)', 'url(#metalSilver)', 'url(#metalSteel)'];
 
 
-const hasAccess = (user, screen) => {
+export const hasAccess = (user, screen) => {
   if (!user) return false;
   if (user.role === 'SUPERVISOR' && screen !== 'app_supervisor') return false;
   if (user.role === 'MASTER') return true;
-  if (screen === 'medicao' || screen === 'financeiro') return true;
   if (!user.allowed_screens || user.allowed_screens.length === 0) return true;
   return user.allowed_screens.includes(screen);
 };

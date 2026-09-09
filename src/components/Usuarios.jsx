@@ -302,24 +302,109 @@ const Usuarios = ({ currentUser }) => {
               </div>
               
               <div>
-                <label style={{ display: 'block', marginBottom: '6px', color: '#cbd5e1', fontSize: '13px' }}>Permissões de Telas</label>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '8px', background: 'rgba(15, 23, 42, 0.6)', padding: '12px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.1)' }}>
-                  {['dashboard', 'rh', 'frota', 'disciplina', 'atestados', 'medicao', 'monitoramento', 'Apresentação', 'app_supervisor'].map(screen => (
-                    <label key={screen} style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#cbd5e1', fontSize: '13px', cursor: 'pointer' }}>
-                      <input 
-                        type="checkbox" 
-                        checked={formData.allowed_screens.includes(screen)}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setFormData({...formData, allowed_screens: [...formData.allowed_screens, screen]});
-                          } else {
-                            setFormData({...formData, allowed_screens: formData.allowed_screens.filter(s => s !== screen)});
-                          }
-                        }}
-                        style={{ accentColor: '#8b5cf6', width: '16px', height: '16px' }}
-                      />
-                      {screen === 'Apresentação' ? 'Modo TV' : screen === 'app_supervisor' ? 'App Supervisor' : screen === 'rh' ? 'RH' : screen === 'medicao' ? 'Medição' : screen.charAt(0).toUpperCase() + screen.slice(1)}
-                    </label>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <label style={{ color: '#cbd5e1', fontSize: '13px', fontWeight: 600 }}>Permissões de Telas e Abas</label>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const CATEGORIAS = [
+                          ['rh', 'frota', 'disciplina', 'atestados', 'relatorio_visitas', 'medicao', 'financeiro', 'monitoramento', 'app_supervisor', 'Apresentação', 'usuarios'],
+                          ['fin_cadastradas', 'fin_aguardando', 'fin_aprovadas', 'fin_lancadas', 'fin_pagas', 'fin_conciliacao', 'fin_recusadas', 'fin_relatorio', 'fin_nova'],
+                          ['med_analise', 'med_gerenciar', 'med_kms'],
+                          ['mon_visitas', 'mon_ocorrencias']
+                        ].flat();
+                        setFormData({...formData, allowed_screens: CATEGORIAS});
+                      }}
+                      style={{ background: 'rgba(139, 92, 246, 0.2)', color: '#c084fc', border: '1px solid rgba(139, 92, 246, 0.4)', borderRadius: '4px', padding: '3px 8px', fontSize: '11px', fontWeight: 700, cursor: 'pointer' }}
+                    >
+                      Selecionar Todas
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFormData({...formData, allowed_screens: []})}
+                      style={{ background: 'rgba(239, 68, 68, 0.15)', color: '#f87171', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '4px', padding: '3px 8px', fontSize: '11px', fontWeight: 700, cursor: 'pointer' }}
+                    >
+                      Desmarcar Todas
+                    </button>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', background: 'rgba(15, 23, 42, 0.6)', padding: '16px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', maxHeight: '380px', overflowY: 'auto' }}>
+                  {[
+                    {
+                      titulo: '📌 Telas Principais (Menu Lateral)',
+                      opcoes: [
+                        { id: 'rh', label: 'Gestão de Efetivos (RH)' },
+                        { id: 'frota', label: 'Gestão de Frota' },
+                        { id: 'disciplina', label: 'Disciplina / Ocorrências' },
+                        { id: 'atestados', label: 'Campeões de Atestado' },
+                        { id: 'relatorio_visitas', label: 'Relatório de Visitas' },
+                        { id: 'medicao', label: 'Medição de Serviços' },
+                        { id: 'financeiro', label: 'Módulo Financeiro' },
+                        { id: 'monitoramento', label: 'Central de Monitoramento' },
+                        { id: 'app_supervisor', label: 'App Supervisor (Campo)' },
+                        { id: 'Apresentação', label: 'Modo Apresentação (TV)' },
+                        { id: 'usuarios', label: 'Gerenciar Usuários (Configurações)' }
+                      ]
+                    },
+                    {
+                      titulo: '💰 Sub-abas do Módulo Financeiro',
+                      opcoes: [
+                        { id: 'fin_cadastradas', label: '1. Cadastro de Despesas' },
+                        { id: 'fin_aguardando', label: '2. Aguardando Aprovação' },
+                        { id: 'fin_aprovadas', label: '3. Despesas Aprovadas' },
+                        { id: 'fin_lancadas', label: '5. Lançadas no Banco' },
+                        { id: 'fin_pagas', label: '6. Despesas Pagas' },
+                        { id: 'fin_conciliacao', label: '7. Conciliação Bancária' },
+                        { id: 'fin_recusadas', label: '8. Despesas Recusadas' },
+                        { id: 'fin_relatorio', label: 'Relatório Mensal & Consulta' },
+                        { id: 'fin_nova', label: '+ Cadastrar Nova Despesa' }
+                      ]
+                    },
+                    {
+                      titulo: '📐 Sub-abas do Módulo Medição',
+                      opcoes: [
+                        { id: 'med_analise', label: 'Análise de Medição' },
+                        { id: 'med_gerenciar', label: 'Gerenciar Postos' },
+                        { id: 'med_kms', label: 'Controle de KMs' }
+                      ]
+                    },
+                    {
+                      titulo: '📍 Sub-abas da Central de Monitoramento',
+                      opcoes: [
+                        { id: 'mon_visitas', label: 'Registro de Visitas' },
+                        { id: 'mon_ocorrencias', label: 'Ocorrências em Campo' }
+                      ]
+                    }
+                  ].map((cat, cIdx) => (
+                    <div key={cIdx}>
+                      <div style={{ fontSize: '12px', fontWeight: 700, color: '#a855f7', marginBottom: '8px', borderBottom: '1px solid rgba(168, 85, 247, 0.2)', paddingBottom: '4px' }}>
+                        {cat.titulo}
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '8px' }}>
+                        {cat.opcoes.map(item => {
+                          const checked = formData.allowed_screens.includes(item.id);
+                          return (
+                            <label key={item.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', color: checked ? '#f8fafc' : '#94a3b8', fontSize: '12px', cursor: 'pointer', background: checked ? 'rgba(139, 92, 246, 0.15)' : 'rgba(255,255,255,0.02)', padding: '6px 8px', borderRadius: '6px', border: checked ? '1px solid rgba(139, 92, 246, 0.4)' : '1px solid rgba(255,255,255,0.05)' }}>
+                              <input 
+                                type="checkbox" 
+                                checked={checked}
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    setFormData({...formData, allowed_screens: [...formData.allowed_screens, item.id]});
+                                  } else {
+                                    setFormData({...formData, allowed_screens: formData.allowed_screens.filter(s => s !== item.id)});
+                                  }
+                                }}
+                                style={{ accentColor: '#8b5cf6', width: '15px', height: '15px' }}
+                              />
+                              <span>{item.label}</span>
+                            </label>
+                          );
+                        })}
+                      </div>
+                    </div>
                   ))}
                 </div>
               </div>
