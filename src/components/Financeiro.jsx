@@ -5,7 +5,8 @@ import {
   Building, Calendar, CreditCard, Shield, AlertTriangle, Filter, 
   Search, Download, Trash2, Eye, MessageSquare, Check, X, ArrowUpRight,
   TrendingUp, TrendingDown, Layers, Percent, Tag, RefreshCw, Plus, Sparkles,
-  Archive, Landmark, CheckCheck, RotateCcw, ArrowRight, Edit2, Send, AlertOctagon
+  Archive, Landmark, CheckCheck, RotateCcw, ArrowRight, Edit2, Send, AlertOctagon,
+  ListFilter, Database, BarChart2
 } from 'lucide-react';
 import { 
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, 
@@ -58,40 +59,28 @@ const CONFIG_STATUS_PAGAMENTO = {
     badge: '⏳ Pendente de Pagamento',
     color: '#fbbf24',
     bg: 'rgba(245, 158, 11, 0.15)',
-    border: 'rgba(245, 158, 11, 0.4)',
-    proximo: 'PAGO',
-    acao: 'Marcar como Paga',
-    proximoBadge: '✓ Marcar Paga'
+    border: 'rgba(245, 158, 11, 0.4)'
   },
   PAGO: {
     label: 'Pago',
     badge: '✓ PAGO',
     color: '#34d399',
     bg: 'rgba(16, 185, 129, 0.15)',
-    border: 'rgba(16, 185, 129, 0.4)',
-    proximo: 'PENDENTE_CONCILIACAO',
-    acao: 'Enviar p/ Conciliação',
-    proximoBadge: '🏦 Enviar p/ Conciliação'
+    border: 'rgba(16, 185, 129, 0.4)'
   },
   PENDENTE_CONCILIACAO: {
     label: 'Pendente de Conciliação',
     badge: '🏦 Pendente de Conciliação',
     color: '#60a5fa',
     bg: 'rgba(59, 130, 246, 0.15)',
-    border: 'rgba(59, 130, 246, 0.4)',
-    proximo: 'ARQUIVADO',
-    acao: 'Conciliar & Arquivar',
-    proximoBadge: '📦 Conciliar & Arquivar'
+    border: 'rgba(59, 130, 246, 0.4)'
   },
   ARQUIVADO: {
     label: 'Arquivada',
     badge: '📦 Arquivada',
     color: '#94a3b8',
     bg: 'rgba(148, 163, 184, 0.15)',
-    border: 'rgba(148, 163, 184, 0.4)',
-    proximo: 'PENDENTE_CONCILIACAO',
-    acao: 'Desarquivar',
-    proximoBadge: '🔄 Desarquivar'
+    border: 'rgba(148, 163, 184, 0.4)'
   }
 };
 
@@ -154,6 +143,7 @@ const formatarMesExtenso = (anoMes) => {
   return anoMes;
 };
 
+// Dados Iniciais cobrindo todas as etapas da esteira financeira
 const DESPESAS_INICIAIS = [
   {
     id: 'fin_1001',
@@ -228,6 +218,30 @@ const DESPESAS_INICIAIS = [
     dataCriacao: '2026-09-02'
   },
   {
+    id: 'fin_1009',
+    grupoId: 'grp_1009',
+    empresa: 'AÇOFORTE',
+    departamento: 'TI',
+    nome: 'Servidores de Infraestrutura e Licenças de Firewall',
+    valor: 16500.00,
+    parcelaNumero: 1,
+    parcelas: 1,
+    vencimento: '2026-09-28',
+    temOP: true,
+    numeroOP: 'OP-2026-4411',
+    banco: 'Itaú',
+    formaPagamento: 'Pix',
+    prioridade: 'ALTA',
+    observacao: 'Renovação semestral do sistema de proteção de dados.',
+    status: 'APROVADA',
+    statusPagamento: 'PENDENTE_PAGAMENTO',
+    dataPagamento: null,
+    dataConciliacao: null,
+    dataArquivamento: null,
+    obsAprovacao: 'Aprovado em reunião de diretoria.',
+    dataCriacao: '2026-09-04'
+  },
+  {
     id: 'fin_1008',
     grupoId: 'grp_1008',
     empresa: 'REGIONAL',
@@ -268,8 +282,8 @@ const DESPESAS_INICIAIS = [
     prioridade: 'MÉDIA',
     observacao: 'Lote de coturnos e coletes - Parcela 1/3.',
     status: 'LANCADA',
-    statusPagamento: 'PENDENTE_PAGAMENTO',
-    dataPagamento: null,
+    statusPagamento: 'PAGO',
+    dataPagamento: '2026-09-05',
     dataConciliacao: null,
     dataArquivamento: null,
     obsAprovacao: 'Aprovado e lançado para pagamento.',
@@ -449,9 +463,9 @@ export default function Financeiro({ currentUser }) {
     localStorage.setItem('acoweb_financeiro_bancos', JSON.stringify(bancos));
   }, [bancos]);
 
-  // Estado Principal de Despesas (versão 4 para reparcelamento mensal e ordem de abas)
+  // Estado Principal de Despesas (versão 5 para esteira exata de 8 abas)
   const [despesas, setDespesas] = useState(() => {
-    const saved = localStorage.getItem('acoweb_financeiro_despesas_v4');
+    const saved = localStorage.getItem('acoweb_financeiro_despesas_v5');
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
@@ -461,18 +475,29 @@ export default function Financeiro({ currentUser }) {
     return DESPESAS_INICIAIS;
   });
 
-  // Salvar despesas v4 no localStorage
+  // Salvar despesas v5 no localStorage
   useEffect(() => {
     try {
-      localStorage.setItem('acoweb_financeiro_despesas_v4', JSON.stringify(despesas));
+      localStorage.setItem('acoweb_financeiro_despesas_v5', JSON.stringify(despesas));
     } catch(e) {
       console.error('Erro ao salvar despesas no localStorage:', e);
     }
   }, [despesas]);
 
-  // Aba Ativa (Primeira aba padrão: 'cadastradas')
-  // Abas disponíveis: 'cadastradas', 'aguardando', 'lancadas', 'conciliacao', 'arquivadas', 'recusadas', 'relatorio', 'nova'
+  // Ordem Exata das Abas Solicitadas:
+  // 1. Cadastradas ('cadastradas')
+  // 2. Aguardando Aprovação ('aguardando')
+  // 3. Aprovadas ('aprovadas')
+  // 4. Lançadas ('lancadas')
+  // 5. Pagas ('pagas')
+  // 6. Conciliação ('conciliacao')
+  // 7. Recusadas ('recusadas')
+  // 8. Relatório Mensal & Consulta Geral ('relatorio')
+  // Extra: Cadastrar Nova Despesa ('nova')
   const [activeTab, setActiveTab] = useState('cadastradas');
+
+  // Sub-aba na tela de Relatório Mensal ('fluxo' ou 'consulta')
+  const [subTabRelatorio, setSubTabRelatorio] = useState('fluxo');
 
   // Filtros Globais da Tabela
   const [filtroEmpresa, setFiltroEmpresa] = useState('');
@@ -556,7 +581,7 @@ export default function Financeiro({ currentUser }) {
     setShowNovoBancoModal(false);
   };
 
-  // Salvar Novo Valor Editado (Disponível na 1ª Aba)
+  // Salvar Novo Valor Editado (Disponível na 1ª Aba: Despesas Cadastradas)
   const handleSalvarNovoValor = (e) => {
     e.preventDefault();
     if (!modalEditarValor) return;
@@ -576,7 +601,8 @@ export default function Financeiro({ currentUser }) {
     setNovoValorInput('');
   };
 
-  // Enviar Despesa da 1ª Aba (Cadastradas) para a 2ª Aba (Aguardando Aprovação)
+  // Transições da Esteira Financeira
+  // 1ª Aba -> 2ª Aba: Enviar Cadastrada para Aprovação
   const handleEnviarParaAprovacao = (id) => {
     setDespesas(prev => prev.map(d => {
       if (d.id === id) {
@@ -591,6 +617,69 @@ export default function Financeiro({ currentUser }) {
     alert('🚀 Despesa enviada para a aba "Aguardando Aprovação"! A diretoria/gestor poderá avaliar e aprovar.');
   };
 
+  // 3ª Aba -> 4ª Aba: Confirmar Lançamento no Banco da despesa Aprovada
+  const handleConfirmarLancamentoBanco = (id) => {
+    setDespesas(prev => prev.map(d => {
+      if (d.id === id) {
+        return {
+          ...d,
+          status: 'LANCADA',
+          statusPagamento: 'PENDENTE_PAGAMENTO'
+        };
+      }
+      return d;
+    }));
+    alert('🏦 Despesa confirmada como Lançada no Banco! Agora está disponível na aba "Lançadas".');
+  };
+
+  // 4ª Aba -> 5ª Aba: Marcar Lançada no Banco como PAGA
+  const handleMarcarComoPaga = (id) => {
+    const hoje = new Date().toISOString().slice(0, 10);
+    setDespesas(prev => prev.map(d => {
+      if (d.id === id) {
+        return {
+          ...d,
+          statusPagamento: 'PAGO',
+          dataPagamento: d.dataPagamento || hoje
+        };
+      }
+      return d;
+    }));
+    alert('✓ Despesa marcada como PAGA com sucesso! Ela foi movida para a aba "Pagas".');
+  };
+
+  // 5ª Aba -> 6ª Aba: Enviar Paga para Conciliação Bancária
+  const handleEnviarParaConciliacao = (id) => {
+    const hoje = new Date().toISOString().slice(0, 10);
+    setDespesas(prev => prev.map(d => {
+      if (d.id === id) {
+        return {
+          ...d,
+          statusPagamento: 'PENDENTE_CONCILIACAO',
+          dataConciliacao: d.dataConciliacao || hoje
+        };
+      }
+      return d;
+    }));
+    alert('🏦 Despesa enviada para a aba "Pendente de Conciliação"!');
+  };
+
+  // 6ª Aba: Conciliar e Arquivar
+  const handleConciliarEArquivar = (id) => {
+    const hoje = new Date().toISOString().slice(0, 10);
+    setDespesas(prev => prev.map(d => {
+      if (d.id === id) {
+        return {
+          ...d,
+          statusPagamento: 'ARQUIVADO',
+          dataArquivamento: d.dataArquivamento || hoje
+        };
+      }
+      return d;
+    }));
+    alert('📦 Despesa conciliada e arquivada com sucesso!');
+  };
+
   // Handler de envio do formulário de nova despesa (Suporta Parcelamento Multi-Mês)
   const handleCadastrarDespesa = (e) => {
     e.preventDefault();
@@ -601,7 +690,6 @@ export default function Financeiro({ currentUser }) {
     const numParc = Math.max(1, parseInt(formNovaDespesa.parcelas, 10) || 1);
     const valTotal = parseFloat(formNovaDespesa.valor) || 0;
     
-    // Divisão de parcelas com arredondamento preciso
     const valParcelaBase = Math.floor((valTotal / numParc) * 100) / 100;
     const resto = Math.round((valTotal - (valParcelaBase * numParc)) * 100) / 100;
 
@@ -659,7 +747,7 @@ export default function Financeiro({ currentUser }) {
       observacao: ''
     });
 
-    // Mudar para a 1ª aba (Despesas Cadastradas)
+    // Mudar para a 1ª aba (Cadastro de Despesas)
     setActiveTab('cadastradas');
   };
 
@@ -672,19 +760,19 @@ export default function Financeiro({ currentUser }) {
       if (d.id === despesa.id) {
         return {
           ...d,
-          status: acao === 'APROVAR' ? 'LANCADA' : 'RECUSADA',
+          status: acao === 'APROVAR' ? 'APROVADA' : 'RECUSADA',
           obsAprovacao: obsAprovacaoInput.trim()
         };
       }
       return d;
     }));
 
-    alert(`Despesa ${acao === 'APROVAR' ? 'Aprovada e enviada para Lançadas no Banco' : 'Reprovada/Recusada'} com sucesso!`);
+    alert(`Despesa ${acao === 'APROVAR' ? 'Aprovada com sucesso e movida para a aba "3. Aprovadas"' : 'Reprovada/Recusada e movida para a aba "7. Recusadas"'}!`);
     setModalAprovacao(null);
     setObsAprovacaoInput('');
   };
 
-  // Alterar status de pagamento/conciliação/arquivamento
+  // Alterar status de pagamento/conciliação/arquivamento manualmente
   const handleMudarStatusPagamento = (id, novoStatus) => {
     setDespesas(prev => prev.map(d => {
       if (d.id === id) {
@@ -699,15 +787,6 @@ export default function Financeiro({ currentUser }) {
       }
       return d;
     }));
-  };
-
-  // Avançar status para a próxima fase do fluxo
-  const handleAvancarStatusPagamento = (id) => {
-    const item = despesas.find(d => d.id === id);
-    if (!item) return;
-    const stAtual = item.statusPagamento || 'PENDENTE_PAGAMENTO';
-    const configAtual = CONFIG_STATUS_PAGAMENTO[stAtual] || CONFIG_STATUS_PAGAMENTO.PENDENTE_PAGAMENTO;
-    handleMudarStatusPagamento(id, configAtual.proximo);
   };
 
   // Excluir Despesa
@@ -744,26 +823,23 @@ export default function Financeiro({ currentUser }) {
   const estatisticas = useMemo(() => {
     const hoje = new Date().toISOString().slice(0, 10);
 
-    // Filtragem por mês para o resumo de KPIs se `filtroMes` estiver ativo
     const despesasEscopo = filtroMes 
       ? despesas.filter(d => d.vencimento && d.vencimento.startsWith(filtroMes))
       : despesas;
 
     const cadastradas = despesasEscopo.filter(d => d.status === 'CADASTRADA');
     const aguardando = despesasEscopo.filter(d => d.status === 'AGUARDANDO_APROVACAO');
-    const lancadas = despesasEscopo.filter(d => d.status === 'LANCADA' || d.status === 'APROVADA');
+    const aprovadas = despesasEscopo.filter(d => d.status === 'APROVADA');
+    const lancadas = despesasEscopo.filter(d => d.status === 'LANCADA' && d.statusPagamento !== 'PAGO' && d.statusPagamento !== 'PENDENTE_CONCILIACAO' && d.statusPagamento !== 'ARQUIVADO');
+    const pagas = despesasEscopo.filter(d => d.statusPagamento === 'PAGO');
+    const conciliacao = despesasEscopo.filter(d => d.statusPagamento === 'PENDENTE_CONCILIACAO');
     const recusadas = despesasEscopo.filter(d => d.status === 'RECUSADA');
+    const arquivadas = despesasEscopo.filter(d => d.statusPagamento === 'ARQUIVADO');
 
     // Situações de Pagamento Globais no Escopo
-    const pagas = despesasEscopo.filter(d => d.statusPagamento === 'PAGO');
     const emAberto = despesasEscopo.filter(d => d.status !== 'RECUSADA' && (!d.statusPagamento || d.statusPagamento === 'PENDENTE_PAGAMENTO'));
-
-    // Vencidas vs A Vencer
     const vencidas = emAberto.filter(d => d.vencimento && d.vencimento < hoje);
     const aVencer = emAberto.filter(d => !d.vencimento || d.vencimento >= hoje);
-
-    const conciliacao = despesasEscopo.filter(d => d.statusPagamento === 'PENDENTE_CONCILIACAO');
-    const arquivadas = despesasEscopo.filter(d => d.statusPagamento === 'ARQUIVADO');
 
     return {
       totalGeral: despesasEscopo.length,
@@ -771,59 +847,64 @@ export default function Financeiro({ currentUser }) {
       valorCadastradas: cadastradas.reduce((a, b) => a + b.valor, 0),
       countAguardando: aguardando.length,
       valorAguardando: aguardando.reduce((a, b) => a + b.valor, 0),
+      countAprovadas: aprovadas.length,
+      valorAprovadas: aprovadas.reduce((a, b) => a + b.valor, 0),
       countLancadas: lancadas.length,
       valorLancadas: lancadas.reduce((a, b) => a + b.valor, 0),
-      countRecusadas: recusadas.length,
-      valorRecusadas: recusadas.reduce((a, b) => a + b.valor, 0),
-
-      // 4 Situações Requisitadas:
       countPagas: pagas.length,
       valorPagas: pagas.reduce((a, b) => a + b.valor, 0),
+      countConciliacao: conciliacao.length,
+      valorConciliacao: conciliacao.reduce((a, b) => a + b.valor, 0),
+      countRecusadas: recusadas.length,
+      valorRecusadas: recusadas.reduce((a, b) => a + b.valor, 0),
+      countArquivadas: arquivadas.length,
+      valorArquivadas: arquivadas.reduce((a, b) => a + b.valor, 0),
+
       countEmAberto: emAberto.length,
       valorEmAberto: emAberto.reduce((a, b) => a + b.valor, 0),
       countVencidas: vencidas.length,
       valorVencidas: vencidas.reduce((a, b) => a + b.valor, 0),
       countAVencer: aVencer.length,
-      valorAVencer: aVencer.reduce((a, b) => a + b.valor, 0),
-
-      countConciliacao: conciliacao.length,
-      valorConciliacao: conciliacao.reduce((a, b) => a + b.valor, 0),
-      countArquivadas: arquivadas.length,
-      valorArquivadas: arquivadas.reduce((a, b) => a + b.valor, 0)
+      valorAVencer: aVencer.reduce((a, b) => a + b.valor, 0)
     };
   }, [despesas, filtroMes]);
 
-  // Lista Filtrada para a Aba Ativa
+  // Lista Filtrada para a Aba Ativa da Tabela Principal
   const listaExibicao = useMemo(() => {
     const hoje = new Date().toISOString().slice(0, 10);
 
     return despesas.filter(d => {
-      // 1ª Aba: Despesas Cadastradas
+      // 1. Cadastro de Despesas
       if (activeTab === 'cadastradas') {
         if (d.status !== 'CADASTRADA') return false;
       }
       
-      // 2ª Aba: Aguardando Aprovação
+      // 2. Aguardando Aprovação
       if (activeTab === 'aguardando') {
         if (d.status !== 'AGUARDANDO_APROVACAO') return false;
       }
 
-      // 3ª Aba: Lançadas no Banco (após aprovação)
+      // 3. Aprovadas
+      if (activeTab === 'aprovadas') {
+        if (d.status !== 'APROVADA') return false;
+      }
+
+      // 4. Lançadas no Banco
       if (activeTab === 'lancadas') {
-        if (d.status !== 'LANCADA' && d.status !== 'APROVADA') return false;
+        if (d.status !== 'LANCADA' || d.statusPagamento === 'PAGO' || d.statusPagamento === 'PENDENTE_CONCILIACAO' || d.statusPagamento === 'ARQUIVADO') return false;
       }
       
-      // 4ª Aba: Pendente de Conciliação
+      // 5. Pagas
+      if (activeTab === 'pagas') {
+        if (d.statusPagamento !== 'PAGO') return false;
+      }
+
+      // 6. Conciliação
       if (activeTab === 'conciliacao') {
         if (d.statusPagamento !== 'PENDENTE_CONCILIACAO') return false;
       }
 
-      // 5ª Aba: Arquivadas
-      if (activeTab === 'arquivadas') {
-        if (d.statusPagamento !== 'ARQUIVADO') return false;
-      }
-
-      // 6ª Aba: Recusadas
+      // 7. Recusadas
       if (activeTab === 'recusadas') {
         if (d.status !== 'RECUSADA') return false;
       }
@@ -861,6 +942,43 @@ export default function Financeiro({ currentUser }) {
       return true;
     });
   }, [despesas, activeTab, filtroEmpresa, filtroDepartamento, filtroFormaPagamento, filtroBusca, filtroStatusPagamento, filtroMes]);
+
+  // Lista para a Consulta Geral de TODAS as Despesas (Na Aba de Relatório)
+  const listaConsultaGeral = useMemo(() => {
+    const hoje = new Date().toISOString().slice(0, 10);
+
+    return despesas.filter(d => {
+      if (filtroMes) {
+        if (!d.vencimento || !d.vencimento.startsWith(filtroMes)) return false;
+      }
+
+      if (filtroStatusPagamento !== 'TODOS') {
+        if (filtroStatusPagamento === 'VENCIDA') {
+          if (d.statusPagamento === 'PAGO' || d.statusPagamento === 'PENDENTE_CONCILIACAO' || d.statusPagamento === 'ARQUIVADO' || !d.vencimento || d.vencimento >= hoje) return false;
+        } else if (filtroStatusPagamento === 'A_VENCER') {
+          if (d.statusPagamento === 'PAGO' || d.statusPagamento === 'PENDENTE_CONCILIACAO' || d.statusPagamento === 'ARQUIVADO' || (d.vencimento && d.vencimento < hoje)) return false;
+        } else if (d.statusPagamento !== filtroStatusPagamento) {
+          return false;
+        }
+      }
+
+      if (filtroEmpresa && d.empresa !== filtroEmpresa) return false;
+      if (filtroDepartamento && d.departamento !== filtroDepartamento) return false;
+      if (filtroFormaPagamento && d.formaPagamento !== filtroFormaPagamento) return false;
+
+      if (filtroBusca) {
+        const term = filtroBusca.toLowerCase();
+        const matchNome = (d.nome || '').toLowerCase().includes(term);
+        const matchOP = (d.numeroOP || '').toLowerCase().includes(term);
+        const matchObs = (d.observacao || '').toLowerCase().includes(term);
+        const matchEmpresa = (d.empresa || '').toLowerCase().includes(term);
+        const matchDepto = (d.departamento || '').toLowerCase().includes(term);
+        if (!matchNome && !matchOP && !matchObs && !matchEmpresa && !matchDepto) return false;
+      }
+
+      return true;
+    });
+  }, [despesas, filtroEmpresa, filtroDepartamento, filtroFormaPagamento, filtroBusca, filtroStatusPagamento, filtroMes]);
 
   // Relatório Mensal Comparativo
   const dadosRelatorioMensal = useMemo(() => {
@@ -940,9 +1058,15 @@ export default function Financeiro({ currentUser }) {
     } else if (filtroTipo === 'AGUARDANDO_APROVACAO') {
       dadosFiltrados = despesas.filter(d => d.status === 'AGUARDANDO_APROVACAO');
       nomeArquivo = 'despesas_aguardando_aprovacao';
+    } else if (filtroTipo === 'APROVADAS') {
+      dadosFiltrados = despesas.filter(d => d.status === 'APROVADA');
+      nomeArquivo = 'despesas_aprovadas';
     } else if (filtroTipo === 'RECUSADAS') {
       dadosFiltrados = despesas.filter(d => d.status === 'RECUSADA');
       nomeArquivo = 'despesas_recusadas';
+    } else if (filtroTipo === 'TODAS') {
+      dadosFiltrados = listaConsultaGeral;
+      nomeArquivo = 'consulta_geral_despesas';
     }
 
     if (filtroMes) {
@@ -1031,28 +1155,28 @@ export default function Financeiro({ currentUser }) {
         </button>
       </div>
 
-      {/* CARDS RESUMO / KPIS DAS 4 SITUAÇÕES FINANCEIRAS & BALANÇO MENSAL */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '24px' }}>
+      {/* CARDS RESUMO / KPIS DAS SITUAÇÕES FINANCEIRAS & BALANÇO MENSAL */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '14px', marginBottom: '24px' }}>
         
-        {/* Situação 1: CONTAS VENCIDAS (ALERTA EM VERMELHO) */}
-        <div style={{ background: 'rgba(239, 68, 68, 0.12)', padding: '16px', borderRadius: '14px', border: '1px solid rgba(239, 68, 68, 0.35)', boxShadow: estatisticas.countVencidas > 0 ? '0 0 15px rgba(239, 68, 68, 0.2)' : 'none' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-            <span style={{ fontSize: '12px', color: '#f87171', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>🚨 Vencidas (Atraso)</span>
-            <AlertOctagon size={18} color="#ef4444" />
+        {/* Situação 1: CONTAS VENCIDAS */}
+        <div style={{ background: 'rgba(239, 68, 68, 0.12)', padding: '14px', borderRadius: '14px', border: '1px solid rgba(239, 68, 68, 0.35)', boxShadow: estatisticas.countVencidas > 0 ? '0 0 15px rgba(239, 68, 68, 0.2)' : 'none' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+            <span style={{ fontSize: '11px', color: '#f87171', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>🚨 Vencidas (Atraso)</span>
+            <AlertOctagon size={16} color="#ef4444" />
           </div>
-          <div style={{ fontSize: '20px', fontWeight: 800, color: '#f87171' }}>
+          <div style={{ fontSize: '18px', fontWeight: 800, color: '#f87171' }}>
             {formatMoney(estatisticas.valorVencidas)}
           </div>
           <div style={{ fontSize: '11px', color: '#fca5a5', marginTop: '4px', fontWeight: 600 }}>
-            {estatisticas.countVencidas} contas em atraso {filtroMes ? `(${formatarMesExtenso(filtroMes)})` : ''}
+            {estatisticas.countVencidas} contas em atraso
           </div>
         </div>
 
         {/* Situação 2: CONTAS A VENCER */}
-        <div style={{ background: 'rgba(245, 158, 11, 0.1)', padding: '16px', borderRadius: '14px', border: '1px solid rgba(245, 158, 11, 0.3)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-            <span style={{ fontSize: '12px', color: '#fbbf24', fontWeight: 700 }}>⏳ A Vencer (No Prazo)</span>
-            <Clock size={18} color="#f59e0b" />
+        <div style={{ background: 'rgba(245, 158, 11, 0.1)', padding: '14px', borderRadius: '14px', border: '1px solid rgba(245, 158, 11, 0.3)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+            <span style={{ fontSize: '11px', color: '#fbbf24', fontWeight: 700 }}>⏳ A Vencer (No Prazo)</span>
+            <Clock size={16} color="#f59e0b" />
           </div>
           <div style={{ fontSize: '18px', fontWeight: 800, color: '#fbbf24' }}>
             {formatMoney(estatisticas.valorAVencer)}
@@ -1063,10 +1187,10 @@ export default function Financeiro({ currentUser }) {
         </div>
 
         {/* Situação 3: TOTAL EM ABERTO */}
-        <div style={{ background: 'rgba(30, 41, 59, 0.5)', padding: '16px', borderRadius: '14px', border: '1px solid rgba(59, 130, 246, 0.2)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-            <span style={{ fontSize: '12px', color: '#94a3b8', fontWeight: 600 }}>💳 Total em Aberto</span>
-            <CreditCard size={18} color="#60a5fa" />
+        <div style={{ background: 'rgba(30, 41, 59, 0.5)', padding: '14px', borderRadius: '14px', border: '1px solid rgba(59, 130, 246, 0.2)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+            <span style={{ fontSize: '11px', color: '#94a3b8', fontWeight: 600 }}>💳 Total em Aberto</span>
+            <CreditCard size={16} color="#60a5fa" />
           </div>
           <div style={{ fontSize: '18px', fontWeight: 800, color: '#60a5fa' }}>
             {formatMoney(estatisticas.valorEmAberto)}
@@ -1076,11 +1200,11 @@ export default function Financeiro({ currentUser }) {
           </div>
         </div>
 
-        {/* Situação 4: TOTAL PAGO (QUITADO) */}
-        <div style={{ background: 'rgba(16, 185, 129, 0.1)', padding: '16px', borderRadius: '14px', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-            <span style={{ fontSize: '12px', color: '#34d399', fontWeight: 700 }}>✓ Pagos (Quitadas)</span>
-            <CheckCircle2 size={18} color="#34d399" />
+        {/* Situação 4: TOTAL PAGO (DESPESAS PAGAS) */}
+        <div style={{ background: 'rgba(16, 185, 129, 0.1)', padding: '14px', borderRadius: '14px', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+            <span style={{ fontSize: '11px', color: '#34d399', fontWeight: 700 }}>✓ Pagas (Quitadas)</span>
+            <CheckCircle2 size={16} color="#34d399" />
           </div>
           <div style={{ fontSize: '18px', fontWeight: 800, color: '#34d399' }}>
             {formatMoney(estatisticas.valorPagas)}
@@ -1091,47 +1215,47 @@ export default function Financeiro({ currentUser }) {
         </div>
 
         {/* AGUARDANDO APROVAÇÃO */}
-        <div style={{ background: 'rgba(30, 41, 59, 0.5)', padding: '16px', borderRadius: '14px', border: '1px solid rgba(245, 158, 11, 0.2)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-            <span style={{ fontSize: '12px', color: '#fbbf24', fontWeight: 600 }}>Aguardando Aprovação</span>
-            <Clock size={18} color="#fbbf24" />
+        <div style={{ background: 'rgba(30, 41, 59, 0.5)', padding: '14px', borderRadius: '14px', border: '1px solid rgba(245, 158, 11, 0.2)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+            <span style={{ fontSize: '11px', color: '#fbbf24', fontWeight: 600 }}>Aguardando Aprovação</span>
+            <Clock size={16} color="#fbbf24" />
           </div>
           <div style={{ fontSize: '18px', fontWeight: 800, color: '#fde047' }}>
             {formatMoney(estatisticas.valorAguardando)}
           </div>
           <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '4px' }}>
-            {estatisticas.countAguardando} pendentes de análise
+            {estatisticas.countAguardando} em análise
           </div>
         </div>
 
         {/* CONCILIAÇÃO & ARQUIVADAS */}
-        <div style={{ background: 'rgba(30, 41, 59, 0.5)', padding: '16px', borderRadius: '14px', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-            <span style={{ fontSize: '12px', color: '#94a3b8', fontWeight: 600 }}>Conciliação / Arquivo</span>
-            <Landmark size={18} color="#94a3b8" />
+        <div style={{ background: 'rgba(30, 41, 59, 0.5)', padding: '14px', borderRadius: '14px', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+            <span style={{ fontSize: '11px', color: '#94a3b8', fontWeight: 600 }}>Conciliação / Arquivo</span>
+            <Landmark size={16} color="#94a3b8" />
           </div>
           <div style={{ fontSize: '18px', fontWeight: 800, color: '#cbd5e1' }}>
             {formatMoney(estatisticas.valorConciliacao + estatisticas.valorArquivadas)}
           </div>
           <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '4px' }}>
-            {estatisticas.countConciliacao} em conciliação / {estatisticas.countArquivadas} arquivadas
+            {estatisticas.countConciliacao} conciliação / {estatisticas.countArquivadas} arquivadas
           </div>
         </div>
 
       </div>
 
-      {/* BARRA DE NAVEGAÇÃO DE ABAS — ORDEM EXATA SOLICITADA */}
-      {/* 1. Cadastradas -> 2. Aguardando Aprovação -> 3. Lançadas no Banco -> 4. Pendente Conciliação -> 5. Arquivadas -> 6. Recusadas -> 7. Relatório */}
-      <div style={{ display: 'flex', gap: '8px', borderBottom: '1px solid rgba(255, 255, 255, 0.1)', marginBottom: '24px', overflowX: 'auto', paddingBottom: '4px' }}>
+      {/* BARRA DE NAVEGAÇÃO DE ABAS — ORDEM EXATA REQUISITADA */}
+      {/* 1. Cadastro de Despesas -> 2. Aguardando Aprovação -> 3. Aprovadas -> 4. Lançadas -> 5. Pagas -> 6. Conciliação -> 7. Recusadas -> Relatório Mensal */}
+      <div style={{ display: 'flex', gap: '6px', borderBottom: '1px solid rgba(255, 255, 255, 0.1)', marginBottom: '24px', overflowX: 'auto', paddingBottom: '4px' }}>
         
-        {/* 1ª ABA: DESPESAS CADASTRADAS */}
+        {/* 1. CADASTRO DE DESPESAS */}
         <button
           onClick={() => setActiveTab('cadastradas')}
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '8px',
-            padding: '10px 16px',
+            gap: '6px',
+            padding: '10px 14px',
             borderRadius: '8px 8px 0 0',
             border: 'none',
             background: activeTab === 'cadastradas' ? 'rgba(139, 92, 246, 0.2)' : 'transparent',
@@ -1142,18 +1266,18 @@ export default function Financeiro({ currentUser }) {
             borderBottom: activeTab === 'cadastradas' ? '3px solid #a78bfa' : 'none'
           }}
         >
-          <FileText size={16} />
-          <span>1. Despesas Cadastradas ({estatisticas.countCadastradas})</span>
+          <FileText size={15} />
+          <span>1. Cadastro de Despesas ({estatisticas.countCadastradas})</span>
         </button>
 
-        {/* 2ª ABA: AGUARDANDO APROVAÇÃO */}
+        {/* 2. AGUARDANDO APROVAÇÃO */}
         <button
           onClick={() => setActiveTab('aguardando')}
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '8px',
-            padding: '10px 16px',
+            gap: '6px',
+            padding: '10px 14px',
             borderRadius: '8px 8px 0 0',
             border: 'none',
             background: activeTab === 'aguardando' ? 'rgba(245, 158, 11, 0.2)' : 'transparent',
@@ -1164,18 +1288,40 @@ export default function Financeiro({ currentUser }) {
             borderBottom: activeTab === 'aguardando' ? '3px solid #fbbf24' : 'none'
           }}
         >
-          <Clock size={16} />
+          <Clock size={15} />
           <span>2. Aguardando Aprovação ({estatisticas.countAguardando})</span>
         </button>
 
-        {/* 3ª ABA: LANÇADAS NO BANCO (APÓS APROVAÇÃO) */}
+        {/* 3. APROVADAS */}
+        <button
+          onClick={() => setActiveTab('aprovadas')}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            padding: '10px 14px',
+            borderRadius: '8px 8px 0 0',
+            border: 'none',
+            background: activeTab === 'aprovadas' ? 'rgba(16, 185, 129, 0.2)' : 'transparent',
+            color: activeTab === 'aprovadas' ? '#34d399' : '#94a3b8',
+            fontWeight: 800,
+            fontSize: '13px',
+            cursor: 'pointer',
+            borderBottom: activeTab === 'aprovadas' ? '3px solid #34d399' : 'none'
+          }}
+        >
+          <CheckCircle2 size={15} />
+          <span>3. Aprovadas ({estatisticas.countAprovadas})</span>
+        </button>
+
+        {/* 4. LANÇADAS */}
         <button
           onClick={() => setActiveTab('lancadas')}
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '8px',
-            padding: '10px 16px',
+            gap: '6px',
+            padding: '10px 14px',
             borderRadius: '8px 8px 0 0',
             border: 'none',
             background: activeTab === 'lancadas' ? 'rgba(59, 130, 246, 0.2)' : 'transparent',
@@ -1186,62 +1332,62 @@ export default function Financeiro({ currentUser }) {
             borderBottom: activeTab === 'lancadas' ? '3px solid #60a5fa' : 'none'
           }}
         >
-          <Send size={16} />
-          <span>3. Lançadas no Banco ({estatisticas.countLancadas})</span>
+          <Send size={15} />
+          <span>5. Lançadas ({estatisticas.countLancadas})</span>
         </button>
 
-        {/* 4ª ABA: CONCILIAÇÃO BANCÁRIA */}
+        {/* 5. PAGAS */}
+        <button
+          onClick={() => setActiveTab('pagas')}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            padding: '10px 14px',
+            borderRadius: '8px 8px 0 0',
+            border: 'none',
+            background: activeTab === 'pagas' ? 'rgba(52, 211, 153, 0.2)' : 'transparent',
+            color: activeTab === 'pagas' ? '#34d399' : '#94a3b8',
+            fontWeight: 800,
+            fontSize: '13px',
+            cursor: 'pointer',
+            borderBottom: activeTab === 'pagas' ? '3px solid #34d399' : 'none'
+          }}
+        >
+          <CheckCheck size={15} />
+          <span>6. Pagas ({estatisticas.countPagas})</span>
+        </button>
+
+        {/* 6. CONCILIAÇÃO */}
         <button
           onClick={() => setActiveTab('conciliacao')}
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '8px',
-            padding: '10px 16px',
+            gap: '6px',
+            padding: '10px 14px',
             borderRadius: '8px 8px 0 0',
             border: 'none',
-            background: activeTab === 'conciliacao' ? 'rgba(16, 185, 129, 0.15)' : 'transparent',
-            color: activeTab === 'conciliacao' ? '#34d399' : '#94a3b8',
+            background: activeTab === 'conciliacao' ? 'rgba(59, 130, 246, 0.15)' : 'transparent',
+            color: activeTab === 'conciliacao' ? '#60a5fa' : '#94a3b8',
             fontWeight: 700,
             fontSize: '13px',
             cursor: 'pointer',
-            borderBottom: activeTab === 'conciliacao' ? '2px solid #34d399' : 'none'
+            borderBottom: activeTab === 'conciliacao' ? '2px solid #60a5fa' : 'none'
           }}
         >
-          <Landmark size={16} />
-          <span>4. Pendente Conciliação ({estatisticas.countConciliacao})</span>
+          <Landmark size={15} />
+          <span>7. Conciliação ({estatisticas.countConciliacao})</span>
         </button>
 
-        {/* 5ª ABA: ARQUIVADAS */}
-        <button
-          onClick={() => setActiveTab('arquivadas')}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            padding: '10px 16px',
-            borderRadius: '8px 8px 0 0',
-            border: 'none',
-            background: activeTab === 'arquivadas' ? 'rgba(148, 163, 184, 0.15)' : 'transparent',
-            color: activeTab === 'arquivadas' ? '#94a3b8' : '#64748b',
-            fontWeight: 700,
-            fontSize: '13px',
-            cursor: 'pointer',
-            borderBottom: activeTab === 'arquivadas' ? '2px solid #94a3b8' : 'none'
-          }}
-        >
-          <Archive size={16} />
-          <span>5. Arquivadas ({estatisticas.countArquivadas})</span>
-        </button>
-
-        {/* 6ª ABA: RECUSADAS */}
+        {/* 7. RECUSADAS */}
         <button
           onClick={() => setActiveTab('recusadas')}
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '8px',
-            padding: '10px 16px',
+            gap: '6px',
+            padding: '10px 14px',
             borderRadius: '8px 8px 0 0',
             border: 'none',
             background: activeTab === 'recusadas' ? 'rgba(239, 68, 68, 0.15)' : 'transparent',
@@ -1252,30 +1398,30 @@ export default function Financeiro({ currentUser }) {
             borderBottom: activeTab === 'recusadas' ? '2px solid #f87171' : 'none'
           }}
         >
-          <XCircle size={16} />
-          <span>6. Recusadas ({estatisticas.countRecusadas})</span>
+          <XCircle size={15} />
+          <span>8. Recusadas ({estatisticas.countRecusadas})</span>
         </button>
 
-        {/* 7ª ABA: RELATÓRIO MENSAL */}
+        {/* 8. RELATÓRIO MENSAL & CONSULTA GERAL */}
         <button
           onClick={() => setActiveTab('relatorio')}
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '8px',
-            padding: '10px 16px',
+            gap: '6px',
+            padding: '10px 14px',
             borderRadius: '8px 8px 0 0',
             border: 'none',
             background: activeTab === 'relatorio' ? 'rgba(139, 92, 246, 0.15)' : 'transparent',
             color: activeTab === 'relatorio' ? '#c084fc' : '#94a3b8',
-            fontWeight: 700,
+            fontWeight: 800,
             fontSize: '13px',
             cursor: 'pointer',
             borderBottom: activeTab === 'relatorio' ? '2px solid #c084fc' : 'none'
           }}
         >
-          <FileText size={16} />
-          <span>Relatório Mensal</span>
+          <BarChart2 size={15} />
+          <span>Relatório Mensal & Consulta</span>
         </button>
 
         {/* ABA FORMULÁRIO: CADASTRAR NOVA DESPESA */}
@@ -1284,8 +1430,8 @@ export default function Financeiro({ currentUser }) {
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '8px',
-            padding: '10px 16px',
+            gap: '6px',
+            padding: '10px 14px',
             borderRadius: '8px 8px 0 0',
             border: 'none',
             background: activeTab === 'nova' ? 'rgba(59, 130, 246, 0.15)' : 'transparent',
@@ -1297,8 +1443,8 @@ export default function Financeiro({ currentUser }) {
             marginLeft: 'auto'
           }}
         >
-          <PlusCircle size={16} />
-          <span>+ Cadastrar Despesa</span>
+          <PlusCircle size={15} />
+          <span>+ Nova Despesa</span>
         </button>
 
       </div>
@@ -1529,7 +1675,7 @@ export default function Financeiro({ currentUser }) {
                   boxShadow: '0 4px 14px rgba(139, 92, 246, 0.4)'
                 }}
               >
-                Salvar em Despesas Cadastradas ➔
+                Salvar em Cadastro de Despesas ➔
               </button>
             </div>
 
@@ -1537,20 +1683,21 @@ export default function Financeiro({ currentUser }) {
         </div>
       )}
 
-      {/* ABAS DA TABELA DE DESPESAS (CADASTRADAS / AGUARDANDO / LANÇADAS / CONCILIAÇÃO / ARQUIVADAS / RECUSADAS) */}
-      {(activeTab === 'cadastradas' || activeTab === 'aguardando' || activeTab === 'lancadas' || activeTab === 'conciliacao' || activeTab === 'arquivadas' || activeTab === 'recusadas') && (
+      {/* ABAS DA TABELA DE DESPESAS (1. CADASTRO | 2. AGUARDANDO | 3. APROVADAS | 5. LANÇADAS | 6. PAGAS | 7. CONCILIAÇÃO | 8. RECUSADAS) */}
+      {(activeTab === 'cadastradas' || activeTab === 'aguardando' || activeTab === 'aprovadas' || activeTab === 'lancadas' || activeTab === 'pagas' || activeTab === 'conciliacao' || activeTab === 'recusadas') && (
         <div style={{ background: 'rgba(30, 41, 59, 0.5)', padding: '24px', borderRadius: '16px', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
           
           {/* BARRA DE FILTROS E EXPORTAÇÃO */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '16px' }}>
             <div>
               <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#f8fafc', margin: 0 }}>
-                {activeTab === 'cadastradas' && '1. Despesas Cadastradas (Editar Valores & Enviar p/ Aprovação)'}
+                {activeTab === 'cadastradas' && '1. Cadastro de Despesas (Edição de Valor & Envio p/ Aprovação)'}
                 {activeTab === 'aguardando' && '2. Aguardando Aprovação (Gestão / Diretoria)'}
-                {activeTab === 'lancadas' && '3. Lançadas no Banco (Confirmação de Pagamento)'}
-                {activeTab === 'conciliacao' && '4. Despesas Pendentes de Conciliação Bancária'}
-                {activeTab === 'arquivadas' && '5. Histórico de Despesas Arquivadas & Conciliadas'}
-                {activeTab === 'recusadas' && '6. Despesas Recusadas / Reprovadas'}
+                {activeTab === 'aprovadas' && '3. Despesas Aprovadas (Prontas p/ Lançamento Bancário)'}
+                {activeTab === 'lancadas' && '5. Lançadas no Banco (Confirmação de Pagamento)'}
+                {activeTab === 'pagas' && '6. Despesas Pagas (Quitadas & Liquidadas)'}
+                {activeTab === 'conciliacao' && '7. Despesas Pendentes de Conciliação Bancária'}
+                {activeTab === 'recusadas' && '8. Despesas Recusadas / Reprovadas'}
                 {` (${listaExibicao.length})`}
               </h3>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '4px' }}>
@@ -1625,29 +1772,15 @@ export default function Financeiro({ currentUser }) {
                 {FORMAS_PAGAMENTO.map(fp => <option key={fp} value={fp}>{fp}</option>)}
               </select>
 
-              {/* Filtro Situações Financeiras */}
-              <select
-                value={filtroStatusPagamento}
-                onChange={(e) => setFiltroStatusPagamento(e.target.value)}
-                style={{ padding: '8px 12px', background: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(59, 130, 246, 0.3)', borderRadius: '8px', color: '#60a5fa', fontSize: '12px', fontWeight: 600 }}
-              >
-                <option value="TODOS">Todas as Situações</option>
-                <option value="VENCIDA">🚨 Vencidas (Atrasadas)</option>
-                <option value="A_VENCER">⏳ A Vencer (No Prazo)</option>
-                <option value="PAGO">✓ Pagas (Quitadas)</option>
-                <option value="PENDENTE_PAGAMENTO">💳 Em Aberto</option>
-                <option value="PENDENTE_CONCILIACAO">🏦 Pendente Conciliação</option>
-                <option value="ARQUIVADO">📦 Arquivadas</option>
-              </select>
-
               {/* Exportar CSV */}
               <button
                 onClick={() => exportarCSVGenerico(
                   activeTab === 'cadastradas' ? 'CADASTRADA' : 
                   (activeTab === 'aguardando' ? 'AGUARDANDO_APROVACAO' : 
-                  (activeTab === 'lancadas' ? 'PAGAS' : 
-                  (activeTab === 'conciliacao' ? 'PENDENTES_CONCILIACAO' : 
-                  (activeTab === 'arquivadas' ? 'ARQUIVADAS' : 'RECUSADAS'))))
+                  (activeTab === 'aprovadas' ? 'APROVADAS' :
+                  (activeTab === 'lancadas' ? 'LANCADA' :
+                  (activeTab === 'pagas' ? 'PAGAS' : 
+                  (activeTab === 'conciliacao' ? 'PENDENTES_CONCILIACAO' : 'RECUSADAS')))))
                 )}
                 style={{ padding: '8px 12px', background: 'rgba(51, 65, 85, 0.6)', color: '#cbd5e1', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', fontSize: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
               >
@@ -1677,7 +1810,7 @@ export default function Financeiro({ currentUser }) {
                     <th style={{ padding: '12px 14px' }}>Vencimento</th>
                     <th style={{ padding: '12px 14px', textAlign: 'center' }}>Situação</th>
 
-                    <th style={{ padding: '12px 14px', textAlign: 'center' }}>Ações & Fluxo</th>
+                    <th style={{ padding: '12px 14px', textAlign: 'center' }}>Ações & Esteira</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1685,7 +1818,6 @@ export default function Financeiro({ currentUser }) {
                     const prioObj = PRIORIDADES.find(p => p.value === item.prioridade) || PRIORIDADES[1];
                     const sit = getSituacaoItem(item);
                     const stPag = item.statusPagamento || 'PENDENTE_PAGAMENTO';
-                    const configSt = CONFIG_STATUS_PAGAMENTO[stPag] || CONFIG_STATUS_PAGAMENTO.PENDENTE_PAGAMENTO;
 
                     return (
                       <tr 
@@ -1734,13 +1866,13 @@ export default function Financeiro({ currentUser }) {
                           )}
                         </td>
 
-                        {/* Valor (Com opção de Editar na 1ª Aba Cadastradas) */}
+                        {/* Valor (Com opção de Editar na 1ª Aba: Cadastradas) */}
                         <td style={{ padding: '12px 14px', textAlign: 'right', fontFamily: 'monospace' }}>
                           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '6px' }}>
                             <div style={{ fontWeight: 800, color: '#60a5fa', fontSize: '14px' }}>
                               {formatMoney(item.valor)}
                             </div>
-                            {/* Botão de Editar Valor na 1ª Aba (Despesas Cadastradas) */}
+                            {/* Botão de Editar Valor na 1ª Aba */}
                             {activeTab === 'cadastradas' && (
                               <button
                                 onClick={() => {
@@ -1799,16 +1931,16 @@ export default function Financeiro({ currentUser }) {
                           </span>
                         </td>
 
-                        {/* Coluna Ações Específicas por Aba */}
+                        {/* Coluna Ações Específicas por Aba da Esteira */}
                         <td style={{ padding: '12px 14px', textAlign: 'center' }}>
                           
-                          {/* AÇÕES NA 1ª ABA: DESPESAS CADASTRADAS */}
+                          {/* 1. CADASTRO DE DESPESAS */}
                           {activeTab === 'cadastradas' && (
                             <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', alignItems: 'center' }}>
                               <button
                                 onClick={() => handleEnviarParaAprovacao(item.id)}
                                 style={{ padding: '6px 12px', background: 'linear-gradient(135deg, #f59e0b, #d97706)', color: '#fff', border: 'none', borderRadius: '6px', fontSize: '11px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', boxShadow: '0 2px 8px rgba(245, 158, 11, 0.3)' }}
-                                title="Enviar para a aba Aguardando Aprovação para avaliação da gestão/diretoria"
+                                title="Enviar para a aba Aguardando Aprovação"
                               >
                                 <Send size={12} /> Enviar p/ Aprovação
                               </button>
@@ -1823,13 +1955,13 @@ export default function Financeiro({ currentUser }) {
                             </div>
                           )}
 
-                          {/* AÇÕES NA 2ª ABA: AGUARDANDO APROVAÇÃO */}
+                          {/* 2. AGUARDANDO APROVAÇÃO */}
                           {activeTab === 'aguardando' && (
                             <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', alignItems: 'center' }}>
                               <button
                                 onClick={() => setModalAprovacao({ despesa: item, acao: 'APROVAR' })}
                                 style={{ padding: '6px 12px', background: '#10b981', color: '#fff', border: 'none', borderRadius: '6px', fontSize: '11px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
-                                title="Aprovar despesa e enviar para Lançadas no Banco"
+                                title="Aprovar despesa e mover para Aprovadas"
                               >
                                 <Check size={12} /> Aprovar
                               </button>
@@ -1843,57 +1975,65 @@ export default function Financeiro({ currentUser }) {
                             </div>
                           )}
 
-                          {/* AÇÕES NA 3ª ABA: DESPESAS LANÇADAS NO BANCO */}
-                          {activeTab === 'lancadas' && (
-                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
-                              {item.statusPagamento !== 'PAGO' ? (
-                                <div style={{ display: 'flex', gap: '6px' }}>
-                                  <button
-                                    onClick={() => handleMudarStatusPagamento(item.id, 'PAGO')}
-                                    style={{ padding: '6px 12px', background: '#10b981', color: '#fff', border: 'none', borderRadius: '6px', fontSize: '11px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
-                                    title="Confirmar pagamento bancário da despesa"
-                                  >
-                                    <Check size={12} /> ✓ Confirmar PAGO
-                                  </button>
-                                  <button
-                                    onClick={() => setModalAprovacao({ despesa: item, acao: 'REPROVAR' })}
-                                    style={{ padding: '6px 10px', background: 'rgba(239, 68, 68, 0.2)', color: '#f87171', border: '1px solid rgba(239, 68, 68, 0.4)', borderRadius: '6px', fontSize: '11px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
-                                    title="Marcar como Não Pago ou Recusar"
-                                  >
-                                    <X size={12} /> Reprovar
-                                  </button>
-                                </div>
-                              ) : (
-                                <button
-                                  onClick={() => handleAvancarStatusPagamento(item.id)}
-                                  style={{ padding: '5px 10px', background: 'rgba(59, 130, 246, 0.2)', color: '#60a5fa', border: '1px solid rgba(59, 130, 246, 0.4)', borderRadius: '6px', fontSize: '11px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
-                                >
-                                  <span>🏦 Enviar p/ Conciliação</span>
-                                  <ArrowRight size={10} />
-                                </button>
-                              )}
+                          {/* 3. APROVADAS */}
+                          {activeTab === 'aprovadas' && (
+                            <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', alignItems: 'center' }}>
+                              <button
+                                onClick={() => handleConfirmarLancamentoBanco(item.id)}
+                                style={{ padding: '6px 12px', background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)', color: '#fff', border: 'none', borderRadius: '6px', fontSize: '11px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                                title="Confirmar lançamento no banco e mover para Lançadas"
+                              >
+                                <Send size={12} /> Confirmar Lançamento no Banco
+                              </button>
                             </div>
                           )}
 
-                          {/* AÇÕES NAS OUTRAS ABAS (CONCILIAÇÃO / ARQUIVADAS / RECUSADAS) */}
-                          {activeTab !== 'cadastradas' && activeTab !== 'aguardando' && activeTab !== 'lancadas' && (
+                          {/* 4. LANÇADAS */}
+                          {activeTab === 'lancadas' && (
                             <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', alignItems: 'center' }}>
-                              <select
-                                value={stPag}
-                                onChange={(e) => handleMudarStatusPagamento(item.id, e.target.value)}
-                                style={{ padding: '3px 6px', background: '#0f172a', border: '1px solid #334155', borderRadius: '6px', color: '#94a3b8', fontSize: '10px' }}
-                                title="Alterar status manualmente"
+                              <button
+                                onClick={() => handleMarcarComoPaga(item.id)}
+                                style={{ padding: '6px 12px', background: '#10b981', color: '#fff', border: 'none', borderRadius: '6px', fontSize: '11px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                                title="Confirmar pagamento e mover para Pagas"
                               >
-                                <option value="PENDENTE_PAGAMENTO">Pendente Pagamento</option>
-                                <option value="PAGO">Pago</option>
-                                <option value="PENDENTE_CONCILIACAO">Pendente Conciliação</option>
-                                <option value="ARQUIVADO">Arquivado</option>
-                              </select>
+                                <Check size={12} /> ✓ Marcar como PAGA
+                              </button>
+                            </div>
+                          )}
 
+                          {/* 5. PAGAS */}
+                          {activeTab === 'pagas' && (
+                            <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', alignItems: 'center' }}>
+                              <button
+                                onClick={() => handleEnviarParaConciliacao(item.id)}
+                                style={{ padding: '6px 12px', background: 'rgba(59, 130, 246, 0.2)', color: '#60a5fa', border: '1px solid rgba(59, 130, 246, 0.4)', borderRadius: '6px', fontSize: '11px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                                title="Enviar para a aba Pendente de Conciliação"
+                              >
+                                <Landmark size={12} /> 🏦 Enviar p/ Conciliação
+                              </button>
+                            </div>
+                          )}
+
+                          {/* 6. CONCILIAÇÃO */}
+                          {activeTab === 'conciliacao' && (
+                            <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', alignItems: 'center' }}>
+                              <button
+                                onClick={() => handleConciliarEArquivar(item.id)}
+                                style={{ padding: '6px 12px', background: 'rgba(148, 163, 184, 0.2)', color: '#cbd5e1', border: '1px solid rgba(148, 163, 184, 0.4)', borderRadius: '6px', fontSize: '11px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                                title="Conciliar e arquivar no histórico"
+                              >
+                                <Archive size={12} /> 📦 Conciliar & Arquivar
+                              </button>
+                            </div>
+                          )}
+
+                          {/* 7. RECUSADAS */}
+                          {activeTab === 'recusadas' && (
+                            <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', alignItems: 'center' }}>
                               <button
                                 onClick={() => handleExcluirDespesa(item.id)}
                                 style={{ background: 'transparent', border: 'none', color: '#64748b', cursor: 'pointer', padding: '4px' }}
-                                title="Excluir despesa"
+                                title="Excluir despesa reprovada"
                               >
                                 <Trash2 size={14} color="#f87171" />
                               </button>
@@ -1913,137 +2053,302 @@ export default function Financeiro({ currentUser }) {
         </div>
       )}
 
-      {/* ABA: RELATÓRIO MENSAL E OPÇÕES DE EXPORTAÇÃO CSV DEDICADAS */}
+      {/* ABA: RELATÓRIO MENSAL & CONSULTA GERAL DE TODAS AS DESPESAS */}
       {activeTab === 'relatorio' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
           
-          {/* BARRA DE EXPORTAÇÃO CSV ESPECIAL */}
-          <div style={{ background: 'rgba(30, 41, 59, 0.5)', padding: '20px', borderRadius: '16px', border: '1px solid rgba(59, 130, 246, 0.2)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
-            <div>
-              <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#f8fafc', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Download size={20} color="#38bdf8" />
-                Exportação de Relatórios de Pagamentos em CSV
-              </h3>
-              <span style={{ fontSize: '12px', color: '#94a3b8' }}>
-                Baixe planilhas segmentadas por status de pagamento, conciliação e arquivo {filtroMes ? `(Filtrado por ${formatarMesExtenso(filtroMes)})` : ''}
-              </span>
-            </div>
+          {/* NAVEGAÇÃO DE SUB-ABAS DENTRO DO RELATÓRIO */}
+          <div style={{ display: 'flex', gap: '12px', borderBottom: '1px solid rgba(255, 255, 255, 0.1)', paddingBottom: '8px' }}>
+            <button
+              onClick={() => setSubTabRelatorio('fluxo')}
+              style={{
+                padding: '8px 16px',
+                borderRadius: '8px',
+                border: 'none',
+                background: subTabRelatorio === 'fluxo' ? 'rgba(59, 130, 246, 0.25)' : 'rgba(30, 41, 59, 0.5)',
+                color: subTabRelatorio === 'fluxo' ? '#60a5fa' : '#94a3b8',
+                fontWeight: 700,
+                fontSize: '13px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px'
+              }}
+            >
+              <BarChart2 size={16} />
+              <span>📊 Fluxo de Pagamentos Mensal & Indicadores</span>
+            </button>
 
-            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-              <button
-                onClick={() => exportarCSVGenerico('PAGAS')}
-                style={{ padding: '8px 14px', background: 'rgba(16, 185, 129, 0.2)', color: '#34d399', border: '1px solid rgba(16, 185, 129, 0.4)', borderRadius: '8px', fontSize: '12px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
-              >
-                <CheckCircle2 size={14} /> Exportar PAGAS
-              </button>
-
-              <button
-                onClick={() => exportarCSVGenerico('PENDENTES_PAGAMENTO')}
-                style={{ padding: '8px 14px', background: 'rgba(245, 158, 11, 0.2)', color: '#fbbf24', border: '1px solid rgba(245, 158, 11, 0.4)', borderRadius: '8px', fontSize: '12px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
-              >
-                <Clock size={14} /> Exportar A PAGAR
-              </button>
-
-              <button
-                onClick={() => exportarCSVGenerico('PENDENTES_CONCILIACAO')}
-                style={{ padding: '8px 14px', background: 'rgba(59, 130, 246, 0.2)', color: '#60a5fa', border: '1px solid rgba(59, 130, 246, 0.4)', borderRadius: '8px', fontSize: '12px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
-              >
-                <Landmark size={14} /> Exportar P/ CONCILIAR
-              </button>
-
-              <button
-                onClick={() => exportarCSVGenerico('ARQUIVADAS')}
-                style={{ padding: '8px 14px', background: 'rgba(148, 163, 184, 0.2)', color: '#94a3b8', border: '1px solid rgba(148, 163, 184, 0.4)', borderRadius: '8px', fontSize: '12px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
-              >
-                <Archive size={14} /> Exportar ARQUIVADAS
-              </button>
-            </div>
+            <button
+              onClick={() => setSubTabRelatorio('consulta')}
+              style={{
+                padding: '8px 16px',
+                borderRadius: '8px',
+                border: 'none',
+                background: subTabRelatorio === 'consulta' ? 'rgba(139, 92, 246, 0.25)' : 'rgba(30, 41, 59, 0.5)',
+                color: subTabRelatorio === 'consulta' ? '#c084fc' : '#94a3b8',
+                fontWeight: 700,
+                fontSize: '13px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px'
+              }}
+            >
+              <Database size={16} />
+              <span>🔍 Consulta Geral de TODAS as Despesas ({listaConsultaGeral.length})</span>
+            </button>
           </div>
 
-          {/* Gráfico Comparativo Mês a Mês */}
-          <div style={{ background: 'rgba(30, 41, 59, 0.5)', padding: '24px', borderRadius: '16px', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
-            <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#f8fafc', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <BarChart size={18} color="#60a5fa" />
-              Relatório Comparativo Mensal — Valor Pago vs Pendente
-            </h3>
+          {/* SUB-ABA 1: FLUXO DE PAGAMENTOS MENSAL & GRÁFICOS */}
+          {subTabRelatorio === 'fluxo' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+              
+              {/* BARRA DE EXPORTAÇÃO CSV ESPECIAL */}
+              <div style={{ background: 'rgba(30, 41, 59, 0.5)', padding: '20px', borderRadius: '16px', border: '1px solid rgba(59, 130, 246, 0.2)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
+                <div>
+                  <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#f8fafc', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Download size={20} color="#38bdf8" />
+                    Exportação de Relatórios de Pagamentos em CSV
+                  </h3>
+                  <span style={{ fontSize: '12px', color: '#94a3b8' }}>
+                    Baixe planilhas segmentadas por status de pagamento, conciliação e arquivo {filtroMes ? `(Filtrado por ${formatarMesExtenso(filtroMes)})` : ''}
+                  </span>
+                </div>
 
-            <div style={{ width: '100%', height: 320 }}>
-              <ResponsiveContainer>
-                <BarChart data={dadosRelatorioMensal.meses} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                  <XAxis dataKey="mes" stroke="#94a3b8" />
-                  <YAxis tickFormatter={(v) => `R$ ${(v / 1000).toFixed(0)}k`} stroke="#94a3b8" />
-                  <Tooltip formatter={(val) => [formatMoney(val)]} contentStyle={{ background: '#0f172a', borderColor: '#334155', borderRadius: '8px' }} />
-                  <Legend />
-                  <Bar dataKey="pago" name="Valor Pago (R$)" fill="#34d399" radius={[6, 6, 0, 0]} />
-                  <Bar dataKey="pendente" name="Pendente de Pagamento (R$)" fill="#fbbf24" radius={[6, 6, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
+                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                  <button
+                    onClick={() => exportarCSVGenerico('PAGAS')}
+                    style={{ padding: '8px 14px', background: 'rgba(16, 185, 129, 0.2)', color: '#34d399', border: '1px solid rgba(16, 185, 129, 0.4)', borderRadius: '8px', fontSize: '12px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
+                  >
+                    <CheckCircle2 size={14} /> Exportar PAGAS
+                  </button>
+
+                  <button
+                    onClick={() => exportarCSVGenerico('PENDENTES_PAGAMENTO')}
+                    style={{ padding: '8px 14px', background: 'rgba(245, 158, 11, 0.2)', color: '#fbbf24', border: '1px solid rgba(245, 158, 11, 0.4)', borderRadius: '8px', fontSize: '12px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
+                  >
+                    <Clock size={14} /> Exportar A PAGAR
+                  </button>
+
+                  <button
+                    onClick={() => exportarCSVGenerico('PENDENTES_CONCILIACAO')}
+                    style={{ padding: '8px 14px', background: 'rgba(59, 130, 246, 0.2)', color: '#60a5fa', border: '1px solid rgba(59, 130, 246, 0.4)', borderRadius: '8px', fontSize: '12px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
+                  >
+                    <Landmark size={14} /> Exportar P/ CONCILIAR
+                  </button>
+
+                  <button
+                    onClick={() => exportarCSVGenerico('ARQUIVADAS')}
+                    style={{ padding: '8px 14px', background: 'rgba(148, 163, 184, 0.2)', color: '#94a3b8', border: '1px solid rgba(148, 163, 184, 0.4)', borderRadius: '8px', fontSize: '12px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
+                  >
+                    <Archive size={14} /> Exportar ARQUIVADAS
+                  </button>
+                </div>
+              </div>
+
+              {/* Gráfico Comparativo Mês a Mês */}
+              <div style={{ background: 'rgba(30, 41, 59, 0.5)', padding: '24px', borderRadius: '16px', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
+                <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#f8fafc', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <BarChart size={18} color="#60a5fa" />
+                  Relatório Comparativo Mensal — Valor Pago vs Pendente
+                </h3>
+
+                <div style={{ width: '100%', height: 320 }}>
+                  <ResponsiveContainer>
+                    <BarChart data={dadosRelatorioMensal.meses} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                      <XAxis dataKey="mes" stroke="#94a3b8" />
+                      <YAxis tickFormatter={(v) => `R$ ${(v / 1000).toFixed(0)}k`} stroke="#94a3b8" />
+                      <Tooltip formatter={(val) => [formatMoney(val)]} contentStyle={{ background: '#0f172a', borderColor: '#334155', borderRadius: '8px' }} />
+                      <Legend />
+                      <Bar dataKey="pago" name="Valor Pago (R$)" fill="#34d399" radius={[6, 6, 0, 0]} />
+                      <Bar dataKey="pendente" name="Pendente de Pagamento (R$)" fill="#fbbf24" radius={[6, 6, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* Resumos Consolidados (Empresas & Departamentos) */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(480px, 1fr))', gap: '20px' }}>
+                
+                {/* Consolidado por Empresa */}
+                <div style={{ background: 'rgba(30, 41, 59, 0.5)', padding: '20px', borderRadius: '16px', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
+                  <h3 style={{ fontSize: '15px', fontWeight: 700, color: '#f8fafc', marginBottom: '14px' }}>
+                    Resumo por Empresa do Grupo
+                  </h3>
+                  <div style={{ overflowX: 'auto' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', textAlign: 'left' }}>
+                      <thead>
+                        <tr style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.1)', color: '#94a3b8', fontSize: '10px', textTransform: 'uppercase' }}>
+                          <th style={{ padding: '8px 10px' }}>Empresa</th>
+                          <th style={{ padding: '8px 10px', textAlign: 'right' }}>Pago (R$)</th>
+                          <th style={{ padding: '8px 10px', textAlign: 'right' }}>Pendente (R$)</th>
+                          <th style={{ padding: '8px 10px', textAlign: 'right' }}>Total (R$)</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {dadosRelatorioMensal.empresas.map(emp => (
+                          <tr key={emp.empresa} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.04)' }}>
+                            <td style={{ padding: '8px 10px', fontWeight: 700, color: '#f8fafc' }}>{emp.empresa}</td>
+                            <td style={{ padding: '8px 10px', textAlign: 'right', color: '#34d399', fontWeight: 700 }}>{formatMoney(emp.pago)}</td>
+                            <td style={{ padding: '8px 10px', textAlign: 'right', color: '#fbbf24', fontWeight: 700 }}>{formatMoney(emp.pendente)}</td>
+                            <td style={{ padding: '8px 10px', textAlign: 'right', color: '#60a5fa', fontWeight: 800 }}>{formatMoney(emp.total)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* Consolidado por Departamento */}
+                <div style={{ background: 'rgba(30, 41, 59, 0.5)', padding: '20px', borderRadius: '16px', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
+                  <h3 style={{ fontSize: '15px', fontWeight: 700, color: '#f8fafc', marginBottom: '14px' }}>
+                    Resumo por Departamento
+                  </h3>
+                  <div style={{ overflowX: 'auto' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', textAlign: 'left' }}>
+                      <thead>
+                        <tr style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.1)', color: '#94a3b8', fontSize: '10px', textTransform: 'uppercase' }}>
+                          <th style={{ padding: '8px 10px' }}>Departamento</th>
+                          <th style={{ padding: '8px 10px', textAlign: 'right' }}>Pago (R$)</th>
+                          <th style={{ padding: '8px 10px', textAlign: 'right' }}>Pendente (R$)</th>
+                          <th style={{ padding: '8px 10px', textAlign: 'right' }}>Total (R$)</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {dadosRelatorioMensal.departamentos.map(dep => (
+                          <tr key={dep.departamento} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.04)' }}>
+                            <td style={{ padding: '8px 10px', fontWeight: 700, color: '#f8fafc' }}>{dep.departamento}</td>
+                            <td style={{ padding: '8px 10px', textAlign: 'right', color: '#34d399', fontWeight: 700 }}>{formatMoney(dep.pago)}</td>
+                            <td style={{ padding: '8px 10px', textAlign: 'right', color: '#fbbf24', fontWeight: 700 }}>{formatMoney(dep.pendente)}</td>
+                            <td style={{ padding: '8px 10px', textAlign: 'right', color: '#60a5fa', fontWeight: 800 }}>{formatMoney(dep.total)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+              </div>
+
             </div>
-          </div>
+          )}
 
-          {/* Resumos Consolidados (Empresas & Departamentos) */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(480px, 1fr))', gap: '20px' }}>
-            
-            {/* Consolidado por Empresa */}
-            <div style={{ background: 'rgba(30, 41, 59, 0.5)', padding: '20px', borderRadius: '16px', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
-              <h3 style={{ fontSize: '15px', fontWeight: 700, color: '#f8fafc', marginBottom: '14px' }}>
-                Resumo por Empresa do Grupo
-              </h3>
+          {/* SUB-ABA 2: CONSULTA GERAL DE TODAS AS DESPESAS CADASTRAIS */}
+          {subTabRelatorio === 'consulta' && (
+            <div style={{ background: 'rgba(30, 41, 59, 0.5)', padding: '24px', borderRadius: '16px', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
+              
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '16px' }}>
+                <div>
+                  <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#f8fafc', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Database size={18} color="#c084fc" />
+                    Consulta Geral & Histórico Unificado de Despesas ({listaConsultaGeral.length})
+                  </h3>
+                  <span style={{ fontSize: '12px', color: '#94a3b8' }}>
+                    Consulte e pesquise qualquer despesa cadastrada no sistema independente da etapa da esteira
+                  </span>
+                </div>
+
+                <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
+                  {/* Busca */}
+                  <div style={{ position: 'relative', minWidth: '180px' }}>
+                    <Search size={14} color="#94a3b8" style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)' }} />
+                    <input 
+                      type="text"
+                      placeholder="Pesquisar por nome, OP ou obs..."
+                      value={filtroBusca}
+                      onChange={(e) => setFiltroBusca(e.target.value)}
+                      style={{ width: '100%', padding: '8px 12px 8px 32px', background: '#0f172a', border: '1px solid #334155', borderRadius: '8px', color: '#fff', fontSize: '12px' }}
+                    />
+                  </div>
+
+                  {/* Filtro Empresa */}
+                  <select
+                    value={filtroEmpresa}
+                    onChange={(e) => setFiltroEmpresa(e.target.value)}
+                    style={{ padding: '8px 12px', background: '#0f172a', border: '1px solid #334155', borderRadius: '8px', color: '#fff', fontSize: '12px' }}
+                  >
+                    <option value="">Todas as Empresas</option>
+                    {EMPRESAS.map(e => <option key={e} value={e}>{e}</option>)}
+                  </select>
+
+                  {/* Filtro Departamento */}
+                  <select
+                    value={filtroDepartamento}
+                    onChange={(e) => setFiltroDepartamento(e.target.value)}
+                    style={{ padding: '8px 12px', background: '#0f172a', border: '1px solid #334155', borderRadius: '8px', color: '#fff', fontSize: '12px' }}
+                  >
+                    <option value="">Todos os Deptos</option>
+                    {departamentos.map(d => <option key={d} value={d}>{d}</option>)}
+                  </select>
+
+                  {/* Exportar CSV Geral */}
+                  <button
+                    onClick={() => exportarCSVGenerico('TODAS')}
+                    style={{ padding: '8px 14px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '12px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
+                  >
+                    <Download size={14} /> Exportar Planilha Completa
+                  </button>
+                </div>
+              </div>
+
+              {/* TABELA DE CONSULTA GERAL DE TODAS AS DESPESAS */}
               <div style={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', textAlign: 'left' }}>
                   <thead>
                     <tr style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.1)', color: '#94a3b8', fontSize: '10px', textTransform: 'uppercase' }}>
-                      <th style={{ padding: '8px 10px' }}>Empresa</th>
-                      <th style={{ padding: '8px 10px', textAlign: 'right' }}>Pago (R$)</th>
-                      <th style={{ padding: '8px 10px', textAlign: 'right' }}>Pendente (R$)</th>
-                      <th style={{ padding: '8px 10px', textAlign: 'right' }}>Total (R$)</th>
+                      <th style={{ padding: '10px' }}>ID / OP</th>
+                      <th style={{ padding: '10px' }}>Empresa</th>
+                      <th style={{ padding: '10px' }}>Departamento</th>
+                      <th style={{ padding: '10px' }}>Descrição Despesa</th>
+                      <th style={{ padding: '10px', textAlign: 'right' }}>Valor (R$)</th>
+                      <th style={{ padding: '10px' }}>Banco / Forma</th>
+                      <th style={{ padding: '10px' }}>Vencimento</th>
+                      <th style={{ padding: '10px', textAlign: 'center' }}>Status na Esteira</th>
+                      <th style={{ padding: '10px', textAlign: 'center' }}>Situação Pagto</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {dadosRelatorioMensal.empresas.map(emp => (
-                      <tr key={emp.empresa} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.04)' }}>
-                        <td style={{ padding: '8px 10px', fontWeight: 700, color: '#f8fafc' }}>{emp.empresa}</td>
-                        <td style={{ padding: '8px 10px', textAlign: 'right', color: '#34d399', fontWeight: 700 }}>{formatMoney(emp.pago)}</td>
-                        <td style={{ padding: '8px 10px', textAlign: 'right', color: '#fbbf24', fontWeight: 700 }}>{formatMoney(emp.pendente)}</td>
-                        <td style={{ padding: '8px 10px', textAlign: 'right', color: '#60a5fa', fontWeight: 800 }}>{formatMoney(emp.total)}</td>
-                      </tr>
-                    ))}
+                    {listaConsultaGeral.map((item, idx) => {
+                      const sit = getSituacaoItem(item);
+                      return (
+                        <tr key={item.id} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.04)', background: idx % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.01)' }}>
+                          <td style={{ padding: '10px', color: '#94a3b8', fontFamily: 'monospace' }}>
+                            <div>{item.id}</div>
+                            {item.temOP && <span style={{ color: '#38bdf8', fontWeight: 700, fontSize: '10px' }}>{item.numeroOP}</span>}
+                          </td>
+                          <td style={{ padding: '10px', fontWeight: 700, color: '#f8fafc' }}>{item.empresa}</td>
+                          <td style={{ padding: '10px', color: '#cbd5e1' }}>{item.departamento}</td>
+                          <td style={{ padding: '10px', fontWeight: 600, color: '#f8fafc', maxWidth: '280px' }}>
+                            {item.nome}
+                            {item.parcelas > 1 && <span style={{ color: '#a78bfa', fontSize: '10px', display: 'block' }}>Parc. {item.parcelaNumero}/{item.parcelas}</span>}
+                          </td>
+                          <td style={{ padding: '10px', textAlign: 'right', fontWeight: 800, color: '#60a5fa', fontFamily: 'monospace' }}>{formatMoney(item.valor)}</td>
+                          <td style={{ padding: '10px', color: '#cbd5e1' }}>
+                            <div>{item.banco}</div>
+                            <span style={{ color: '#94a3b8', fontSize: '10px' }}>{item.formaPagamento}</span>
+                          </td>
+                          <td style={{ padding: '10px', color: '#cbd5e1' }}>{formatDate(item.vencimento)}</td>
+                          <td style={{ padding: '10px', textAlign: 'center' }}>
+                            <span style={{ padding: '3px 8px', borderRadius: '6px', fontSize: '10px', fontWeight: 700, background: 'rgba(51, 65, 85, 0.6)', color: '#cbd5e1', border: '1px solid rgba(255,255,255,0.1)' }}>
+                              {item.status}
+                            </span>
+                          </td>
+                          <td style={{ padding: '10px', textAlign: 'center' }}>
+                            <span style={{ padding: '3px 8px', borderRadius: '12px', fontSize: '10px', fontWeight: 800, background: sit.bg, color: sit.color }}>
+                              {sit.label}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
-            </div>
 
-            {/* Consolidado por Departamento */}
-            <div style={{ background: 'rgba(30, 41, 59, 0.5)', padding: '20px', borderRadius: '16px', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
-              <h3 style={{ fontSize: '15px', fontWeight: 700, color: '#f8fafc', marginBottom: '14px' }}>
-                Resumo por Departamento
-              </h3>
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', textAlign: 'left' }}>
-                  <thead>
-                    <tr style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.1)', color: '#94a3b8', fontSize: '10px', textTransform: 'uppercase' }}>
-                      <th style={{ padding: '8px 10px' }}>Departamento</th>
-                      <th style={{ padding: '8px 10px', textAlign: 'right' }}>Pago (R$)</th>
-                      <th style={{ padding: '8px 10px', textAlign: 'right' }}>Pendente (R$)</th>
-                      <th style={{ padding: '8px 10px', textAlign: 'right' }}>Total (R$)</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {dadosRelatorioMensal.departamentos.map(dep => (
-                      <tr key={dep.departamento} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.04)' }}>
-                        <td style={{ padding: '8px 10px', fontWeight: 700, color: '#f8fafc' }}>{dep.departamento}</td>
-                        <td style={{ padding: '8px 10px', textAlign: 'right', color: '#34d399', fontWeight: 700 }}>{formatMoney(dep.pago)}</td>
-                        <td style={{ padding: '8px 10px', textAlign: 'right', color: '#fbbf24', fontWeight: 700 }}>{formatMoney(dep.pendente)}</td>
-                        <td style={{ padding: '8px 10px', textAlign: 'right', color: '#60a5fa', fontWeight: 800 }}>{formatMoney(dep.total)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
             </div>
-
-          </div>
+          )}
 
         </div>
       )}
