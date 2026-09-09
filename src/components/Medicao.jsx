@@ -192,16 +192,63 @@ export default function Medicao({ rawPresencas = [], currentUser }) {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadStats, setUploadStats] = useState(null);
 
-  // Filtros
-  const [filtroCliente, setFiltroCliente] = useState('');
-  const [filtroEmpresa, setFiltroEmpresa] = useState('');
-  const [filtroTurno, setFiltroTurno] = useState('');
-  const [filtroProduto, setFiltroProduto] = useState('');
-  const [filtroBusca, setFiltroBusca] = useState('');
-  const [dataInicio, setDataInicio] = useState('');
-  const [dataFim, setDataFim] = useState('');
+  // User ID para isolamento de filtros por usuário
+  const userId = currentUser?.id || currentUser?.username || currentUser?.email || 'default';
+  const filterStorageKey = `medicao_filtros_${userId}`;
+
+  // Filtros isolados por usuário
+  const [filtroCliente, setFiltroCliente] = useState(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(filterStorageKey) || '{}');
+      return saved.filtroCliente || '';
+    } catch(e) { return ''; }
+  });
+  const [filtroEmpresa, setFiltroEmpresa] = useState(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(filterStorageKey) || '{}');
+      return saved.filtroEmpresa || '';
+    } catch(e) { return ''; }
+  });
+  const [filtroTurno, setFiltroTurno] = useState(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(filterStorageKey) || '{}');
+      return saved.filtroTurno || '';
+    } catch(e) { return ''; }
+  });
+  const [filtroProduto, setFiltroProduto] = useState(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(filterStorageKey) || '{}');
+      return saved.filtroProduto || '';
+    } catch(e) { return ''; }
+  });
+  const [filtroBusca, setFiltroBusca] = useState(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(filterStorageKey) || '{}');
+      return saved.filtroBusca || '';
+    } catch(e) { return ''; }
+  });
+  const [dataInicio, setDataInicio] = useState(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(filterStorageKey) || '{}');
+      return saved.dataInicio || '';
+    } catch(e) { return ''; }
+  });
+  const [dataFim, setDataFim] = useState(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(filterStorageKey) || '{}');
+      return saved.dataFim || '';
+    } catch(e) { return ''; }
+  });
   const [tipoCobranca, setTipoCobranca] = useState('cheio'); // 'executado' ou 'cheio'
   const [diasMesCalculo, setDiasMesCalculo] = useState(31);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(filterStorageKey, JSON.stringify({
+        filtroCliente, filtroEmpresa, filtroTurno, filtroProduto, filtroBusca, dataInicio, dataFim
+      }));
+    } catch(e){}
+  }, [filtroCliente, filtroEmpresa, filtroTurno, filtroProduto, filtroBusca, dataInicio, dataFim, filterStorageKey]);
 
   // Modais
   const [detalhePosto, setDetalhePosto] = useState(null);

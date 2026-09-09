@@ -923,14 +923,10 @@ export default function Financeiro({ currentUser }) {
     return { code: 'A_VENCER', label: '⏳ A Vencer', color: '#fbbf24', bg: 'rgba(245, 158, 11, 0.15)', border: 'rgba(245, 158, 11, 0.4)' };
   };
 
-  // Estatísticas Globais & Resumo por Mês (Balanço Mensal)
+  // Estatísticas Globais & Resumo por Mês (Balanço Mensal - Sempre Globais e Não Contaminadas por Filtros de Abas)
   const estatisticas = useMemo(() => {
     const hoje = new Date().toISOString().slice(0, 10);
-    const mesFiltro = filtroAtual.mes;
-
-    const despesasEscopo = mesFiltro 
-      ? despesas.filter(d => d.vencimento && d.vencimento.startsWith(mesFiltro))
-      : despesas;
+    const despesasEscopo = despesas;
 
     const cadastradas = despesasEscopo.filter(d => d.status === 'CADASTRADA');
     const aguardando = despesasEscopo.filter(d => d.status === 'AGUARDANDO_APROVACAO');
@@ -979,7 +975,7 @@ export default function Financeiro({ currentUser }) {
       listaAguardando: aguardando,
       listaConciliacaoEArquivo: [...conciliacao, ...arquivadas]
     };
-  }, [despesas, filtroAtual.mes]);
+  }, [despesas]);
 
   // Lista Filtrada para a Aba Ativa da Tabela Principal
   const listaExibicao = useMemo(() => {

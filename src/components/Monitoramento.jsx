@@ -4,24 +4,26 @@ import { supabase } from '../supabaseClient';
 import { Camera, MapPin, Building, Clock, Activity, Search, Calendar, User, ExternalLink, Image as ImageIcon, Trash2, AlertCircle, CheckCircle, X } from 'lucide-react';
 
 const Monitoramento = ({ currentUser }) => {
+  const userId = currentUser?.id || currentUser?.username || currentUser?.email || 'default';
+
   const [visitas, setVisitas] = useState([]);
   const [ocorrencias, setOcorrencias] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('visitas');
 
-  const [filterData, setFilterData] = useState(() => localStorage.getItem('mon_filter_data') || '');
-  const [filterSupervisor, setFilterSupervisor] = useState(() => localStorage.getItem('mon_filter_sup') || '');
-  const [filterCliente, setFilterCliente] = useState(() => localStorage.getItem('mon_filter_cli') || '');
+  const [filterData, setFilterData] = useState(() => localStorage.getItem(`mon_filter_data_${userId}`) || '');
+  const [filterSupervisor, setFilterSupervisor] = useState(() => localStorage.getItem(`mon_filter_sup_${userId}`) || '');
+  const [filterCliente, setFilterCliente] = useState(() => localStorage.getItem(`mon_filter_cli_${userId}`) || '');
   const [filterStatusOcorrencia, setFilterStatusOcorrencia] = useState('Aberto');
 
   const [resolvendoOcorrencia, setResolvendoOcorrencia] = useState(null);
   const [tratativaTexto, setTratativaTexto] = useState('');
 
   useEffect(() => {
-    localStorage.setItem('mon_filter_data', filterData);
-    localStorage.setItem('mon_filter_sup', filterSupervisor);
-    localStorage.setItem('mon_filter_cli', filterCliente);
-  }, [filterData, filterSupervisor, filterCliente]);
+    localStorage.setItem(`mon_filter_data_${userId}`, filterData);
+    localStorage.setItem(`mon_filter_sup_${userId}`, filterSupervisor);
+    localStorage.setItem(`mon_filter_cli_${userId}`, filterCliente);
+  }, [filterData, filterSupervisor, filterCliente, userId]);
 
   useEffect(() => {
     fetchData();
