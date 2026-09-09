@@ -1157,10 +1157,10 @@ export default function Financeiro({ currentUser }) {
     };
   }, [despesas, departamentos]);
 
-  // Função Geradora de CSV por Filtro Específico
+  // Função Geradora de CSV por Filtro Específico (Exporta todas as despesas por padrão, respeitando filtros ativos)
   const exportarCSVGenerico = (filtroTipo) => {
     let dadosFiltrados = despesas;
-    let nomeArquivo = 'relatorio_financeiro';
+    let nomeArquivo = 'relatorio_financeiro_despesas';
 
     if (filtroTipo === 'PAGAS') {
       dadosFiltrados = despesas.filter(d => d.statusPagamento === 'PAGO');
@@ -1183,14 +1183,47 @@ export default function Financeiro({ currentUser }) {
     } else if (filtroTipo === 'RECUSADAS') {
       dadosFiltrados = despesas.filter(d => d.status === 'RECUSADA');
       nomeArquivo = 'despesas_recusadas';
-    } else if (filtroTipo === 'TODAS') {
-      dadosFiltrados = listaConsultaGeral;
-      nomeArquivo = 'consulta_geral_despesas';
+    } else if (filtroTipo === 'CADASTRADA') {
+      dadosFiltrados = despesas.filter(d => d.status === 'CADASTRADA');
+      nomeArquivo = 'despesas_cadastradas';
     }
 
-    if (filtroAtual?.mes) {
-      dadosFiltrados = dadosFiltrados.filter(d => d.vencimento && d.vencimento.startsWith(filtroAtual.mes));
-      nomeArquivo += `_${filtroAtual.mes}`;
+    // Aplicar filtros ativos da aba/usuário se houver
+    const { mes, statusPagamento, empresa, departamento, formaPagamento, busca } = filtroAtual || {};
+    const hoje = new Date().toISOString().slice(0, 10);
+
+    if (mes) {
+      dadosFiltrados = dadosFiltrados.filter(d => d.vencimento && d.vencimento.startsWith(mes));
+      nomeArquivo += `_${mes}`;
+    }
+    if (empresa) {
+      dadosFiltrados = dadosFiltrados.filter(d => d.empresa === empresa);
+    }
+    if (departamento) {
+      dadosFiltrados = dadosFiltrados.filter(d => d.departamento === departamento);
+    }
+    if (formaPagamento) {
+      dadosFiltrados = dadosFiltrados.filter(d => d.formaPagamento === formaPagamento);
+    }
+    if (statusPagamento && statusPagamento !== 'TODOS') {
+      if (statusPagamento === 'VENCIDA') {
+        dadosFiltrados = dadosFiltrados.filter(d => d.statusPagamento !== 'PAGO' && d.statusPagamento !== 'PENDENTE_CONCILIACAO' && d.statusPagamento !== 'ARQUIVADO' && d.vencimento && d.vencimento < hoje);
+      } else if (statusPagamento === 'A_VENCER') {
+        dadosFiltrados = dadosFiltrados.filter(d => d.statusPagamento !== 'PAGO' && d.statusPagamento !== 'PENDENTE_CONCILIACAO' && d.statusPagamento !== 'ARQUIVADO' && (!d.vencimento || d.vencimento >= hoje));
+      } else {
+        dadosFiltrados = dadosFiltrados.filter(d => d.statusPagamento === statusPagamento);
+      }
+    }
+    if (busca) {
+      const term = busca.toLowerCase();
+      dadosFiltrados = dadosFiltrados.filter(d => {
+        const matchNome = (d.nome || '').toLowerCase().includes(term);
+        const matchOP = (d.numeroOP || '').toLowerCase().includes(term);
+        const matchObs = (d.observacao || '').toLowerCase().includes(term);
+        const matchEmpresa = (d.empresa || '').toLowerCase().includes(term);
+        const matchDepto = (d.departamento || '').toLowerCase().includes(term);
+        return matchNome || matchOP || matchObs || matchEmpresa || matchDepto;
+      });
     }
 
     const headers = ['ID', 'Empresa', 'Departamento', 'Descrição Despesa', 'Valor Previsto (R$)', 'Valor Executado (R$)', 'Diferença (R$)', 'Parcela', 'Total Parcelas', 'Vencimento', 'Último Vencimento Est.', 'Tem OP', 'Num OP', 'Banco', 'Forma Pagamento', 'Prioridade', 'Status Etapa', 'Status Pagamento', 'Data Pagamento', 'Data Conciliação', 'Data Arquivamento', 'Obs Cadastro', 'Obs Análise', 'Obs Pagamento'];
@@ -1981,14 +2014,7 @@ export default function Financeiro({ currentUser }) {
 
               {/* Exportar CSV */}
               <button
-                onClick={() => exportarCSVGenerico(
-                  activeTab === 'cadastradas' ? 'CADASTRADA' : 
-                  (activeTab === 'aguardando' ? 'AGUARDANDO_APROVACAO' : 
-                  (activeTab === 'aprovadas' ? 'APROVADAS' :
-                  (activeTab === 'lancadas' ? 'LANCADA' :
-                  (activeTab === 'pagas' ? 'PAGAS' : 
-                  (activeTab === 'conciliacao' ? 'PENDENTES_CONCILIACAO' : 'RECUSADAS')))))
-                )}
+                onClick={() => exportarCSVGenerico()}
                 style={{ padding: '8px 12px', background: 'rgba(51, 65, 85, 0.6)', color: '#cbd5e1', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', fontSize: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
               >
                 <Download size={14} /> Exportar CSV
