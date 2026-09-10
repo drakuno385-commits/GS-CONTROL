@@ -233,19 +233,19 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
   useEffect(() => {
     const loadData = async () => {
       const { data: dDespesas } = await supabase.from('financeiro_despesas').select('*');
-      if (dDespesas) setDespesasFromDb(dDespesas);
+      if (dDespesas) setDespesasFromDb(snakeToCamel(dDespesas));
 
       const { data: dFaturas } = await supabase.from('financeiro_faturas').select('*');
-      if (dFaturas) setFaturasFromDb(dFaturas);
+      if (dFaturas) setFaturasFromDb(snakeToCamel(dFaturas));
 
       const { data: dBancosSaldos } = await supabase.from('financeiro_bancos_saldos').select('*');
-      if (dBancosSaldos) setBancosComSaldoFromDb(dBancosSaldos);
+      if (dBancosSaldos) setBancosComSaldoFromDb(snakeToCamel(dBancosSaldos));
 
       const { data: dHistorico } = await supabase.from('financeiro_historico_bancario').select('*');
-      if (dHistorico) setHistoricoMovimentacoesFromDb(dHistorico);
+      if (dHistorico) setHistoricoMovimentacoesFromDb(snakeToCamel(dHistorico));
 
       const { data: dEntradas } = await supabase.from('financeiro_entradas').select('*');
-      if (dEntradas) setEntradasRecursosFromDb(dEntradas);
+      if (dEntradas) setEntradasRecursosFromDb(snakeToCamel(dEntradas));
 
       const { data: dConfig } = await supabase.from('financeiro_config').select('*');
       if (dConfig) {
@@ -267,28 +267,28 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
 
     const channel = supabase.channel('financeiro_changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'financeiro_despesas' }, payload => {
-        if (payload.eventType === 'INSERT') setDespesasFromDb(prev => prev.find(p => p.id === payload.new.id) ? prev : [...prev, payload.new]);
-        else if (payload.eventType === 'UPDATE') setDespesasFromDb(prev => prev.map(p => p.id === payload.new.id ? payload.new : p));
+        if (payload.eventType === 'INSERT') setDespesasFromDb(prev => prev.find(p => p.id === snakeToCamel(payload.new).id) ? prev : [...prev, snakeToCamel(payload.new)]);
+        else if (payload.eventType === 'UPDATE') setDespesasFromDb(prev => prev.map(p => p.id === snakeToCamel(payload.new).id ? snakeToCamel(payload.new) : p));
         else if (payload.eventType === 'DELETE') setDespesasFromDb(prev => prev.filter(p => p.id !== payload.old.id));
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'financeiro_faturas' }, payload => {
-        if (payload.eventType === 'INSERT') setFaturasFromDb(prev => prev.find(p => p.id === payload.new.id) ? prev : [...prev, payload.new]);
-        else if (payload.eventType === 'UPDATE') setFaturasFromDb(prev => prev.map(p => p.id === payload.new.id ? payload.new : p));
+        if (payload.eventType === 'INSERT') setFaturasFromDb(prev => prev.find(p => p.id === snakeToCamel(payload.new).id) ? prev : [...prev, snakeToCamel(payload.new)]);
+        else if (payload.eventType === 'UPDATE') setFaturasFromDb(prev => prev.map(p => p.id === snakeToCamel(payload.new).id ? snakeToCamel(payload.new) : p));
         else if (payload.eventType === 'DELETE') setFaturasFromDb(prev => prev.filter(p => p.id !== payload.old.id));
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'financeiro_bancos_saldos' }, payload => {
-        if (payload.eventType === 'INSERT') setBancosComSaldoFromDb(prev => prev.find(p => p.id === payload.new.id) ? prev : [...prev, payload.new]);
-        else if (payload.eventType === 'UPDATE') setBancosComSaldoFromDb(prev => prev.map(p => p.id === payload.new.id ? payload.new : p));
+        if (payload.eventType === 'INSERT') setBancosComSaldoFromDb(prev => prev.find(p => p.id === snakeToCamel(payload.new).id) ? prev : [...prev, snakeToCamel(payload.new)]);
+        else if (payload.eventType === 'UPDATE') setBancosComSaldoFromDb(prev => prev.map(p => p.id === snakeToCamel(payload.new).id ? snakeToCamel(payload.new) : p));
         else if (payload.eventType === 'DELETE') setBancosComSaldoFromDb(prev => prev.filter(p => p.id !== payload.old.id));
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'financeiro_entradas' }, payload => {
-        if (payload.eventType === 'INSERT') setEntradasRecursosFromDb(prev => prev.find(p => p.id === payload.new.id) ? prev : [...prev, payload.new]);
-        else if (payload.eventType === 'UPDATE') setEntradasRecursosFromDb(prev => prev.map(p => p.id === payload.new.id ? payload.new : p));
+        if (payload.eventType === 'INSERT') setEntradasRecursosFromDb(prev => prev.find(p => p.id === snakeToCamel(payload.new).id) ? prev : [...prev, snakeToCamel(payload.new)]);
+        else if (payload.eventType === 'UPDATE') setEntradasRecursosFromDb(prev => prev.map(p => p.id === snakeToCamel(payload.new).id ? snakeToCamel(payload.new) : p));
         else if (payload.eventType === 'DELETE') setEntradasRecursosFromDb(prev => prev.filter(p => p.id !== payload.old.id));
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'financeiro_historico_bancario' }, payload => {
-        if (payload.eventType === 'INSERT') setHistoricoMovimentacoesFromDb(prev => prev.find(p => p.id === payload.new.id) ? prev : [...prev, payload.new]);
-        else if (payload.eventType === 'UPDATE') setHistoricoMovimentacoesFromDb(prev => prev.map(p => p.id === payload.new.id ? payload.new : p));
+        if (payload.eventType === 'INSERT') setHistoricoMovimentacoesFromDb(prev => prev.find(p => p.id === snakeToCamel(payload.new).id) ? prev : [...prev, snakeToCamel(payload.new)]);
+        else if (payload.eventType === 'UPDATE') setHistoricoMovimentacoesFromDb(prev => prev.map(p => p.id === snakeToCamel(payload.new).id ? snakeToCamel(payload.new) : p));
         else if (payload.eventType === 'DELETE') setHistoricoMovimentacoesFromDb(prev => prev.filter(p => p.id !== payload.old.id));
       })
       .subscribe();
