@@ -166,11 +166,66 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
     return [];
   });
 
+  const [clientesFaturamento, setClientesFaturamento] = useState(() => {
+    try {
+      const saved = localStorage.getItem('acoweb_financeiro_clientes_fat_v1');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch(e){}
+    return [];
+  });
+
   useEffect(() => {
     try {
       localStorage.setItem('acoweb_financeiro_faturas_v1', JSON.stringify(faturas));
     } catch(e){}
   }, [faturas]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('acoweb_financeiro_clientes_fat_v1', JSON.stringify(clientesFaturamento));
+    } catch(e){}
+  }, [clientesFaturamento]);
+
+  // Sincroniza clientes da planilha (App.jsx) com os clientes do faturamento sem duplicar
+  useEffect(() => {
+    if (clientesCadastrados && clientesCadastrados.length > 0) {
+      setClientesFaturamento(prev => {
+        const novos = [...prev];
+        let mudou = false;
+        clientesCadastrados.forEach(c => {
+          if (!novos.includes(c)) {
+            novos.push(c);
+            mudou = true;
+          }
+        });
+        if (mudou) return novos.sort();
+        return prev;
+      });
+    }
+  }, [clientesCadastrados]);
+
+  const [showModalClientesFat, setShowModalClientesFat] = useState(false);
+  const [novoClienteFat, setNovoClienteFat] = useState('');
+
+  const handleAddClienteFat = (e) => {
+    e.preventDefault();
+    if (!novoClienteFat.trim()) return;
+    const nome = novoClienteFat.trim().toUpperCase();
+    if (clientesFaturamento.includes(nome)) {
+      alert("Este cliente já está cadastrado.");
+      return;
+    }
+    setClientesFaturamento(prev => [...prev, nome].sort());
+    setNovoClienteFat('');
+  };
+
+  const handleRemoveClienteFat = (cliente) => {
+    if (!window.confirm(`Tem certeza que deseja remover "${cliente}" da lista de faturamento?`)) return;
+    setClientesFaturamento(prev => prev.filter(c => c !== cliente));
+  };
 
   // Estado de Departamentos Customizados
   const [departamentos, setDepartamentos] = useState(() => {
@@ -4512,6 +4567,57 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
         </div>
       )}
 
+      {/* MODAL: GERENCIAR CLIENTES (FATURAMENTO) */}
+      {showModalClientesFat && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ background: '#0f172a', padding: '32px', borderRadius: '20px', width: '90%', maxWidth: '500px', border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)', maxHeight: '80vh', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 800, color: '#f8fafc', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Edit size={20} color="#fbbf24" />
+                Gerenciar Clientes (Faturamento)
+              </h2>
+              <button onClick={() => setShowModalClientesFat(false)} style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer' }}>
+                <X size={24} />
+              </button>
+            </div>
+
+            <form onSubmit={handleAddClienteFat} style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
+              <input
+                required
+                type="text"
+                placeholder="Nome do Novo Cliente"
+                value={novoClienteFat}
+                onChange={(e) => setNovoClienteFat(e.target.value)}
+                style={{ flex: 1, padding: '10px 14px', background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', color: '#fff', fontSize: '13px' }}
+              />
+              <button type="submit" style={{ padding: '0 16px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 700, cursor: 'pointer' }}>
+                <Plus size={18} />
+              </button>
+            </form>
+
+            <div style={{ overflowY: 'auto', flex: 1, border: '1px solid #334155', borderRadius: '8px', background: 'rgba(30,41,59,0.3)' }}>
+              {clientesFaturamento.length === 0 ? (
+                <div style={{ padding: '20px', textAlign: 'center', color: '#64748b', fontSize: '13px' }}>Nenhum cliente cadastrado.</div>
+              ) : (
+                clientesFaturamento.map((cli, idx) => (
+                  <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', borderBottom: '1px solid #334155' }}>
+                    <span style={{ color: '#cbd5e1', fontSize: '13px', fontWeight: 600 }}>{cli}</span>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveClienteFat(cli)}
+                      style={{ background: 'rgba(239, 68, 68, 0.1)', border: 'none', color: '#ef4444', padding: '6px', borderRadius: '6px', cursor: 'pointer' }}
+                      title="Remover Cliente"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* SEÇÃO 3: FATURAMENTO */}
       {/* SEÇÃO 3: FATURAMENTO */}
       {moduloSubSecao === 'faturamento' && (
@@ -4593,7 +4699,16 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
               
               <form onSubmit={handleCadastrarFatura} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '16px' }}>
                 <div style={{ gridColumn: '1 / -1' }}>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#94a3b8', marginBottom: '6px' }}>Cliente (Planilha de Efetivo)</label>
+                  <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', fontWeight: 600, color: '#94a3b8', marginBottom: '6px' }}>
+                    <span>Cliente (Base Efetivo + Manuais)</span>
+                    <button
+                      type="button"
+                      onClick={() => setShowModalClientesFat(true)}
+                      style={{ background: 'transparent', border: 'none', color: '#fbbf24', fontSize: '11px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                    >
+                      <Edit size={12} /> Gerenciar Clientes
+                    </button>
+                  </label>
                   <select
                     required
                     value={formNovaFatura.cliente}
@@ -4601,7 +4716,7 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
                     style={{ width: '100%', padding: '10px', background: '#0f172a', border: '1px solid #334155', borderRadius: '8px', color: '#fff', fontSize: '13px' }}
                   >
                     <option value="">Selecione o Cliente...</option>
-                    {clientesCadastrados.map((cli, idx) => (
+                    {clientesFaturamento.map((cli, idx) => (
                       <option key={idx} value={cli}>{cli}</option>
                     ))}
                   </select>
