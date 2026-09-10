@@ -555,6 +555,33 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
     } catch(e){}
   }, [historicoMovimentacoes]);
 
+  // Auditoria do Financeiro
+  const [logsAuditoria, setLogsAuditoria] = useState(() => {
+    try {
+      const saved = localStorage.getItem('acoweb_financeiro_auditoria_v1');
+      return saved ? JSON.parse(saved) : [];
+    } catch(e) { return []; }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('acoweb_financeiro_auditoria_v1', JSON.stringify(logsAuditoria));
+    } catch(e){}
+  }, [logsAuditoria]);
+
+  const registrarAuditoria = (acao, detalhes) => {
+    const novoLog = {
+      id: `aud_${Date.now()}_${Math.floor(Math.random()*1000)}`,
+      data: new Date().toISOString(),
+      usuario: currentUser?.nome || currentUser?.email || 'Desconhecido',
+      acao,
+      detalhes
+    };
+    // Mantém os últimos 1000 registros para não estourar o localStorage
+    setLogsAuditoria(prev => [novoLog, ...prev].slice(0, 1000));
+  };
+
+  const [showModalAuditoria, setShowModalAuditoria] = useState(false);
   // Formulário de Nova Despesa
   const [formNovaDespesa, setFormNovaDespesa] = useState({
     empresa: 'AÇOFORTE',
@@ -673,6 +700,7 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
       return d;
     }));
 
+    registrarAuditoria('EDITAR_DESPESA', `Despesa editada (Geral): ${modalEditarDespesa.nome} | R$ ${modalEditarDespesa.valor}`);
     alert('✅ Despesa cadastrada alterada por completo com sucesso!');
     setModalEditarDespesa(null);
   };
@@ -689,6 +717,9 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
       }
       return d;
     }));
+    const dFound = despesas.find(x => x.id === id);
+    if (dFound) registrarAuditoria('SOLICITAR_APROVACAO', `Solicitada aprovação para: ${dFound.nome}`);
+    registrarAuditoria('CADASTRAR_DESPESA', `Nova despesa lançada: ${dFound.nome} | R$ ${dFound.valor} | Empresa: ${dFound.empresa}`);
     alert('🚀 Despesa enviada para a aba "Aguardando Aprovação"! A diretoria/gestor poderá avaliar e aprovar.');
   };
 
@@ -738,6 +769,8 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
       }
       return d;
     }));
+
+    registrarAuditoria('CONFIRMAR_PAGAMENTO', `Pagamento informado para: ${modalConfirmarPagamento.nome} | Valor Executado: R$ ${valExec}`);
 
     alert(`✓ Pagamento confirmado com sucesso!\nValor Previsto Original: ${formatMoney(modalConfirmarPagamento.valor)}\nValor Executado Pago: ${formatMoney(valExec)}`);
     setModalConfirmarPagamento(null);
@@ -1064,6 +1097,9 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
       return d;
     }));
 
+    const msgAcao = acao === 'APROVAR' ? 'Aprovação' : 'Recusa';
+    registrarAuditoria(`AVALIAR_DESPESA`, `${msgAcao} da despesa: ${modalAprovacao.nome} | Motivo: ${obsAprovacaoInput || 'Sem motivo'}`);
+
     alert(`Despesa ${acao === 'APROVAR' ? 'Aprovada com sucesso e movida para a aba "3. Aprovadas"' : 'Reprovada/Recusada e movida para a aba "7. Recusadas"'}!`);
     setModalAprovacao(null);
     setObsAprovacaoInput('');
@@ -1075,7 +1111,9 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
       return;
     }
     if (window.confirm('Tem certeza que deseja excluir esta despesa permanentemente?')) {
-      setDespesas(prev => prev.filter(d => d.id !== id));
+      const d = despesas.find(x => x.id === id);
+      setDespesas(prev => prev.filter(x => x.id !== id));
+      if (d) registrarAuditoria('EXCLUIR_DESPESA', `Despesa excluída: ${d.nome} | R$ ${d.valor}`);
     }
   };
 
@@ -1500,6 +1538,7 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
     };
 
     setFaturas([novaFatura, ...faturas]);
+    registrarAuditoria('CADASTRAR_FATURA', `Fatura gerada: NFe ${novaFatura.numeroNota} | Cliente: ${novaFatura.cliente} | R$ ${vReceber}`);
     setSubTabFaturamento('fila');
     setFormNovaFatura({
       empresa: '',
@@ -1582,6 +1621,8 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
       ...historicoMovimentacoes
     ]);
 
+    registrarAuditoria('RECEBER_FATURA', `Recebimento NFe ${faturaInfo.numeroNota} | Valor: R$ ${vRecebido} | Banco: ${bancoObj?.nome || 'Desc'}`);
+
     setModalRecebimentoFatura(null);
     alert('Fatura recebida e saldo atualizado com sucesso!');
   };
@@ -1592,7 +1633,9 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
       return;
     }
     if (!window.confirm("Deseja realmente excluir esta fatura? Se ela já foi recebida, o saldo NÃO será estornado automaticamente do banco.")) return;
+    const fatParaExcluir = faturas.find(f => f.id === id);
     setFaturas(faturas.filter(f => f.id !== id));
+    if (fatParaExcluir) registrarAuditoria('EXCLUIR_FATURA', `Fatura NFe ${fatParaExcluir.numeroNota} do cliente ${fatParaExcluir.cliente} excluída.`);
   };
 
   const handleDeleteEntrada = (id) => {
@@ -1633,6 +1676,8 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
       },
       ...historicoMovimentacoes
     ]);
+
+    registrarAuditoria('EXCLUIR_ENTRADA', `Entrada excluída: ${entradaParaExcluir.descricao} | Valor: R$ ${entradaParaExcluir.valor} | Banco: ${entradaParaExcluir.bancoNome}`);
   };
 
   const handleZerarBase = () => {
@@ -1642,6 +1687,8 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
     setBancosComSaldo([]);
     setEntradasRecursos([]);
     setHistoricoMovimentacoes([]);
+
+    registrarAuditoria('ZERAR_BASE', 'O usuário limpou toda a base de dados do Financeiro.');
 
     // Força a substituição no localStorage
     localStorage.setItem('acoweb_financeiro_despesas_v5', '[]');
@@ -1677,6 +1724,22 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          {currentUser?.role === 'MASTER' && (
+            <button
+              onClick={() => setShowModalAuditoria(true)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '6px',
+                background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444',
+                padding: '8px 14px', borderRadius: '10px', fontWeight: 600, fontSize: '12px',
+                border: '1px solid rgba(239, 68, 68, 0.2)', cursor: 'pointer'
+              }}
+              title="Apenas MASTER: Ver log de ações de todos os usuários neste dispositivo"
+            >
+              <FileText size={16} />
+              Logs de Auditoria
+            </button>
+          )}
+
           {moduloSubSecao === 'fluxo' ? (
             <button
               onClick={() => setActiveTab('nova')}
@@ -5097,6 +5160,45 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
             </div>
           )}
 
+        </div>
+      )}
+      {/* MODAL DE AUDITORIA */}
+      {showModalAuditoria && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}>
+          <div style={{ background: '#1e293b', width: '900px', maxWidth: '95vw', height: '80vh', borderRadius: '16px', border: '1px solid rgba(255, 255, 255, 0.1)', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5)' }}>
+            <div style={{ padding: '20px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h3 style={{ margin: 0, color: '#f8fafc', fontSize: '18px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <FileText size={20} color="#ef4444" /> Logs de Auditoria do Financeiro (Local)
+              </h3>
+              <button onClick={() => setShowModalAuditoria(false)} style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer' }}><X size={24} /></button>
+            </div>
+            <div style={{ padding: '20px', flex: 1, overflowY: 'auto' }}>
+              {logsAuditoria.length === 0 ? (
+                <div style={{ textAlign: 'center', color: '#94a3b8', padding: '40px' }}>Nenhum log registrado ainda.</div>
+              ) : (
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', color: '#94a3b8', textAlign: 'left' }}>
+                      <th style={{ padding: '12px' }}>Data/Hora</th>
+                      <th style={{ padding: '12px' }}>Usuário</th>
+                      <th style={{ padding: '12px' }}>Ação</th>
+                      <th style={{ padding: '12px' }}>Detalhes</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {logsAuditoria.map((log, idx) => (
+                      <tr key={log.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', background: idx % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.02)' }}>
+                        <td style={{ padding: '10px', color: '#cbd5e1', whiteSpace: 'nowrap' }}>{new Date(log.data).toLocaleString()}</td>
+                        <td style={{ padding: '10px', color: '#f8fafc', fontWeight: 'bold' }}>{log.usuario}</td>
+                        <td style={{ padding: '10px' }}><span style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#f87171', padding: '4px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: 'bold' }}>{log.acao}</span></td>
+                        <td style={{ padding: '10px', color: '#94a3b8' }}>{log.detalhes}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
         </div>
       )}
 
