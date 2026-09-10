@@ -3673,60 +3673,66 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
                 </button>
               </div>
 
-              {/* Grid de Cards de Bancos com Saldo Live */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
+              {/* Lista de Bancos com Saldo Live */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 {bancosComSaldo.map(banco => (
-                  <div key={banco.id} style={{ background: 'rgba(15, 23, 42, 0.8)', padding: '20px', borderRadius: '16px', border: `1px solid ${banco.cor || '#334155'}`, boxShadow: '0 4px 14px rgba(0,0,0,0.3)' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                      <div style={{ fontWeight: 800, fontSize: '16px', color: '#f8fafc' }}>{banco.nome}</div>
-                      <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                  <div key={banco.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(15, 23, 42, 0.8)', padding: '16px 20px', borderRadius: '12px', borderLeft: `4px solid ${banco.cor || '#334155'}`, borderTop: '1px solid rgba(255,255,255,0.05)', borderRight: '1px solid rgba(255,255,255,0.05)', borderBottom: '1px solid rgba(255,255,255,0.05)', boxShadow: '0 4px 14px rgba(0,0,0,0.2)' }}>
+                    
+                    {/* Informações Principais */}
+                    <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+                      <div style={{ fontWeight: 800, fontSize: '15px', color: '#f8fafc', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        {banco.nome} 
+                        <span style={{ fontSize: '10px', background: 'rgba(255,255,255,0.1)', padding: '2px 6px', borderRadius: '4px', color: '#cbd5e1' }}>
+                          {banco.empresa || 'AÇOFORTE'}
+                        </span>
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#94a3b8', marginTop: '4px' }}>
+                        Ag: <strong style={{ color: '#cbd5e1' }}>{banco.agencia}</strong> | Conta: <strong style={{ color: '#cbd5e1' }}>{banco.conta}</strong>
+                      </div>
+                    </div>
+
+                    {/* Saldo Atual e Inicial */}
+                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', paddingRight: '20px' }}>
+                      <div style={{ fontSize: '10px', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 700 }}>Saldo Disponível</div>
+                      <div style={{ fontSize: '18px', fontWeight: 800, color: banco.saldoAtual >= 0 ? '#34d399' : '#f87171', fontFamily: 'monospace' }}>
+                        {formatMoney(banco.saldoAtual)}
+                      </div>
+                      <div style={{ fontSize: '10px', color: '#64748b', marginTop: '2px' }}>
+                        Inicial: <strong style={{ color: '#94a3b8' }}>{formatMoney(banco.saldoInicial)}</strong>
+                      </div>
+                    </div>
+
+                    {/* Botões de Ação */}
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                      <button
+                        onClick={() => {
+                          setFormBancoSaldo({
+                            id: banco.id,
+                            nome: banco.nome,
+                            empresa: banco.empresa || 'AÇOFORTE',
+                            agencia: banco.agencia || '',
+                            conta: banco.conta || '',
+                            saldoInicial: banco.saldoInicial,
+                            saldoAtual: banco.saldoAtual,
+                            cor: banco.cor || '#38bdf8'
+                          });
+                          setShowModalBancoSaldo(true);
+                        }}
+                        style={{ background: 'rgba(255,255,255,0.08)', border: 'none', color: '#cbd5e1', borderRadius: '6px', padding: '8px 12px', fontSize: '12px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
+                      >
+                        <Edit2 size={14} /> Editar
+                      </button>
+                      {currentUser?.role === 'MASTER' && (
                         <button
-                          onClick={() => {
-                            setFormBancoSaldo({
-                              id: banco.id,
-                              nome: banco.nome,
-                              empresa: banco.empresa || 'AÇOFORTE',
-                              agencia: banco.agencia || '',
-                              conta: banco.conta || '',
-                              saldoInicial: banco.saldoInicial,
-                              saldoAtual: banco.saldoAtual,
-                              cor: banco.cor || '#38bdf8'
-                            });
-                            setShowModalBancoSaldo(true);
-                          }}
-                          style={{ background: 'rgba(255,255,255,0.08)', border: 'none', color: '#cbd5e1', borderRadius: '6px', padding: '4px 8px', fontSize: '11px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                          onClick={() => handleExcluirBanco(banco.id, banco.nome)}
+                          style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#f87171', borderRadius: '6px', padding: '8px 12px', fontSize: '12px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
+                          title="Apenas usuários com perfil MASTER podem excluir contas bancárias"
                         >
-                          <Edit2 size={12} /> Editar
+                          <Trash2 size={14} color="#f87171" />
                         </button>
-                        {currentUser?.role === 'MASTER' && (
-                          <button
-                            onClick={() => handleExcluirBanco(banco.id, banco.nome)}
-                            style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#f87171', borderRadius: '6px', padding: '4px 8px', fontSize: '11px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
-                            title="Apenas usuários com perfil MASTER podem excluir contas bancárias"
-                          >
-                            <Trash2 size={12} color="#f87171" /> Excluir
-                          </button>
-                        )}
-                      </div>
+                      )}
                     </div>
 
-                    <div style={{ fontSize: '11px', color: '#94a3b8', marginBottom: '12px' }}>
-                      Empresa: <strong style={{ color: '#cbd5e1' }}>{banco.empresa || 'AÇOFORTE'}</strong> <br/>
-                      Agência: <strong style={{ color: '#cbd5e1' }}>{banco.agencia}</strong> | Conta: <strong style={{ color: '#cbd5e1' }}>{banco.conta}</strong>
-                    </div>
-
-                    <div style={{ background: 'rgba(30, 41, 59, 0.6)', padding: '12px', borderRadius: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <div>
-                        <div style={{ fontSize: '10px', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 700 }}>Saldo Atual Disponível</div>
-                        <div style={{ fontSize: '20px', fontWeight: 800, color: banco.saldoAtual >= 0 ? '#34d399' : '#f87171', fontFamily: 'monospace' }}>
-                          {formatMoney(banco.saldoAtual)}
-                        </div>
-                      </div>
-                      <div style={{ textAlign: 'right' }}>
-                        <div style={{ fontSize: '10px', color: '#64748b' }}>Saldo Inicial</div>
-                        <div style={{ fontSize: '11px', color: '#cbd5e1', fontWeight: 700 }}>{formatMoney(banco.saldoInicial)}</div>
-                      </div>
-                    </div>
                   </div>
                 ))}
               </div>
