@@ -277,6 +277,14 @@ const App = () => {
     return Array.from(list).sort();
   }, [rawEfetivos, rawPresencas]);
 
+  // List of ALL clients (including administrative ones) for Faturamento
+  const allClientsList = useMemo(() => {
+    const list = new Set();
+    rawEfetivos.forEach(r => r.cliente && list.add(r.cliente));
+    rawPresencas.forEach(r => r.cliente && list.add(r.cliente));
+    return Array.from(list).sort();
+  }, [rawEfetivos, rawPresencas]);
+
   // List of unique postos for the filter dropdown
   const postosList = useMemo(() => {
     const list = new Set();
@@ -1968,7 +1976,7 @@ const App = () => {
               currentUser={currentUser} 
               subSecaoProp={financeiroSubSecao}
               onSelectSubSecao={(sub) => setFinanceiroSubSecao(sub)}
-              clientesCadastrados={clientsList}
+              clientesCadastrados={allClientsList}
             />
           </ErrorBoundary>
         )}
