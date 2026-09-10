@@ -482,6 +482,7 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
   const [formBancoSaldo, setFormBancoSaldo] = useState({
     id: null,
     nome: '',
+    empresa: 'AÇOFORTE',
     agencia: '',
     conta: '',
     saldoInicial: '',
@@ -867,6 +868,7 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
           return {
             ...b,
             nome: formBancoSaldo.nome.trim(),
+            empresa: formBancoSaldo.empresa,
             agencia: formBancoSaldo.agencia.trim(),
             conta: formBancoSaldo.conta.trim(),
             saldoInicial: sInicial,
@@ -881,6 +883,7 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
       const novo = {
         id: `b_${Date.now()}`,
         nome: formBancoSaldo.nome.trim(),
+        empresa: formBancoSaldo.empresa,
         agencia: formBancoSaldo.agencia.trim() || '0001',
         conta: formBancoSaldo.conta.trim() || '00000-0',
         saldoInicial: sInicial,
@@ -892,7 +895,7 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
     }
 
     setShowModalBancoSaldo(false);
-    setFormBancoSaldo({ id: null, nome: '', agencia: '', conta: '', saldoInicial: '', saldoAtual: '', cor: '#38bdf8' });
+    setFormBancoSaldo({ id: null, nome: '', empresa: 'AÇOFORTE', agencia: '', conta: '', saldoInicial: '', saldoAtual: '', cor: '#38bdf8' });
   };
 
   // Excluir Banco Cadastrado (APENAS USUÁRIO MASTER)
@@ -3597,7 +3600,7 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
                 </div>
                 <button
                   onClick={() => {
-                    setFormBancoSaldo({ id: null, nome: '', agencia: '', conta: '', saldoInicial: '', saldoAtual: '', cor: '#38bdf8' });
+                    setFormBancoSaldo({ id: null, nome: '', empresa: 'AÇOFORTE', agencia: '', conta: '', saldoInicial: '', saldoAtual: '', cor: '#38bdf8' });
                     setShowModalBancoSaldo(true);
                   }}
                   style={{ padding: '10px 18px', background: 'linear-gradient(135deg, #a78bfa, #7c3aed)', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', boxShadow: '0 4px 14px rgba(139, 92, 246, 0.4)' }}
@@ -3618,6 +3621,7 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
                             setFormBancoSaldo({
                               id: banco.id,
                               nome: banco.nome,
+                              empresa: banco.empresa || 'AÇOFORTE',
                               agencia: banco.agencia || '',
                               conta: banco.conta || '',
                               saldoInicial: banco.saldoInicial,
@@ -3643,6 +3647,7 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
                     </div>
 
                     <div style={{ fontSize: '11px', color: '#94a3b8', marginBottom: '12px' }}>
+                      Empresa: <strong style={{ color: '#cbd5e1' }}>{banco.empresa || 'AÇOFORTE'}</strong> <br/>
                       Agência: <strong style={{ color: '#cbd5e1' }}>{banco.agencia}</strong> | Conta: <strong style={{ color: '#cbd5e1' }}>{banco.conta}</strong>
                     </div>
 
@@ -4401,6 +4406,22 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
             </div>
 
             <form onSubmit={handleSalvarBancoSaldo} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#f8fafc', marginBottom: '6px' }}>
+                  Empresa Vinculada *
+                </label>
+                <select
+                  value={formBancoSaldo.empresa}
+                  onChange={(e) => setFormBancoSaldo({ ...formBancoSaldo, empresa: e.target.value })}
+                  style={{ width: '100%', padding: '10px 14px', background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', color: '#fff', fontSize: '13px' }}
+                >
+                  <option value="AÇOFORTE">AÇOFORTE</option>
+                  <option value="EXPRESS">EXPRESS</option>
+                  <option value="FERRO E AÇO">FERRO E AÇO</option>
+                  <option value="OUTRA">OUTRA</option>
+                </select>
+              </div>
+
               <div>
                 <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#f8fafc', marginBottom: '6px' }}>
                   Nome da Instituição Bancária *
