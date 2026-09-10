@@ -1445,29 +1445,6 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <button
-            onClick={handleZerarBase}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              background: 'linear-gradient(135deg, #ef4444, #dc2626)',
-              color: '#fff',
-              padding: '10px 18px',
-              borderRadius: '10px',
-              fontWeight: 700,
-              fontSize: '13px',
-              border: 'none',
-              cursor: 'pointer',
-              boxShadow: '0 4px 14px rgba(239, 68, 68, 0.4)',
-              transition: 'all 0.2s'
-            }}
-            title="Apagar todos os dados do Financeiro e preparar para Produção"
-          >
-            <Trash2 size={18} />
-            <span>Zerar Sistema (Produção)</span>
-          </button>
-
           {moduloSubSecao === 'fluxo' ? (
             <button
               onClick={() => setActiveTab('nova')}
