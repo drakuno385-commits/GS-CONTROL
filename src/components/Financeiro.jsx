@@ -459,7 +459,9 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
     valorBruto: '',
     valorGlosa: '',
     valorImpostos: '',
+    valorRetencao: '',
     dataPrevista: new Date().toISOString().slice(0, 10),
+    bancoPrevisto: '',
     observacao: ''
   });
 
@@ -1464,7 +1466,8 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
     const vBruto = parseFloat(formNovaFatura.valorBruto.replace(',', '.'));
     const vGlosa = formNovaFatura.valorGlosa ? parseFloat(formNovaFatura.valorGlosa.replace(',', '.')) : 0;
     const vImp = formNovaFatura.valorImpostos ? parseFloat(formNovaFatura.valorImpostos.replace(',', '.')) : 0;
-    const vReceber = vBruto - vGlosa - vImp;
+    const vRet = formNovaFatura.valorRetencao ? parseFloat(formNovaFatura.valorRetencao.replace(',', '.')) : 0;
+    const vReceber = vBruto - vGlosa - vImp - vRet;
 
     const novaFatura = {
       id: `fat_${Date.now()}`,
@@ -1473,8 +1476,10 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
       valorBruto: vBruto,
       valorGlosa: vGlosa,
       valorImpostos: vImp,
+      valorRetencao: vRet,
       valorReceber: vReceber,
       dataPrevista: formNovaFatura.dataPrevista,
+      bancoPrevistoId: formNovaFatura.bancoPrevisto,
       observacao: formNovaFatura.observacao,
       status: 'pendente', // pendente | recebida
       criadaEm: new Date().toISOString()
@@ -1488,7 +1493,9 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
       valorBruto: '',
       valorGlosa: '',
       valorImpostos: '',
+      valorRetencao: '',
       dataPrevista: new Date().toISOString().slice(0, 10),
+      bancoPrevisto: '',
       observacao: ''
     });
     alert('Fatura cadastrada com sucesso!');
@@ -4782,6 +4789,17 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
                 </div>
 
                 <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#94a3b8', marginBottom: '6px' }}>Retenção/Penhora (Opcional)</label>
+                  <input
+                    type="text"
+                    placeholder="0,00"
+                    value={formNovaFatura.valorRetencao}
+                    onChange={(e) => setFormNovaFatura({ ...formNovaFatura, valorRetencao: e.target.value })}
+                    style={{ width: '100%', padding: '10px', background: '#0f172a', border: '1px solid #334155', borderRadius: '8px', color: '#fff', fontSize: '13px' }}
+                  />
+                </div>
+
+                <div>
                   <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#94a3b8', marginBottom: '6px' }}>Data Prevista para Pagamento</label>
                   <input
                     required
@@ -4790,6 +4808,20 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
                     onChange={(e) => setFormNovaFatura({ ...formNovaFatura, dataPrevista: e.target.value })}
                     style={{ width: '100%', padding: '10px', background: '#0f172a', border: '1px solid #334155', borderRadius: '8px', color: '#fff', fontSize: '13px', colorScheme: 'dark' }}
                   />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#94a3b8', marginBottom: '6px' }}>Banco Previsto p/ Recebimento</label>
+                  <select
+                    value={formNovaFatura.bancoPrevisto}
+                    onChange={(e) => setFormNovaFatura({ ...formNovaFatura, bancoPrevisto: e.target.value })}
+                    style={{ width: '100%', padding: '10px', background: '#0f172a', border: '1px solid #334155', borderRadius: '8px', color: '#fff', fontSize: '13px' }}
+                  >
+                    <option value="">Selecione...</option>
+                    {bancosComSaldo.map(b => (
+                      <option key={b.id} value={b.id}>{b.nome} (Ag: {b.agencia} / Cc: {b.conta})</option>
+                    ))}
+                  </select>
                 </div>
 
                 <div style={{ gridColumn: '1 / -1' }}>
@@ -4810,7 +4842,8 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
                       {formatMoney(
                         (parseFloat(formNovaFatura.valorBruto.replace(',','.') || 0)) -
                         (parseFloat(formNovaFatura.valorGlosa.replace(',','.') || 0)) -
-                        (parseFloat(formNovaFatura.valorImpostos.replace(',','.') || 0))
+                        (parseFloat(formNovaFatura.valorImpostos.replace(',','.') || 0)) -
+                        (parseFloat(formNovaFatura.valorRetencao.replace(',','.') || 0))
                       )}
                     </strong>
                   </div>
@@ -4851,7 +4884,7 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
                         </td>
                         <td style={{ padding: '12px', textAlign: 'right', color: '#94a3b8' }}>{formatMoney(fat.valorBruto)}</td>
                         <td style={{ padding: '12px', textAlign: 'right', color: '#ef4444' }}>
-                          {fat.valorGlosa + fat.valorImpostos > 0 ? `-${formatMoney(fat.valorGlosa + fat.valorImpostos)}` : '-'}
+                          {(fat.valorGlosa || 0) + (fat.valorImpostos || 0) + (fat.valorRetencao || 0) > 0 ? `-${formatMoney((fat.valorGlosa || 0) + (fat.valorImpostos || 0) + (fat.valorRetencao || 0))}` : '-'}
                         </td>
                         <td style={{ padding: '12px', textAlign: 'right', fontWeight: 800, color: '#fbbf24', fontSize: '14px' }}>
                           {formatMoney(fat.valorReceber)}
@@ -4868,7 +4901,7 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
                           <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
                             {fat.status === 'pendente' && (
                               <button
-                                onClick={() => setModalRecebimentoFatura({ id: fat.id, valorRecebido: fat.valorReceber.toFixed(2).replace('.', ','), bancoDestino: bancosComSaldo[0]?.id || '', dataRecebimento: new Date().toISOString().slice(0, 10) })}
+                                onClick={() => setModalRecebimentoFatura({ id: fat.id, valorRecebido: fat.valorReceber.toFixed(2).replace('.', ','), bancoDestino: fat.bancoPrevistoId || bancosComSaldo[0]?.id || '', dataRecebimento: new Date().toISOString().slice(0, 10) })}
                                 title="Registrar Recebimento"
                                 style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#34d399', border: 'none', padding: '6px 10px', borderRadius: '6px', cursor: 'pointer', fontWeight: 700, fontSize: '11px', display: 'flex', alignItems: 'center', gap: '4px' }}
                               >
