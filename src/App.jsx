@@ -1771,6 +1771,18 @@ const App = () => {
                           <Landmark size={16} />
                           <span style={{ fontSize: '13px' }}>🏦 Conciliação Bancária</span>
                         </a>
+
+                        <a 
+                          className={`nav-item ${activeMenu === 'financeiro' && financeiroSubSecao === 'faturamento' ? 'active' : ''}`} 
+                          onClick={() => {
+                            setActiveMenu('financeiro');
+                            setFinanceiroSubSecao('faturamento');
+                          }}
+                          style={{ cursor: 'pointer', padding: '8px 12px' }}
+                        >
+                          <DollarSign size={16} />
+                          <span style={{ fontSize: '13px' }}>🧾 Faturamento</span>
+                        </a>
                       </motion.div>
                     )}
                   </AnimatePresence>

@@ -1430,15 +1430,15 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{ padding: '10px', background: moduloSubSecao === 'fluxo' ? 'linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(37, 99, 235, 0.2))' : 'linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(5, 150, 105, 0.2))', borderRadius: '12px', border: moduloSubSecao === 'fluxo' ? '1px solid rgba(59, 130, 246, 0.3)' : '1px solid rgba(16, 185, 129, 0.3)' }}>
-              {moduloSubSecao === 'fluxo' ? <BarChart2 size={28} color="#60a5fa" /> : <Landmark size={28} color="#34d399" />}
+            <div style={{ padding: '10px', background: moduloSubSecao === 'fluxo' ? 'linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(37, 99, 235, 0.2))' : moduloSubSecao === 'faturamento' ? 'linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(217, 119, 6, 0.2))' : 'linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(5, 150, 105, 0.2))', borderRadius: '12px', border: moduloSubSecao === 'fluxo' ? '1px solid rgba(59, 130, 246, 0.3)' : moduloSubSecao === 'faturamento' ? '1px solid rgba(245, 158, 11, 0.3)' : '1px solid rgba(16, 185, 129, 0.3)' }}>
+              {moduloSubSecao === 'fluxo' ? <BarChart2 size={28} color="#60a5fa" /> : moduloSubSecao === 'faturamento' ? <DollarSign size={28} color="#fbbf24" /> : <Landmark size={28} color="#34d399" />}
             </div>
             <div>
               <h1 style={{ fontSize: '24px', fontWeight: 800, color: '#f8fafc', letterSpacing: '-0.02em', margin: 0 }}>
-                {moduloSubSecao === 'fluxo' ? 'Fluxo de Despesas' : 'Conciliação Bancária'}
+                {moduloSubSecao === 'fluxo' ? 'Fluxo de Despesas' : moduloSubSecao === 'faturamento' ? 'Faturamento & Contas a Receber' : 'Conciliação Bancária'}
               </h1>
               <p style={{ fontSize: '13px', color: '#94a3b8', margin: '2px 0 0 0' }}>
-                {moduloSubSecao === 'fluxo' ? 'Esteira Operacional & Relatórios' : 'Gestão de Bancos, Saldos & Entradas de Recursos'}
+                {moduloSubSecao === 'fluxo' ? 'Esteira Operacional & Relatórios' : moduloSubSecao === 'faturamento' ? 'Gestão de Lançamentos, Faturas e Receitas' : 'Gestão de Bancos, Saldos & Entradas de Recursos'}
               </p>
             </div>
           </div>
@@ -4308,6 +4308,17 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
             </form>
 
           </div>
+        </div>
+      )}
+
+      {/* SEÇÃO 3: FATURAMENTO */}
+      {moduloSubSecao === 'faturamento' && (
+        <div style={{ background: 'rgba(30, 41, 59, 0.4)', borderRadius: '16px', padding: '40px', textAlign: 'center', border: '1px dashed rgba(245, 158, 11, 0.3)', marginTop: '24px' }}>
+          <DollarSign size={48} color="#fbbf24" style={{ marginBottom: '16px', opacity: 0.8 }} />
+          <h2 style={{ color: '#f8fafc', fontSize: '20px', fontWeight: 800, marginBottom: '8px' }}>Módulo de Faturamento em Desenvolvimento</h2>
+          <p style={{ color: '#94a3b8', fontSize: '14px', maxWidth: '500px', margin: '0 auto' }}>
+            A esteira de faturamento, controle de contas a receber, emissão de boletos e integração de NFe será disponibilizada nas próximas atualizações.
+          </p>
         </div>
       )}
 
