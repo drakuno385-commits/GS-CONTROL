@@ -658,8 +658,16 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
     if (modalEditarDespesa) {
       setModalEditarDespesa(prev => ({ ...prev, empresa: nome }));
     }
+    if (showModalBancoSaldo) {
+      setFormBancoSaldo(prev => ({ ...prev, empresa: nome }));
+    }
     setNovoEmpresaInput('');
-    setShowNovoEmpresaModal(false);
+    // Não fecha o modal para a pessoa poder gerenciar mais se quiser
+  };
+
+  const handleExcluirEmpresa = (nome) => {
+    if (!window.confirm(`Tem certeza que deseja remover a empresa "${nome}" da lista?`)) return;
+    setEmpresas(prev => prev.filter(emp => emp !== nome));
   };
 
   // Adicionar Novo Departamento Rápido
@@ -2246,7 +2254,7 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
                 style={{ width: '100%', padding: '10px 14px', background: '#0f172a', border: '1px solid #334155', borderRadius: '8px', color: '#fff', fontSize: '13px', fontWeight: 700 }}
               >
                 {empresas.map(emp => <option key={emp} value={emp}>{emp}</option>)}
-                <option value="NOVA_EMPRESA">+ Adicionar Nova Empresa</option>
+                <option value="NOVA_EMPRESA">+ Gerenciar Empresas</option>
               </select>
             </div>
 
@@ -3925,30 +3933,48 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
         </div>
       )}
 
-      {/* MODAL CADASTRAR NOVA EMPRESA (+) */}
+      {/* MODAL GERENCIAR EMPRESAS (+) */}
       {showNovoEmpresaModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: '16px' }}>
-          <div style={{ background: '#0f172a', border: '1px solid #334155', borderRadius: '16px', padding: '24px', maxWidth: '400px', width: '100%' }}>
+          <div style={{ background: '#0f172a', border: '1px solid #334155', borderRadius: '16px', padding: '24px', maxWidth: '400px', width: '100%', maxHeight: '80vh', display: 'flex', flexDirection: 'column' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
               <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#f8fafc', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Plus size={18} color="#60a5fa" />
-                Cadastrar Nova Empresa
+                <Building size={18} color="#60a5fa" />
+                Gerenciar Empresas
               </h3>
               <button onClick={() => setShowNovoEmpresaModal(false)} style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer' }}><X size={20} /></button>
             </div>
-            <form onSubmit={handleAdicionarEmpresa}>
+            <form onSubmit={handleAdicionarEmpresa} style={{ marginBottom: '20px' }}>
               <input
                 type="text"
                 autoFocus
-                placeholder="Nome da Empresa (Ex: LOGISTICA S/A)"
+                placeholder="Nome da Nova Empresa..."
                 value={novoEmpresaInput}
                 onChange={(e) => setNovoEmpresaInput(e.target.value.toUpperCase())}
-                style={{ width: '100%', padding: '10px 14px', background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', color: '#fff', fontSize: '13px', marginBottom: '16px' }}
+                style={{ width: '100%', padding: '10px 14px', background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', color: '#fff', fontSize: '13px', marginBottom: '8px' }}
               />
               <button type="submit" style={{ width: '100%', padding: '10px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 700, cursor: 'pointer' }}>
-                Salvar Empresa
+                + Adicionar Empresa
               </button>
             </form>
+            
+            <div style={{ overflowY: 'auto', flex: 1 }}>
+              <h4 style={{ fontSize: '12px', color: '#94a3b8', marginBottom: '10px', textTransform: 'uppercase', fontWeight: 700 }}>Empresas Cadastradas</h4>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {empresas.map(emp => (
+                  <div key={emp} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#1e293b', padding: '10px 14px', borderRadius: '8px', border: '1px solid #334155' }}>
+                    <span style={{ fontSize: '13px', color: '#f8fafc', fontWeight: 600 }}>{emp}</span>
+                    <button 
+                      onClick={() => handleExcluirEmpresa(emp)}
+                      style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '4px' }}
+                      title="Excluir Empresa"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       )}
@@ -4241,7 +4267,7 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
                   style={{ width: '100%', padding: '10px 14px', background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', color: '#fff', fontSize: '13px', fontWeight: 700 }}
                 >
                   {empresas.map(emp => <option key={emp} value={emp}>{emp}</option>)}
-                  <option value="NOVA_EMPRESA">+ Adicionar Nova Empresa</option>
+                  <option value="NOVA_EMPRESA">+ Gerenciar Empresas</option>
                 </select>
               </div>
 
@@ -4503,13 +4529,17 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
                 </label>
                 <select
                   value={formBancoSaldo.empresa}
-                  onChange={(e) => setFormBancoSaldo({ ...formBancoSaldo, empresa: e.target.value })}
+                  onChange={(e) => {
+                    if (e.target.value === 'NOVA_EMPRESA') {
+                      setShowNovoEmpresaModal(true);
+                    } else {
+                      setFormBancoSaldo({ ...formBancoSaldo, empresa: e.target.value });
+                    }
+                  }}
                   style={{ width: '100%', padding: '10px 14px', background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', color: '#fff', fontSize: '13px' }}
                 >
-                  <option value="AÇOFORTE">AÇOFORTE</option>
-                  <option value="EXPRESS">EXPRESS</option>
-                  <option value="FERRO E AÇO">FERRO E AÇO</option>
-                  <option value="OUTRA">OUTRA</option>
+                  {empresas.map(emp => <option key={emp} value={emp}>{emp}</option>)}
+                  <option value="NOVA_EMPRESA">+ Gerenciar Empresas</option>
                 </select>
               </div>
 
