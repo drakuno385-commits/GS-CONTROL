@@ -13,7 +13,7 @@ import {
   Tooltip, Legend, PieChart, Pie, Cell, ComposedChart, Line 
 } from 'recharts';
 
-const EMPRESAS = ['AÇOFORTE', 'BELLS', 'LGA', 'REGIONAL', 'LÓGICA'];
+const EMPRESAS_PADRAO = ['AÇOWEB', 'AÇOFORTE', 'EXPRESS', 'FERRO E AÇO', 'LÓGICA'];
 
 const DEPARTAMENTOS_PADRAO = [
   'Operacional',
@@ -245,6 +245,19 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
     return BANCOS_PADRAO;
   });
 
+  // Estado de Empresas Customizadas
+  const [empresas, setEmpresas] = useState(() => {
+    const saved = localStorage.getItem('acoweb_financeiro_empresas');
+    if (saved) {
+      try { return JSON.parse(saved); } catch(e){}
+    }
+    return EMPRESAS_PADRAO;
+  });
+
+  useEffect(() => {
+    localStorage.setItem('acoweb_financeiro_empresas', JSON.stringify(empresas));
+  }, [empresas]);
+
   // Salvar customizações no localStorage
   useEffect(() => {
     localStorage.setItem('acoweb_financeiro_deptos', JSON.stringify(departamentos));
@@ -371,6 +384,9 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
   const [modalEditarDespesa, setModalEditarDespesa] = useState(null);
 
   // Modais de Cadastro Rápido de Novo Departamento e Novo Banco
+  const [showNovoEmpresaModal, setShowNovoEmpresaModal] = useState(false);
+  const [novoEmpresaInput, setNovoEmpresaInput] = useState('');
+
   const [showNovoDeptoModal, setShowNovoDeptoModal] = useState(false);
   const [novoDeptoInput, setNovoDeptoInput] = useState('');
 
@@ -612,6 +628,24 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
     setMeses.add(hojeMes);
     return Array.from(setMeses).sort();
   }, [despesas]);
+
+  // Adicionar Nova Empresa Rápida
+  const handleAdicionarEmpresa = (e) => {
+    e.preventDefault();
+    const nome = novoEmpresaInput.trim().toUpperCase();
+    if (!nome) return;
+    if (empresas.some(emp => emp === nome)) {
+      alert('Esta empresa já existe na lista.');
+      return;
+    }
+    setEmpresas(prev => [...prev, nome]);
+    setFormNovaDespesa(prev => ({ ...prev, empresa: nome }));
+    if (modalEditarDespesa) {
+      setModalEditarDespesa(prev => ({ ...prev, empresa: nome }));
+    }
+    setNovoEmpresaInput('');
+    setShowNovoEmpresaModal(false);
+  };
 
   // Adicionar Novo Departamento Rápido
   const handleAdicionarDepto = (e) => {
@@ -1328,7 +1362,7 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
 
     // Totais por Empresa
     const mapEmpresa = {};
-    EMPRESAS.forEach(emp => { mapEmpresa[emp] = { empresa: emp, pago: 0, pendente: 0, total: 0, listaPago: [], listaPendente: [], listaTotal: [] }; });
+    empresas.forEach(emp => { mapEmpresa[emp] = { empresa: emp, pago: 0, pendente: 0, total: 0, listaPago: [], listaPendente: [], listaTotal: [] }; });
 
     despesas.forEach(d => {
       if (d.status === 'RECUSADA') return;
@@ -2187,10 +2221,17 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
               </label>
               <select
                 value={formNovaDespesa.empresa}
-                onChange={(e) => setFormNovaDespesa({ ...formNovaDespesa, empresa: e.target.value })}
+                onChange={(e) => {
+                  if (e.target.value === 'NOVA_EMPRESA') {
+                    setShowNovoEmpresaModal(true);
+                  } else {
+                    setFormNovaDespesa({ ...formNovaDespesa, empresa: e.target.value });
+                  }
+                }}
                 style={{ width: '100%', padding: '10px 14px', background: '#0f172a', border: '1px solid #334155', borderRadius: '8px', color: '#fff', fontSize: '13px', fontWeight: 700 }}
               >
-                {EMPRESAS.map(emp => <option key={emp} value={emp}>{emp}</option>)}
+                {empresas.map(emp => <option key={emp} value={emp}>{emp}</option>)}
+                <option value="NOVA_EMPRESA">+ Adicionar Nova Empresa</option>
               </select>
             </div>
 
@@ -2505,7 +2546,7 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
                 style={{ padding: '8px 12px', background: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '8px', color: '#f8fafc', fontSize: '12px' }}
               >
                 <option value="">Todas as Empresas</option>
-                {EMPRESAS.map(e => <option key={e} value={e}>{e}</option>)}
+                {empresas.map(e => <option key={e} value={e}>{e}</option>)}
               </select>
 
               {/* Filtro Departamento */}
@@ -3217,7 +3258,7 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
                     style={{ padding: '8px 12px', background: '#0f172a', border: '1px solid #334155', borderRadius: '8px', color: '#fff', fontSize: '12px' }}
                   >
                     <option value="">Todas as Empresas</option>
-                    {EMPRESAS.map(e => <option key={e} value={e}>{e}</option>)}
+                    {empresas.map(e => <option key={e} value={e}>{e}</option>)}
                   </select>
 
                   {/* Filtro Departamento */}
@@ -3869,6 +3910,34 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
         </div>
       )}
 
+      {/* MODAL CADASTRAR NOVA EMPRESA (+) */}
+      {showNovoEmpresaModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: '16px' }}>
+          <div style={{ background: '#0f172a', border: '1px solid #334155', borderRadius: '16px', padding: '24px', maxWidth: '400px', width: '100%' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#f8fafc', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Plus size={18} color="#60a5fa" />
+                Cadastrar Nova Empresa
+              </h3>
+              <button onClick={() => setShowNovoEmpresaModal(false)} style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer' }}><X size={20} /></button>
+            </div>
+            <form onSubmit={handleAdicionarEmpresa}>
+              <input
+                type="text"
+                autoFocus
+                placeholder="Nome da Empresa (Ex: LOGISTICA S/A)"
+                value={novoEmpresaInput}
+                onChange={(e) => setNovoEmpresaInput(e.target.value.toUpperCase())}
+                style={{ width: '100%', padding: '10px 14px', background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', color: '#fff', fontSize: '13px', marginBottom: '16px' }}
+              />
+              <button type="submit" style={{ width: '100%', padding: '10px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 700, cursor: 'pointer' }}>
+                Salvar Empresa
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* MODAL CADASTRAR NOVO DEPARTAMENTO (+) */}
       {showNovoDeptoModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: '16px' }}>
@@ -4147,10 +4216,17 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
                 </label>
                 <select
                   value={modalEditarDespesa.empresa}
-                  onChange={(e) => setModalEditarDespesa({ ...modalEditarDespesa, empresa: e.target.value })}
-                  style={{ width: '100%', padding: '10px 12px', background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', color: '#fff', fontSize: '13px', fontWeight: 700 }}
+                  onChange={(e) => {
+                    if (e.target.value === 'NOVA_EMPRESA') {
+                      setShowNovoEmpresaModal(true);
+                    } else {
+                      setModalEditarDespesa({ ...modalEditarDespesa, empresa: e.target.value });
+                    }
+                  }}
+                  style={{ width: '100%', padding: '10px 14px', background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', color: '#fff', fontSize: '13px', fontWeight: 700 }}
                 >
-                  {EMPRESAS.map(emp => <option key={emp} value={emp}>{emp}</option>)}
+                  {empresas.map(emp => <option key={emp} value={emp}>{emp}</option>)}
+                  <option value="NOVA_EMPRESA">+ Adicionar Nova Empresa</option>
                 </select>
               </div>
 
@@ -4840,7 +4916,7 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
                     style={{ width: '100%', padding: '10px', background: '#0f172a', border: '1px solid #334155', borderRadius: '8px', color: '#fff', fontSize: '13px' }}
                   >
                     <option value="">Selecione a Empresa...</option>
-                    {EMPRESAS.map((emp, idx) => (
+                    {empresas.map((emp, idx) => (
                       <option key={idx} value={emp}>{emp}</option>
                     ))}
                   </select>
@@ -5060,7 +5136,7 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
                     style={{ width: '100%', padding: '8px', background: '#0f172a', border: '1px solid #334155', borderRadius: '6px', color: '#fff', fontSize: '12px' }}
                   >
                     <option value="">Todas</option>
-                    {EMPRESAS.map((emp, i) => <option key={i} value={emp}>{emp}</option>)}
+                    {empresas.map((emp, i) => <option key={i} value={emp}>{emp}</option>)}
                   </select>
                 </div>
                 <div>
