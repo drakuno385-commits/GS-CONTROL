@@ -187,7 +187,7 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed)) return parsed;
       } catch(e){}
     }
     return DESPESAS_INICIAIS;
@@ -399,20 +399,14 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
   });
 
   // Lista de Bancos com Saldos Reais Cadastrados
-  const BANCOS_SALDO_PADRAO = [
-    { id: 'b_itau', nome: 'Itaú Unibanco', agencia: '0412', conta: '48201-9', saldoInicial: 150000.00, saldoAtual: 150000.00, cor: '#f97316' },
-    { id: 'b_bradesco', nome: 'Bradesco', agencia: '1204', conta: '19402-3', saldoInicial: 85000.00, saldoAtual: 85000.00, cor: '#ef4444' },
-    { id: 'b_santander', nome: 'Santander', agencia: '0089', conta: '99201-8', saldoInicial: 42500.00, saldoAtual: 42500.00, cor: '#dc2626' },
-    { id: 'b_bb', nome: 'Banco do Brasil', agencia: '3410', conta: '88301-4', saldoInicial: 25000.00, saldoAtual: 25000.00, cor: '#eab308' },
-    { id: 'b_caixa', nome: 'Caixa Econômica', agencia: '0150', conta: '11029-5', saldoInicial: 10000.00, saldoAtual: 10000.00, cor: '#0284c7' }
-  ];
+  const BANCOS_SALDO_PADRAO = [];
 
   const [bancosComSaldo, setBancosComSaldo] = useState(() => {
     try {
       const saved = localStorage.getItem('acoweb_bancos_saldo_v2');
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed)) return parsed;
       }
     } catch(e){}
     return BANCOS_SALDO_PADRAO;
@@ -433,28 +427,7 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
         if (Array.isArray(parsed)) return parsed;
       }
     } catch(e){}
-    return [
-      {
-        id: 'ent_101',
-        descricao: 'Faturamento Venda Lote Aço Estrutural',
-        valor: 45000.00,
-        bancoId: 'b_itau',
-        bancoNome: 'Itaú Unibanco',
-        dataEntrada: new Date().toISOString().slice(0, 10),
-        categoria: 'Faturamento / Vendas',
-        observacao: 'Crédito NF 99201 via Pix'
-      },
-      {
-        id: 'ent_102',
-        descricao: 'Aporte de Capital dos Sócios',
-        valor: 25000.00,
-        bancoId: 'b_bradesco',
-        bancoNome: 'Bradesco',
-        dataEntrada: new Date().toISOString().slice(0, 10),
-        categoria: 'Aporte / Capital',
-        observacao: 'Reforço de saldo bancário'
-      }
-    ];
+    return [];
   });
 
   useEffect(() => {
@@ -1394,6 +1367,42 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
     document.body.removeChild(link);
   };
 
+  const handleDeleteEntrada = (id) => {
+    if (!window.confirm("Deseja realmente excluir esta entrada de recursos? O saldo do banco será recalculado subtraindo este valor.")) return;
+    
+    const entradaParaExcluir = entradasRecursos.find(e => e.id === id);
+    if (!entradaParaExcluir) return;
+
+    // Atualiza o saldo do banco (subtrai o valor que havia sido adicionado)
+    const bancoAtualizado = bancosComSaldo.find(b => b.id === entradaParaExcluir.bancoId);
+    if (bancoAtualizado) {
+      const novosBancos = bancosComSaldo.map(b => {
+        if (b.id === entradaParaExcluir.bancoId) {
+          return { ...b, saldoAtual: b.saldoAtual - entradaParaExcluir.valor };
+        }
+        return b;
+      });
+      setBancosComSaldo(novosBancos);
+    }
+
+    // Exclui a entrada
+    const novasEntradas = entradasRecursos.filter(e => e.id !== id);
+    setEntradasRecursos(novasEntradas);
+
+    // Registra no histórico (opcional, mas bom manter a rastreabilidade)
+    setHistoricoMovimentacoes([
+      {
+        id: `hist_${Date.now()}_excl`,
+        dataStr: new Date().toISOString(),
+        tipo: 'ESTORNO_ENTRADA',
+        descricao: `Exclusão de Entrada: ${entradaParaExcluir.descricao}`,
+        valor: entradaParaExcluir.valor,
+        banco: entradaParaExcluir.bancoNome
+      },
+      ...historicoMovimentacoes
+    ]);
+  };
+
   const handleZerarBase = () => {
     if (!window.confirm("🔴 ATENÇÃO: Tem certeza que deseja excluir TODOS os dados de movimentação do financeiro (Despesas, Bancos, Entradas, Extrato)? Isso zerará o sistema para a produção.")) return;
     // Limpa o state para evitar que o useEffect re-salve dados antes do reload
@@ -1436,6 +1445,29 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <button
+            onClick={handleZerarBase}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              background: 'linear-gradient(135deg, #ef4444, #dc2626)',
+              color: '#fff',
+              padding: '10px 18px',
+              borderRadius: '10px',
+              fontWeight: 700,
+              fontSize: '13px',
+              border: 'none',
+              cursor: 'pointer',
+              boxShadow: '0 4px 14px rgba(239, 68, 68, 0.4)',
+              transition: 'all 0.2s'
+            }}
+            title="Apagar todos os dados do Financeiro e preparar para Produção"
+          >
+            <Trash2 size={18} />
+            <span>Zerar Sistema (Produção)</span>
+          </button>
+
           {moduloSubSecao === 'fluxo' ? (
             <button
               onClick={() => setActiveTab('nova')}
@@ -3235,11 +3267,14 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
                       <th style={{ padding: '12px' }}>Banco de Destino (Creditado)</th>
                       <th style={{ padding: '12px', textAlign: 'right' }}>Valor Creditado (R$)</th>
                       <th style={{ padding: '12px' }}>Observações</th>
+                      {currentUser?.role === 'MASTER' && (
+                        <th style={{ padding: '12px', textAlign: 'center' }}>Ações</th>
+                      )}
                     </tr>
                   </thead>
                   <tbody>
                     {entradasRecursos.length === 0 ? (
-                      <tr><td colSpan={6} style={{ padding: '32px', textAlign: 'center', color: '#64748b' }}>Nenhuma entrada de recursos cadastrada.</td></tr>
+                      <tr><td colSpan={currentUser?.role === 'MASTER' ? 7 : 6} style={{ padding: '32px', textAlign: 'center', color: '#64748b' }}>Nenhuma entrada de recursos cadastrada.</td></tr>
                     ) : (
                       entradasRecursos.map((ent, idx) => (
                         <tr key={ent.id} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.04)', background: idx % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.01)' }}>
@@ -3255,6 +3290,17 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
                             +{formatMoney(ent.valor)}
                           </td>
                           <td style={{ padding: '12px', color: '#94a3b8', fontSize: '11px' }}>{ent.observacao || '—'}</td>
+                          {currentUser?.role === 'MASTER' && (
+                            <td style={{ padding: '12px', textAlign: 'center' }}>
+                              <button
+                                onClick={() => handleDeleteEntrada(ent.id)}
+                                title="Excluir Entrada"
+                                style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '4px' }}
+                              >
+                                <Trash2 size={16} color="#ef4444" />
+                              </button>
+                            </td>
+                          )}
                         </tr>
                       ))
                     )}
