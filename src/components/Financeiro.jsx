@@ -573,7 +573,7 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
     const novoLog = {
       id: `aud_${Date.now()}_${Math.floor(Math.random()*1000)}`,
       data: new Date().toISOString(),
-      usuario: currentUser?.nome || currentUser?.email || 'Desconhecido',
+      usuario: currentUser?.username || currentUser?.email || 'Desconhecido',
       acao,
       detalhes
     };
