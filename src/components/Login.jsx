@@ -122,7 +122,7 @@ export default function Login({ onLoginSuccess }) {
         flex: 1, 
         display: window.innerWidth > 768 ? 'block' : 'none',
         position: 'relative',
-        background: 'linear-gradient(135deg, #0b1120 0%, #1e3a8a 100%)',
+        backgroundImage: 'url("https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2072&auto=format&fit=crop")', backgroundSize: 'cover', backgroundPosition: 'center',
         overflow: 'hidden'
       }}>
         {/* Efeito de Grid Cibernetico */}
