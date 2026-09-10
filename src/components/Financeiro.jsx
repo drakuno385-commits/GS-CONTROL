@@ -40,6 +40,7 @@ function useSupabaseSync(tableName, initialData = []) {
     
     setTimeout(async () => {
       try {
+        console.log("SYNC START", tableName, "Old:", capturedOldState, "New:", newState);
         const oldMap = new Map(capturedOldState.map(i => [i.id, i]));
         const newMap = new Map(newState.map(i => [i.id, i]));
         
@@ -50,6 +51,7 @@ function useSupabaseSync(tableName, initialData = []) {
            return old && JSON.stringify(old) !== JSON.stringify(i);
         });
         
+        console.log("ADDED:", added);
         if (added.length > 0) {
           const { error } = await supabase.from(tableName).insert(camelToSnake(added));
           if (error) { console.error("Supabase insert error", tableName, error); alert("Erro Insert: " + error.message); }
@@ -63,7 +65,7 @@ function useSupabaseSync(tableName, initialData = []) {
           if (error) { console.error("Supabase update error", tableName, error); alert("Erro Update: " + error.message); }
         }
       } catch (e) {
-        console.error("Sync error", e);
+        console.error("Sync error", e); alert("Erro critico no Sync: " + e.message);
       }
     }, 0);
   };
@@ -3229,7 +3231,7 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
                         </tr>
                       </thead>
                       <tbody>
-                        {dadosRelatorioMensal.[...departamentos].sort().map(dep => (
+                        {dadosRelatorioMensal.departamentos.map(dep => (
                           <tr key={dep.departamento} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.04)' }}>
                             <td style={{ padding: '8px 10px', fontWeight: 700, color: '#f8fafc' }}>{dep.departamento}</td>
                             <td 
