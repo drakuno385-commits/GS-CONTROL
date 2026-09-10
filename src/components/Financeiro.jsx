@@ -261,16 +261,15 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
   // Garante que as novas empresas padrão entrem na lista de quem já tinha cache antigo
   useEffect(() => {
     setEmpresas(prev => {
-      const novas = [...prev];
+      const arrayEmpresas = prev ? [...prev] : [];
       let mudou = false;
       EMPRESAS_PADRAO.forEach(ep => {
-        if (!novos.includes(ep)) {
-          novos.push(ep);
+        if (!arrayEmpresas.includes(ep)) {
+          arrayEmpresas.push(ep);
           mudou = true;
         }
       });
-      // Remover as empresas de teste antigas se elas existirem e ninguém usou (opcional, vamos apenas garantir as novas)
-      return mudou ? novas : prev;
+      return mudou ? arrayEmpresas : prev;
     });
   }, []);
 
