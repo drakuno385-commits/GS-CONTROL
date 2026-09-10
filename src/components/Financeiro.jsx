@@ -454,6 +454,7 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
 
   // Formulário de Nova Fatura
   const [formNovaFatura, setFormNovaFatura] = useState({
+    empresa: '',
     cliente: '',
     numeroNota: '',
     valorBruto: '',
@@ -463,6 +464,14 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
     dataPrevista: new Date().toISOString().slice(0, 10),
     bancoPrevisto: '',
     observacao: ''
+  });
+
+  // Filtros do Histórico de Faturamento
+  const [filtrosHistoricoFaturas, setFiltrosHistoricoFaturas] = useState({
+    empresa: '',
+    cliente: '',
+    mes: '',
+    banco: ''
   });
 
   // Modal de Recebimento de Fatura
@@ -1471,6 +1480,7 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
 
     const novaFatura = {
       id: `fat_${Date.now()}`,
+      empresa: formNovaFatura.empresa,
       cliente: formNovaFatura.cliente,
       numeroNota: formNovaFatura.numeroNota,
       valorBruto: vBruto,
@@ -1488,6 +1498,7 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
     setFaturas([novaFatura, ...faturas]);
     setSubTabFaturamento('fila');
     setFormNovaFatura({
+      empresa: '',
       cliente: '',
       numeroNota: '',
       valorBruto: '',
@@ -1510,6 +1521,12 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
     const faturaInfo = faturas.find(f => f.id === faturaId);
     
     if (!faturaInfo) return;
+
+    if (vRecebido < faturaInfo.valorReceber) {
+      if (!window.confirm(`Atenção: O valor recebido (R$ ${vRecebido.toLocaleString('pt-BR', {minimumFractionDigits:2})}) é MENOR que o valor líquido esperado (R$ ${faturaInfo.valorReceber.toLocaleString('pt-BR', {minimumFractionDigits:2})}). Deseja prosseguir com o recebimento parcial/com desconto?`)) {
+        return;
+      }
+    }
 
     // Atualiza status da fatura
     const faturasAtualizadas = faturas.map(f => {
@@ -4719,6 +4736,21 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
               
               <form onSubmit={handleCadastrarFatura} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '16px' }}>
                 <div style={{ gridColumn: '1 / -1' }}>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#94a3b8', marginBottom: '6px' }}>Empresa Emissora</label>
+                  <select
+                    required
+                    value={formNovaFatura.empresa}
+                    onChange={(e) => setFormNovaFatura({ ...formNovaFatura, empresa: e.target.value })}
+                    style={{ width: '100%', padding: '10px', background: '#0f172a', border: '1px solid #334155', borderRadius: '8px', color: '#fff', fontSize: '13px' }}
+                  >
+                    <option value="">Selecione a Empresa...</option>
+                    {EMPRESAS.map((emp, idx) => (
+                      <option key={idx} value={emp}>{emp}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div style={{ gridColumn: '1 / -1' }}>
                   <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', fontWeight: 600, color: '#94a3b8', marginBottom: '6px' }}>
                     <span>Cliente (Base Efetivo + Manuais)</span>
                     <button
@@ -4855,31 +4887,33 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
             </div>
           )}
 
-          {/* CONTEÚDO: FILA DE RECEBIMENTO & HISTÓRICO */}
-          {(subTabFaturamento === 'fila' || subTabFaturamento === 'recebidas') && (
+          {/* CONTEÚDO: FILA DE RECEBIMENTO */}
+          {subTabFaturamento === 'fila' && (
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', textAlign: 'left' }}>
                 <thead>
                   <tr style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.1)', color: '#94a3b8', fontSize: '10px', textTransform: 'uppercase' }}>
-                    <th style={{ padding: '12px' }}>NFe</th>
+                    <th style={{ padding: '12px' }}>NFe / Empresa</th>
                     <th style={{ padding: '12px' }}>Cliente</th>
                     <th style={{ padding: '12px' }}>Previsão</th>
                     <th style={{ padding: '12px', textAlign: 'right' }}>Valor NFe</th>
                     <th style={{ padding: '12px', textAlign: 'right' }}>Descontos</th>
                     <th style={{ padding: '12px', textAlign: 'right', color: '#fbbf24' }}>A Receber</th>
-                    {subTabFaturamento === 'recebidas' && <th style={{ padding: '12px' }}>Recebido Em / Banco</th>}
                     <th style={{ padding: '12px', textAlign: 'center' }}>Ações</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {faturas.filter(f => subTabFaturamento === 'fila' ? f.status === 'pendente' : f.status === 'recebida').length === 0 ? (
-                    <tr><td colSpan={8} style={{ padding: '32px', textAlign: 'center', color: '#64748b' }}>Nenhuma fatura nesta lista.</td></tr>
+                  {faturas.filter(f => f.status === 'pendente').length === 0 ? (
+                    <tr><td colSpan={7} style={{ padding: '32px', textAlign: 'center', color: '#64748b' }}>Nenhuma fatura nesta lista.</td></tr>
                   ) : (
-                    faturas.filter(f => subTabFaturamento === 'fila' ? f.status === 'pendente' : f.status === 'recebida').map((fat, idx) => (
+                    faturas.filter(f => f.status === 'pendente').map((fat, idx) => (
                       <tr key={fat.id} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.04)', background: idx % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.01)' }}>
-                        <td style={{ padding: '12px', color: '#cbd5e1', fontWeight: 700 }}>#{fat.numeroNota}</td>
+                        <td style={{ padding: '12px', color: '#cbd5e1', fontWeight: 700 }}>
+                          #{fat.numeroNota}
+                          {fat.empresa && <span style={{ display: 'block', fontSize: '10px', color: '#94a3b8', fontWeight: 400 }}>{fat.empresa}</span>}
+                        </td>
                         <td style={{ padding: '12px', color: '#f8fafc', fontWeight: 600 }}>{fat.cliente}</td>
-                        <td style={{ padding: '12px', color: fat.status === 'pendente' && new Date(fat.dataPrevista) < new Date() ? '#ef4444' : '#94a3b8' }}>
+                        <td style={{ padding: '12px', color: new Date(fat.dataPrevista) < new Date() ? '#ef4444' : '#94a3b8' }}>
                           {formatDate(fat.dataPrevista)}
                         </td>
                         <td style={{ padding: '12px', textAlign: 'right', color: '#94a3b8' }}>{formatMoney(fat.valorBruto)}</td>
@@ -4889,25 +4923,15 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
                         <td style={{ padding: '12px', textAlign: 'right', fontWeight: 800, color: '#fbbf24', fontSize: '14px' }}>
                           {formatMoney(fat.valorReceber)}
                         </td>
-                        {subTabFaturamento === 'recebidas' && (
-                          <td style={{ padding: '12px' }}>
-                            <span style={{ display: 'block', color: '#34d399', fontWeight: 700 }}>{formatDate(fat.dataRecebimento)}</span>
-                            <span style={{ fontSize: '10px', color: '#94a3b8' }}>
-                              {bancosComSaldo.find(b => b.id === fat.bancoRecebimentoId)?.nome || 'Banco Excluído'}
-                            </span>
-                          </td>
-                        )}
                         <td style={{ padding: '12px', textAlign: 'center' }}>
                           <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
-                            {fat.status === 'pendente' && (
-                              <button
-                                onClick={() => setModalRecebimentoFatura({ id: fat.id, valorRecebido: fat.valorReceber.toFixed(2).replace('.', ','), bancoDestino: fat.bancoPrevistoId || bancosComSaldo[0]?.id || '', dataRecebimento: new Date().toISOString().slice(0, 10) })}
-                                title="Registrar Recebimento"
-                                style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#34d399', border: 'none', padding: '6px 10px', borderRadius: '6px', cursor: 'pointer', fontWeight: 700, fontSize: '11px', display: 'flex', alignItems: 'center', gap: '4px' }}
-                              >
-                                <CheckCircle2 size={14} /> Receber
-                              </button>
-                            )}
+                            <button
+                              onClick={() => setModalRecebimentoFatura({ id: fat.id, valorRecebido: fat.valorReceber.toFixed(2).replace('.', ','), bancoDestino: fat.bancoPrevistoId || bancosComSaldo[0]?.id || '', dataRecebimento: new Date().toISOString().slice(0, 10) })}
+                              title="Registrar Recebimento"
+                              style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#34d399', border: 'none', padding: '6px 10px', borderRadius: '6px', cursor: 'pointer', fontWeight: 700, fontSize: '11px', display: 'flex', alignItems: 'center', gap: '4px' }}
+                            >
+                              <CheckCircle2 size={14} /> Receber
+                            </button>
                             {currentUser?.role === 'MASTER' && (
                               <button
                                 onClick={() => handleDeleteFatura(fat.id)}
@@ -4924,6 +4948,131 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
                   )}
                 </tbody>
               </table>
+            </div>
+          )}
+
+          {/* CONTEÚDO: HISTÓRICO RECEBIDAS */}
+          {subTabFaturamento === 'recebidas' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {/* Filtros */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '10px', background: 'rgba(30,41,59,0.5)', padding: '16px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '10px', fontWeight: 700, color: '#94a3b8', marginBottom: '4px', textTransform: 'uppercase' }}>Empresa</label>
+                  <select
+                    value={filtrosHistoricoFaturas.empresa}
+                    onChange={(e) => setFiltrosHistoricoFaturas({...filtrosHistoricoFaturas, empresa: e.target.value})}
+                    style={{ width: '100%', padding: '8px', background: '#0f172a', border: '1px solid #334155', borderRadius: '6px', color: '#fff', fontSize: '12px' }}
+                  >
+                    <option value="">Todas</option>
+                    {EMPRESAS.map((emp, i) => <option key={i} value={emp}>{emp}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '10px', fontWeight: 700, color: '#94a3b8', marginBottom: '4px', textTransform: 'uppercase' }}>Cliente</label>
+                  <select
+                    value={filtrosHistoricoFaturas.cliente}
+                    onChange={(e) => setFiltrosHistoricoFaturas({...filtrosHistoricoFaturas, cliente: e.target.value})}
+                    style={{ width: '100%', padding: '8px', background: '#0f172a', border: '1px solid #334155', borderRadius: '6px', color: '#fff', fontSize: '12px' }}
+                  >
+                    <option value="">Todos</option>
+                    {clientesFaturamento.map((cli, i) => <option key={i} value={cli}>{cli}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '10px', fontWeight: 700, color: '#94a3b8', marginBottom: '4px', textTransform: 'uppercase' }}>Mês</label>
+                  <input
+                    type="month"
+                    value={filtrosHistoricoFaturas.mes}
+                    onChange={(e) => setFiltrosHistoricoFaturas({...filtrosHistoricoFaturas, mes: e.target.value})}
+                    style={{ width: '100%', padding: '8px', background: '#0f172a', border: '1px solid #334155', borderRadius: '6px', color: '#fff', fontSize: '12px', colorScheme: 'dark' }}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '10px', fontWeight: 700, color: '#94a3b8', marginBottom: '4px', textTransform: 'uppercase' }}>Banco</label>
+                  <select
+                    value={filtrosHistoricoFaturas.banco}
+                    onChange={(e) => setFiltrosHistoricoFaturas({...filtrosHistoricoFaturas, banco: e.target.value})}
+                    style={{ width: '100%', padding: '8px', background: '#0f172a', border: '1px solid #334155', borderRadius: '6px', color: '#fff', fontSize: '12px' }}
+                  >
+                    <option value="">Todos</option>
+                    {bancosComSaldo.map(b => <option key={b.id} value={b.id}>{b.nome}</option>)}
+                  </select>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'flex-end' }}>
+                  <button
+                    onClick={() => setFiltrosHistoricoFaturas({empresa: '', cliente: '', mes: '', banco: ''})}
+                    style={{ width: '100%', padding: '8px', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: 'none', borderRadius: '6px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}
+                  >
+                    Limpar Filtros
+                  </button>
+                </div>
+              </div>
+
+              {/* Tabela */}
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', textAlign: 'left' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.1)', color: '#94a3b8', fontSize: '10px', textTransform: 'uppercase' }}>
+                      <th style={{ padding: '12px' }}>Data Receb. / NFe</th>
+                      <th style={{ padding: '12px' }}>Cliente / Empresa</th>
+                      <th style={{ padding: '12px', textAlign: 'right' }}>Valor NFe</th>
+                      <th style={{ padding: '12px', textAlign: 'right' }}>Descontos</th>
+                      <th style={{ padding: '12px', textAlign: 'right', color: '#10b981' }}>Recebido</th>
+                      <th style={{ padding: '12px' }}>Banco Destino</th>
+                      <th style={{ padding: '12px', textAlign: 'center' }}>Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(() => {
+                      let fFiltradas = faturas.filter(f => f.status === 'recebida');
+                      if (filtrosHistoricoFaturas.empresa) fFiltradas = fFiltradas.filter(f => f.empresa === filtrosHistoricoFaturas.empresa);
+                      if (filtrosHistoricoFaturas.cliente) fFiltradas = fFiltradas.filter(f => f.cliente === filtrosHistoricoFaturas.cliente);
+                      if (filtrosHistoricoFaturas.banco) fFiltradas = fFiltradas.filter(f => f.bancoRecebimentoId === filtrosHistoricoFaturas.banco);
+                      if (filtrosHistoricoFaturas.mes) fFiltradas = fFiltradas.filter(f => f.dataRecebimento && f.dataRecebimento.startsWith(filtrosHistoricoFaturas.mes));
+
+                      if (fFiltradas.length === 0) {
+                        return <tr><td colSpan={7} style={{ padding: '32px', textAlign: 'center', color: '#64748b' }}>Nenhuma fatura encontrada.</td></tr>;
+                      }
+
+                      return fFiltradas.map((fat, idx) => (
+                        <tr key={fat.id} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.04)', background: idx % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.01)' }}>
+                          <td style={{ padding: '12px', color: '#f8fafc', fontWeight: 700 }}>
+                            {formatDate(fat.dataRecebimento)}
+                            <span style={{ display: 'block', fontSize: '10px', color: '#94a3b8', fontWeight: 400 }}>NFe #{fat.numeroNota}</span>
+                          </td>
+                          <td style={{ padding: '12px', color: '#f8fafc', fontWeight: 600 }}>
+                            {fat.cliente}
+                            <span style={{ display: 'block', fontSize: '10px', color: '#94a3b8', fontWeight: 400 }}>{fat.empresa || 'Sem Empresa'}</span>
+                          </td>
+                          <td style={{ padding: '12px', textAlign: 'right', color: '#94a3b8' }}>{formatMoney(fat.valorBruto)}</td>
+                          <td style={{ padding: '12px', textAlign: 'right', color: '#ef4444' }}>
+                            {(fat.valorGlosa || 0) + (fat.valorImpostos || 0) + (fat.valorRetencao || 0) > 0 ? `-${formatMoney((fat.valorGlosa || 0) + (fat.valorImpostos || 0) + (fat.valorRetencao || 0))}` : '-'}
+                          </td>
+                          <td style={{ padding: '12px', textAlign: 'right', fontWeight: 800, color: '#10b981', fontSize: '14px' }}>
+                            {formatMoney(fat.valorRecebido)}
+                          </td>
+                          <td style={{ padding: '12px' }}>
+                            <span style={{ color: '#cbd5e1', fontWeight: 600 }}>
+                              {bancosComSaldo.find(b => b.id === fat.bancoRecebimentoId)?.nome || 'Banco Excluído'}
+                            </span>
+                          </td>
+                          <td style={{ padding: '12px', textAlign: 'center' }}>
+                            {currentUser?.role === 'MASTER' && (
+                              <button
+                                onClick={() => handleDeleteFatura(fat.id)}
+                                title="Excluir Fatura"
+                                style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '4px' }}
+                              >
+                                <Trash2 size={16} color="#ef4444" />
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      ));
+                    })()}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
 
