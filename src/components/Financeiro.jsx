@@ -1512,7 +1512,7 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
           status: 'recebida',
           valorRecebido: vRecebido,
           bancoRecebimentoId: modalRecebimentoFatura.bancoDestino,
-          dataRecebimento: new Date().toISOString()
+          dataRecebimento: modalRecebimentoFatura.dataRecebimento
         };
       }
       return f;
@@ -1536,7 +1536,7 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
       valor: vRecebido,
       bancoId: modalRecebimentoFatura.bancoDestino,
       bancoNome: bancoObj ? bancoObj.nome : 'Banco Desconhecido',
-      dataEntrada: new Date().toISOString().slice(0, 10),
+      dataEntrada: modalRecebimentoFatura.dataRecebimento,
       categoria: 'Faturamento / Vendas',
       observacao: `Automático via Faturamento NFe ${faturaInfo.numeroNota}`
     };
@@ -1545,7 +1545,7 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
     setHistoricoMovimentacoes([
       {
         id: `hist_${Date.now()}_fat`,
-        dataStr: new Date().toISOString(),
+        dataStr: new Date(modalRecebimentoFatura.dataRecebimento).toISOString(),
         tipo: 'ENTRADA',
         descricao: `Recebimento Fatura NFe ${faturaInfo.numeroNota}`,
         valor: vRecebido,
@@ -4519,6 +4519,19 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
             <form onSubmit={handleReceberFatura} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div>
                 <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#94a3b8', marginBottom: '6px' }}>
+                  Data do Recebimento
+                </label>
+                <input
+                  required
+                  type="date"
+                  value={modalRecebimentoFatura.dataRecebimento}
+                  onChange={(e) => setModalRecebimentoFatura({ ...modalRecebimentoFatura, dataRecebimento: e.target.value })}
+                  style={{ width: '100%', padding: '10px 14px', background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', color: '#fff', fontSize: '13px', colorScheme: 'dark' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#94a3b8', marginBottom: '6px' }}>
                   Valor Real Recebido (R$)
                 </label>
                 <input
@@ -4855,7 +4868,7 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
                           <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
                             {fat.status === 'pendente' && (
                               <button
-                                onClick={() => setModalRecebimentoFatura({ id: fat.id, valorRecebido: fat.valorReceber.toFixed(2).replace('.', ','), bancoDestino: bancosComSaldo[0]?.id || '' })}
+                                onClick={() => setModalRecebimentoFatura({ id: fat.id, valorRecebido: fat.valorReceber.toFixed(2).replace('.', ','), bancoDestino: bancosComSaldo[0]?.id || '', dataRecebimento: new Date().toISOString().slice(0, 10) })}
                                 title="Registrar Recebimento"
                                 style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#34d399', border: 'none', padding: '6px 10px', borderRadius: '6px', cursor: 'pointer', fontWeight: 700, fontSize: '11px', display: 'flex', alignItems: 'center', gap: '4px' }}
                               >
