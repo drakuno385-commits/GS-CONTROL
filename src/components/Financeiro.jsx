@@ -1070,6 +1070,10 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
   };
 
   const handleExcluirDespesa = (id) => {
+    if (currentUser?.role !== 'MASTER') {
+      alert("Acesso Negado: Apenas MASTER pode excluir despesas.");
+      return;
+    }
     if (window.confirm('Tem certeza que deseja excluir esta despesa permanentemente?')) {
       setDespesas(prev => prev.filter(d => d.id !== id));
     }
@@ -1583,11 +1587,19 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
   };
 
   const handleDeleteFatura = (id) => {
+    if (currentUser?.role !== 'MASTER') {
+      alert("Acesso Negado: Apenas MASTER pode excluir faturas.");
+      return;
+    }
     if (!window.confirm("Deseja realmente excluir esta fatura? Se ela já foi recebida, o saldo NÃO será estornado automaticamente do banco.")) return;
     setFaturas(faturas.filter(f => f.id !== id));
   };
 
   const handleDeleteEntrada = (id) => {
+    if (currentUser?.role !== 'MASTER') {
+      alert("Acesso Negado: Apenas MASTER pode excluir entradas de recursos.");
+      return;
+    }
     if (!window.confirm("Deseja realmente excluir esta entrada de recursos? O saldo do banco será recalculado subtraindo este valor.")) return;
     
     const entradaParaExcluir = entradasRecursos.find(e => e.id === id);
@@ -5049,7 +5061,16 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
                             {(fat.valorGlosa || 0) + (fat.valorImpostos || 0) + (fat.valorRetencao || 0) > 0 ? `-${formatMoney((fat.valorGlosa || 0) + (fat.valorImpostos || 0) + (fat.valorRetencao || 0))}` : '-'}
                           </td>
                           <td style={{ padding: '12px', textAlign: 'right', fontWeight: 800, color: '#10b981', fontSize: '14px' }}>
-                            {formatMoney(fat.valorRecebido)}
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
+                              <span>{formatMoney(fat.valorRecebido)}</span>
+                              {Math.abs(fat.valorRecebido - fat.valorReceber) < 0.01 ? (
+                                <span style={{ background: 'rgba(16, 185, 129, 0.2)', color: '#34d399', padding: '2px 6px', borderRadius: '4px', fontSize: '9px', fontWeight: 700 }}>OK</span>
+                              ) : fat.valorRecebido < fat.valorReceber ? (
+                                <span style={{ background: 'rgba(239, 68, 68, 0.2)', color: '#f87171', padding: '2px 6px', borderRadius: '4px', fontSize: '9px', fontWeight: 700 }}>A MENOR</span>
+                              ) : (
+                                <span style={{ background: 'rgba(59, 130, 246, 0.2)', color: '#60a5fa', padding: '2px 6px', borderRadius: '4px', fontSize: '9px', fontWeight: 700 }}>A MAIOR</span>
+                              )}
+                            </div>
                           </td>
                           <td style={{ padding: '12px' }}>
                             <span style={{ color: '#cbd5e1', fontWeight: 600 }}>

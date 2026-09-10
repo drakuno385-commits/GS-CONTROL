@@ -835,6 +835,10 @@ const App = () => {
   };
 
   const handleFileUpload = (e) => {
+    if (currentUser?.role !== 'MASTER' && currentUser?.role !== 'GERENTE') {
+      alert("Acesso Negado: Apenas usuários MASTER ou GERENTE podem importar planilhas que substituem a base de dados.");
+      return;
+    }
     const file = e.target.files[0];
     if (!file) return;
     Papa.parse(file, {
@@ -1957,20 +1961,20 @@ const App = () => {
         )}
 
         
-        {activeMenu === 'rh' && renderRH()}
-        {activeMenu === 'frota' && renderFrota()}
-        {activeMenu === 'disciplina' && renderDisciplina()}
-        {activeMenu === 'atestados' && renderAtestados()}
-        {activeMenu === 'monitoramento' && <Monitoramento currentUser={currentUser} />}
-        {activeMenu === 'relatorio_visitas' && <RelatorioVisitas currentUser={currentUser} rawEfetivos={rawEfetivos} rawPresencas={rawPresencas} />}
-        {activeMenu === 'app_supervisor' && <SupervisorApp currentUser={currentUser} />}
-        {activeMenu === 'usuarios' && <Usuarios currentUser={currentUser} />}
-        {activeMenu === 'medicao' && (
+        {activeMenu === 'rh' ? (hasAccess(currentUser, 'rh') ? renderRH() : <div style={{padding: '50px', textAlign: 'center', color: '#ef4444'}}>Acesso Negado</div>) : null}
+        {activeMenu === 'frota' ? (hasAccess(currentUser, 'frota') ? renderFrota() : <div style={{padding: '50px', textAlign: 'center', color: '#ef4444'}}>Acesso Negado</div>) : null}
+        {activeMenu === 'disciplina' ? (hasAccess(currentUser, 'disciplina') ? renderDisciplina() : <div style={{padding: '50px', textAlign: 'center', color: '#ef4444'}}>Acesso Negado</div>) : null}
+        {activeMenu === 'atestados' ? (hasAccess(currentUser, 'atestados') ? renderAtestados() : <div style={{padding: '50px', textAlign: 'center', color: '#ef4444'}}>Acesso Negado</div>) : null}
+        {activeMenu === 'monitoramento' ? (hasAccess(currentUser, 'monitoramento') ? <Monitoramento currentUser={currentUser} /> : <div style={{padding: '50px', textAlign: 'center', color: '#ef4444'}}>Acesso Negado</div>) : null}
+        {activeMenu === 'relatorio_visitas' ? (hasAccess(currentUser, 'relatorio_visitas') ? <RelatorioVisitas currentUser={currentUser} rawEfetivos={rawEfetivos} rawPresencas={rawPresencas} /> : <div style={{padding: '50px', textAlign: 'center', color: '#ef4444'}}>Acesso Negado</div>) : null}
+        {activeMenu === 'app_supervisor' ? (hasAccess(currentUser, 'app_supervisor') ? <SupervisorApp currentUser={currentUser} /> : <div style={{padding: '50px', textAlign: 'center', color: '#ef4444'}}>Acesso Negado</div>) : null}
+        {activeMenu === 'usuarios' ? (hasAccess(currentUser, 'usuarios') ? <Usuarios currentUser={currentUser} /> : <div style={{padding: '50px', textAlign: 'center', color: '#ef4444'}}>Acesso Negado</div>) : null}
+        {activeMenu === 'medicao' ? (hasAccess(currentUser, 'medicao') ? (
           <ErrorBoundary>
             <Medicao rawPresencas={rawPresencas} currentUser={currentUser} />
           </ErrorBoundary>
-        )}
-        {activeMenu === 'financeiro' && (
+        ) : <div style={{padding: '50px', textAlign: 'center', color: '#ef4444'}}>Acesso Negado</div>) : null}
+        {activeMenu === 'financeiro' ? (hasAccess(currentUser, 'financeiro') ? (
           <ErrorBoundary>
             <Financeiro 
               currentUser={currentUser} 
@@ -1979,7 +1983,7 @@ const App = () => {
               clientesCadastrados={allClientsList}
             />
           </ErrorBoundary>
-        )}
+        ) : <div style={{padding: '50px', textAlign: 'center', color: '#ef4444'}}>Acesso Negado</div>) : null}
                 </motion.div>
         </AnimatePresence>
       </main>
