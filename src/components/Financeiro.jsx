@@ -155,39 +155,9 @@ const DESPESAS_INICIAIS = [];
 
 export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao, clientesCadastrados = [] }) {
   // Estado de Faturas (Módulo Faturamento)
-  const [faturas, setFaturas] = useState(() => {
-    try {
-      const saved = localStorage.getItem('acoweb_financeiro_faturas_v1');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) return parsed;
-      }
-    } catch(e){}
-    return [];
-  });
+  const [faturas, setFaturas] = useState([]);
 
-  const [clientesFaturamento, setClientesFaturamento] = useState(() => {
-    try {
-      const saved = localStorage.getItem('acoweb_financeiro_clientes_fat_v1');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) return parsed;
-      }
-    } catch(e){}
-    return [];
-  });
-
-  useEffect(() => {
-    try {
-      localStorage.setItem('acoweb_financeiro_faturas_v1', JSON.stringify(faturas));
-    } catch(e){}
-  }, [faturas]);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem('acoweb_financeiro_clientes_fat_v1', JSON.stringify(clientesFaturamento));
-    } catch(e){}
-  }, [clientesFaturamento]);
+  const [clientesFaturamento, setClientesFaturamento] = useState([]);
 
   // Sincroniza clientes da planilha (App.jsx) com os clientes do faturamento sem duplicar
   useEffect(() => {
@@ -219,6 +189,7 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
       return;
     }
     setClientesFaturamento(prev => [...prev, nome].sort());
+    supabase.from('financeiro_config').upsert({ chave: 'clientes_fat', valor: [...clientesFaturamento, nome].sort() });
     setNovoClienteFat('');
   };
 
@@ -228,35 +199,13 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
   };
 
   // Estado de Departamentos Customizados
-  const [departamentos, setDepartamentos] = useState(() => {
-    const saved = localStorage.getItem('acoweb_financeiro_deptos');
-    if (saved) {
-      try { return JSON.parse(saved); } catch(e){}
-    }
-    return DEPARTAMENTOS_PADRAO;
-  });
+  const [departamentos, setDepartamentos] = useState(DEPARTAMENTOS_PADRAO);
 
   // Estado de Bancos Customizados
-  const [bancos, setBancos] = useState(() => {
-    const saved = localStorage.getItem('acoweb_financeiro_bancos');
-    if (saved) {
-      try { return JSON.parse(saved); } catch(e){}
-    }
-    return BANCOS_PADRAO;
-  });
+  const [bancos, setBancos] = useState(BANCOS_PADRAO);
 
   // Estado de Empresas Customizadas
-  const [empresas, setEmpresas] = useState(() => {
-    const saved = localStorage.getItem('acoweb_financeiro_empresas');
-    if (saved) {
-      try { return JSON.parse(saved); } catch(e){}
-    }
-    return EMPRESAS_PADRAO;
-  });
-
-  useEffect(() => {
-    localStorage.setItem('acoweb_financeiro_empresas', JSON.stringify(empresas));
-  }, [empresas]);
+  const [empresas, setEmpresas] = useState(EMPRESAS_PADRAO);
 
   // Garante que as novas empresas padrão entrem na lista de quem já tinha cache antigo
   useEffect(() => {
@@ -274,36 +223,81 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
   }, []);
 
   // Salvar customizações no localStorage
-  useEffect(() => {
-    localStorage.setItem('acoweb_financeiro_deptos', JSON.stringify(departamentos));
-  }, [departamentos]);
-
-  useEffect(() => {
-    localStorage.setItem('acoweb_financeiro_bancos', JSON.stringify(bancos));
-  }, [bancos]);
-
   // Estado Principal de Despesas
-  const [despesas, setDespesas] = useState(() => {
-    const saved = localStorage.getItem('acoweb_financeiro_despesas_v5');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) return parsed;
-      } catch(e){}
-    }
-    return DESPESAS_INICIAIS;
-  });
+  const [despesas, setDespesas] = useState([]);
 
   // Salvar despesas v5 no localStorage
-  useEffect(() => {
-    try {
-      localStorage.setItem('acoweb_financeiro_despesas_v5', JSON.stringify(despesas));
-    } catch(e) {
-      console.error('Erro ao salvar despesas no localStorage:', e);
-    }
-  }, [despesas]);
-
   // Identificação do Usuário para Isolamento de Filtros e Visualização por Perfil
+  
+  // SUPABASE INITIAL FETCH AND REALTIME
+  useEffect(() => {
+    const loadData = async () => {
+      const { data: dDespesas } = await supabase.from('financeiro_despesas').select('*');
+      if (dDespesas) setDespesas(dDespesas);
+
+      const { data: dFaturas } = await supabase.from('financeiro_faturas').select('*');
+      if (dFaturas) setFaturas(dFaturas);
+
+      const { data: dBancosSaldos } = await supabase.from('financeiro_bancos_saldos').select('*');
+      if (dBancosSaldos) setBancosComSaldo(dBancosSaldos);
+
+      const { data: dHistorico } = await supabase.from('financeiro_historico_bancario').select('*');
+      if (dHistorico) setHistoricoMovimentacoes(dHistorico);
+
+      const { data: dEntradas } = await supabase.from('financeiro_entradas').select('*');
+      if (dEntradas) setEntradasRecursos(dEntradas);
+
+      const { data: dConfig } = await supabase.from('financeiro_config').select('*');
+      if (dConfig) {
+        const emp = dConfig.find(c => c.chave === 'empresas');
+        if (emp && emp.valor) setEmpresas(emp.valor);
+        const dep = dConfig.find(c => c.chave === 'departamentos');
+        if (dep && dep.valor) setDepartamentos(dep.valor);
+        const bnc = dConfig.find(c => c.chave === 'bancos');
+        if (bnc && bnc.valor) setBancos(bnc.valor);
+        const cli = dConfig.find(c => c.chave === 'clientes_fat');
+        if (cli && cli.valor) setClientesFaturamento(cli.valor);
+      }
+
+      const { data: dAuditoria } = await supabase.from('financeiro_auditoria').select('*').order('data', { ascending: false }).limit(1000);
+      if (dAuditoria) setLogsAuditoria(dAuditoria);
+    };
+
+    loadData();
+
+    const channel = supabase.channel('financeiro_changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'financeiro_despesas' }, payload => {
+        if (payload.eventType === 'INSERT') setDespesas(prev => prev.find(p => p.id === payload.new.id) ? prev : [...prev, payload.new]);
+        else if (payload.eventType === 'UPDATE') setDespesas(prev => prev.map(p => p.id === payload.new.id ? payload.new : p));
+        else if (payload.eventType === 'DELETE') setDespesas(prev => prev.filter(p => p.id !== payload.old.id));
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'financeiro_faturas' }, payload => {
+        if (payload.eventType === 'INSERT') setFaturas(prev => prev.find(p => p.id === payload.new.id) ? prev : [...prev, payload.new]);
+        else if (payload.eventType === 'UPDATE') setFaturas(prev => prev.map(p => p.id === payload.new.id ? payload.new : p));
+        else if (payload.eventType === 'DELETE') setFaturas(prev => prev.filter(p => p.id !== payload.old.id));
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'financeiro_bancos_saldos' }, payload => {
+        if (payload.eventType === 'INSERT') setBancosComSaldo(prev => prev.find(p => p.id === payload.new.id) ? prev : [...prev, payload.new]);
+        else if (payload.eventType === 'UPDATE') setBancosComSaldo(prev => prev.map(p => p.id === payload.new.id ? payload.new : p));
+        else if (payload.eventType === 'DELETE') setBancosComSaldo(prev => prev.filter(p => p.id !== payload.old.id));
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'financeiro_entradas' }, payload => {
+        if (payload.eventType === 'INSERT') setEntradasRecursos(prev => prev.find(p => p.id === payload.new.id) ? prev : [...prev, payload.new]);
+        else if (payload.eventType === 'UPDATE') setEntradasRecursos(prev => prev.map(p => p.id === payload.new.id ? payload.new : p));
+        else if (payload.eventType === 'DELETE') setEntradasRecursos(prev => prev.filter(p => p.id !== payload.old.id));
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'financeiro_historico_bancario' }, payload => {
+        if (payload.eventType === 'INSERT') setHistoricoMovimentacoes(prev => prev.find(p => p.id === payload.new.id) ? prev : [...prev, payload.new]);
+        else if (payload.eventType === 'UPDATE') setHistoricoMovimentacoes(prev => prev.map(p => p.id === payload.new.id ? payload.new : p));
+        else if (payload.eventType === 'DELETE') setHistoricoMovimentacoes(prev => prev.filter(p => p.id !== payload.old.id));
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
   const userId = currentUser?.id || currentUser?.username || currentUser?.email || 'usuario_padrao';
   const filterStorageKey = `acoweb_financeiro_filtros_${userId}`;
   const tabStorageKey = `acoweb_financeiro_tab_${userId}`;
@@ -539,58 +533,13 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
   // Lista de Bancos com Saldos Reais Cadastrados
   const BANCOS_SALDO_PADRAO = [];
 
-  const [bancosComSaldo, setBancosComSaldo] = useState(() => {
-    try {
-      const saved = localStorage.getItem('acoweb_bancos_saldo_v2');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) return parsed;
-      }
-    } catch(e){}
-    return BANCOS_SALDO_PADRAO;
-  });
-
-  useEffect(() => {
-    try {
-      localStorage.setItem('acoweb_bancos_saldo_v2', JSON.stringify(bancosComSaldo));
-    } catch(e){}
-  }, [bancosComSaldo]);
+  const [bancosComSaldo, setBancosComSaldo] = useState([]);
 
   // Lista de Entradas de Recursos (Receitas / Aportes)
-  const [entradasRecursos, setEntradasRecursos] = useState(() => {
-    try {
-      const saved = localStorage.getItem('acoweb_entradas_recursos_v2');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) return parsed;
-      }
-    } catch(e){}
-    return [];
-  });
-
-  useEffect(() => {
-    try {
-      localStorage.setItem('acoweb_entradas_recursos_v2', JSON.stringify(entradasRecursos));
-    } catch(e){}
-  }, [entradasRecursos]);
+  const [entradasRecursos, setEntradasRecursos] = useState([]);
 
   // Histórico de Movimentações Bancárias (Entradas & Abates de Conciliação)
-  const [historicoMovimentacoes, setHistoricoMovimentacoes] = useState(() => {
-    try {
-      const saved = localStorage.getItem('acoweb_historico_bancario_v2');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) return parsed;
-      }
-    } catch(e){}
-    return [];
-  });
-
-  useEffect(() => {
-    try {
-      localStorage.setItem('acoweb_historico_bancario_v2', JSON.stringify(historicoMovimentacoes));
-    } catch(e){}
-  }, [historicoMovimentacoes]);
+  const [historicoMovimentacoes, setHistoricoMovimentacoes] = useState([]);
 
   // Auditoria do Financeiro
   const [logsAuditoria, setLogsAuditoria] = useState(() => {
@@ -599,12 +548,6 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
       return saved ? JSON.parse(saved) : [];
     } catch(e) { return []; }
   });
-
-  useEffect(() => {
-    try {
-      localStorage.setItem('acoweb_financeiro_auditoria_v1', JSON.stringify(logsAuditoria));
-    } catch(e){}
-  }, [logsAuditoria]);
 
   const registrarAuditoria = (acao, detalhes) => {
     const novoLog = {
@@ -659,6 +602,7 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
       return;
     }
     setEmpresas(prev => [...prev, nome]);
+    supabase.from('financeiro_config').upsert({ chave: 'empresas', valor: [...empresas, nome] });
     setFormNovaDespesa(prev => ({ ...prev, empresa: nome }));
     if (modalEditarDespesa) {
       setModalEditarDespesa(prev => ({ ...prev, empresa: nome }));
@@ -685,6 +629,7 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
       return;
     }
     setDepartamentos(prev => [...prev, nome]);
+    supabase.from('financeiro_config').upsert({ chave: 'departamentos', valor: [...departamentos, nome] });
     setFormNovaDespesa(prev => ({ ...prev, departamento: nome }));
     if (modalEditarDespesa) {
       setModalEditarDespesa(prev => ({ ...prev, departamento: nome }));
@@ -703,6 +648,7 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
       return;
     }
     setBancos(prev => [...prev, nome]);
+    supabase.from('financeiro_config').upsert({ chave: 'bancos', valor: [...bancos, nome] });
     setFormNovaDespesa(prev => ({ ...prev, banco: nome }));
     if (modalEditarDespesa) {
       setModalEditarDespesa(prev => ({ ...prev, banco: nome }));
