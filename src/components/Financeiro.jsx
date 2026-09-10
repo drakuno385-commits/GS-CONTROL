@@ -2364,7 +2364,11 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
                   onChange={(e) => setFormNovaDespesa({ ...formNovaDespesa, banco: e.target.value })}
                   style={{ width: '100%', padding: '10px 14px', background: '#0f172a', border: '1px solid #334155', borderRadius: '8px', color: '#fff', fontSize: '13px' }}
                 >
-                  {bancos.map(b => <option key={b} value={b}>{b}</option>)}
+                  <option value="">Selecione o Banco...</option>
+                  {bancosComSaldo.length > 0
+                    ? bancosComSaldo.map(b => <option key={b.id} value={b.nome}>{b.nome} ({b.empresa || 'AÇOFORTE'})</option>)
+                    : bancos.map(b => <option key={b} value={b}>{b}</option>)
+                  }
                 </select>
                 <button
                   type="button"
@@ -2604,7 +2608,10 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
                 style={{ padding: '8px 12px', background: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '8px', color: '#f8fafc', fontSize: '12px' }}
               >
                 <option value="">Todos os Bancos</option>
-                {bancos.map(b => <option key={b} value={b}>{b}</option>)}
+                {bancosComSaldo.length > 0
+                  ? bancosComSaldo.map(b => <option key={b.id} value={b.nome}>{b.nome}</option>)
+                  : bancos.map(b => <option key={b} value={b}>{b}</option>)
+                }
               </select>
 
               {/* Exportar CSV */}
@@ -2756,9 +2763,14 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
                                   cursor: 'pointer'
                                 }}
                               >
-                                {bancos.map(b => (
-                                  <option key={b} value={b}>{b}</option>
-                                ))}
+                                {bancosComSaldo.length > 0
+                                  ? bancosComSaldo.map(b => (
+                                    <option key={b.id} value={b.nome}>{b.nome} ({b.empresa || 'AÇOFORTE'})</option>
+                                  ))
+                                  : bancos.map(b => (
+                                    <option key={b} value={b}>{b}</option>
+                                  ))
+                                }
                               </select>
                             </div>
                           ) : (
@@ -3306,7 +3318,10 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
                     style={{ padding: '8px 12px', background: '#0f172a', border: '1px solid #334155', borderRadius: '8px', color: '#fff', fontSize: '12px' }}
                   >
                     <option value="">Todos os Bancos</option>
-                    {bancos.map(b => <option key={b} value={b}>{b}</option>)}
+                    {bancosComSaldo.length > 0
+                      ? bancosComSaldo.map(b => <option key={b.id} value={b.nome}>{b.nome}</option>)
+                      : bancos.map(b => <option key={b} value={b}>{b}</option>)
+                    }
                   </select>
 
                   {/* Exportar CSV Geral */}
@@ -4405,7 +4420,11 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
                     onChange={(e) => setModalEditarDespesa({ ...modalEditarDespesa, banco: e.target.value })}
                     style={{ width: '100%', padding: '10px 12px', background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', color: '#fff', fontSize: '13px' }}
                   >
-                    {bancos.map(b => <option key={b} value={b}>{b}</option>)}
+                    <option value="">Selecione o Banco...</option>
+                    {bancosComSaldo.length > 0
+                      ? bancosComSaldo.map(b => <option key={b.id} value={b.nome}>{b.nome} ({b.empresa || 'AÇOFORTE'})</option>)
+                      : bancos.map(b => <option key={b} value={b}>{b}</option>)
+                    }
                   </select>
                   <button
                     type="button"
