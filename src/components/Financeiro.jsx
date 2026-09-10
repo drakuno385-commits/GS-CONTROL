@@ -686,7 +686,7 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
     if (!modalEditarDespesa.valor || Number(modalEditarDespesa.valor) <= 0) return alert('Por favor, informe um valor válido para a despesa.');
     if (modalEditarDespesa.temOP && !modalEditarDespesa.numeroOP.trim()) return alert('Por favor, informe o Número da OP.');
 
-    setDespesasFromDb(prev => prev.map(d => {
+    setDespesas(prev => prev.map(d => {
       if (d.id === modalEditarDespesa.id) {
         return {
           ...d,
@@ -716,7 +716,7 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
 
   // Transições da Esteira Financeira
   const handleEnviarParaAprovacao = (id) => {
-    setDespesasFromDb(prev => prev.map(d => {
+    setDespesas(prev => prev.map(d => {
       if (d.id === id) {
         return {
           ...d,
@@ -733,7 +733,7 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
   };
 
   const handleConfirmarLancamentoBanco = (id) => {
-    setDespesasFromDb(prev => prev.map(d => {
+    setDespesas(prev => prev.map(d => {
       if (d.id === id) {
         return {
           ...d,
@@ -765,7 +765,7 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
     }
 
     const hoje = new Date().toISOString().slice(0, 10);
-    setDespesasFromDb(prev => prev.map(d => {
+    setDespesas(prev => prev.map(d => {
       if (d.id === modalConfirmarPagamento.id) {
         return {
           ...d,
@@ -796,7 +796,7 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
 
   const handleEnviarParaConciliacao = (id) => {
     const hoje = new Date().toISOString().slice(0, 10);
-    setDespesasFromDb(prev => prev.map(d => {
+    setDespesas(prev => prev.map(d => {
       if (d.id === id) {
         return {
           ...d,
@@ -811,7 +811,7 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
 
   const handleConciliarEArquivar = (id) => {
     const hoje = new Date().toISOString().slice(0, 10);
-    setDespesasFromDb(prev => prev.map(d => {
+    setDespesas(prev => prev.map(d => {
       if (d.id === id) {
         return {
           ...d,
@@ -828,7 +828,7 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
   // Handler para Estorno de Despesa de Pagas de volta para Lançadas
   const handleEstornarParaLancadas = (id) => {
     if (!window.confirm('Tem certeza que deseja estornar este pagamento e retornar a despesa para a aba "Lançadas"?')) return;
-    setDespesasFromDb(prev => prev.map(d => {
+    setDespesas(prev => prev.map(d => {
       if (d.id === id) {
         const copy = { ...d };
         delete copy.valorExecutado;
@@ -847,7 +847,7 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
 
   // Handler para Reenviar Despesa Recusada/Reprovada para a Tela 1 (Cadastro)
   const handleReenviarParaCadastro = (id) => {
-    setDespesasFromDb(prev => prev.map(d => {
+    setDespesas(prev => prev.map(d => {
       if (d.id === id) {
         return {
           ...d,
@@ -870,7 +870,7 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
     const sInicial = parseFloat(formBancoSaldo.saldoInicial) || 0;
 
     if (formBancoSaldo.id) {
-      setBancosComSaldoFromDb(prev => prev.map(b => {
+      setBancosComSaldo(prev => prev.map(b => {
         if (b.id === formBancoSaldo.id) {
           const difInicial = sInicial - b.saldoInicial;
           return {
@@ -898,7 +898,7 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
         saldoAtual: sInicial,
         cor: formBancoSaldo.cor || '#38bdf8'
       };
-      setBancosComSaldoFromDb(prev => [...prev, novo]);
+      setBancosComSaldo(prev => [...prev, novo]);
       alert(`✅ Banco ${novo.nome} cadastrado com saldo inicial de ${formatMoney(sInicial)}!`);
     }
 
@@ -914,7 +914,7 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
     }
 
     if (window.confirm(`⚠️ AVISO MASTER: Deseja realmente EXCLUIR o banco "${bancoNome}"?\n\nEsta ação removerá o banco e seu saldo da gestão bancária.`)) {
-      setBancosComSaldoFromDb(prev => prev.filter(b => b.id !== bancoId));
+      setBancosComSaldo(prev => prev.filter(b => b.id !== bancoId));
       alert(`✅ Banco "${bancoNome}" excluído com sucesso!`);
     }
   };
@@ -941,10 +941,10 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
       observacao: formEntradaRecursos.observacao.trim()
     };
 
-    setBancosComSaldoFromDb(prev => prev.map(b => b.id === bancoDestino.id ? { ...b, saldoAtual: b.saldoAtual + val } : b));
-    setEntradasRecursosFromDb(prev => [novaEntrada, ...prev]);
+    setBancosComSaldo(prev => prev.map(b => b.id === bancoDestino.id ? { ...b, saldoAtual: b.saldoAtual + val } : b));
+    setEntradasRecursos(prev => [novaEntrada, ...prev]);
 
-    setHistoricoMovimentacoesFromDb(prev => [
+    setHistoricoMovimentacoes(prev => [
       {
         id: `mov_${Date.now()}`,
         data: formEntradaRecursos.dataEntrada,
@@ -985,10 +985,10 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
     const hoje = new Date().toISOString().slice(0, 10);
 
     // Atualizar saldo do banco
-    setBancosComSaldoFromDb(prev => prev.map(b => b.id === bancoPagador.id ? { ...b, saldoAtual: novoSaldo } : b));
+    setBancosComSaldo(prev => prev.map(b => b.id === bancoPagador.id ? { ...b, saldoAtual: novoSaldo } : b));
 
     // Atualizar despesa
-    setDespesasFromDb(prev => prev.map(d => {
+    setDespesas(prev => prev.map(d => {
       if (d.id === despesaId) {
         return {
           ...d,
@@ -1004,7 +1004,7 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
     }));
 
     // Registrar histórico
-    setHistoricoMovimentacoesFromDb(prev => [
+    setHistoricoMovimentacoes(prev => [
       {
         id: `mov_${Date.now()}`,
         data: hoje,
@@ -1071,7 +1071,7 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
       });
     }
 
-    setDespesasFromDb(prev => [...novasDespesas, ...prev]);
+    setDespesas(prev => [...novasDespesas, ...prev]);
     alert(`✅ Despesa cadastrada com sucesso! ${numParc > 1 ? `Criadas ${numParc} parcelas mensais replicadas automaticamente.` : ''}`);
 
     setFormNovaDespesa({
@@ -1097,7 +1097,7 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
     if (!modalAprovacao) return;
     const { despesa, acao } = modalAprovacao;
 
-    setDespesasFromDb(prev => prev.map(d => {
+    setDespesas(prev => prev.map(d => {
       if (d.id === despesa.id) {
         return {
           ...d,
@@ -1123,7 +1123,7 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
     }
     if (window.confirm('Tem certeza que deseja excluir esta despesa permanentemente?')) {
       const d = despesas.find(x => x.id === id);
-      setDespesasFromDb(prev => prev.filter(x => x.id !== id));
+      setDespesas(prev => prev.filter(x => x.id !== id));
       if (d) registrarAuditoria('EXCLUIR_DESPESA', `Despesa excluída: ${d.nome} | R$ ${d.valor}`);
     }
   };
@@ -2696,7 +2696,7 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
                                 value={item.banco || bancos[0] || 'Itaú'}
                                 onChange={(e) => {
                                   const novoBanco = e.target.value;
-                                  setDespesasFromDb(prev => prev.map(d => d.id === item.id ? { ...d, banco: novoBanco } : d));
+                                  setDespesas(prev => prev.map(d => d.id === item.id ? { ...d, banco: novoBanco } : d));
                                 }}
                                 style={{
                                   padding: '4px 8px',
