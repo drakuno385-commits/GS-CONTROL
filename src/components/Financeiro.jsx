@@ -2258,7 +2258,7 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
                 }}
                 style={{ width: '100%', padding: '10px 14px', background: '#0f172a', border: '1px solid #334155', borderRadius: '8px', color: '#fff', fontSize: '13px', fontWeight: 700 }}
               >
-                {empresas.map(emp => <option key={emp} value={emp}>{emp}</option>)}
+                {[...empresas].sort().map(emp => <option key={emp} value={emp}>{emp}</option>)}
                 <option value="NOVA_EMPRESA">+ Gerenciar Empresas</option>
               </select>
             </div>
@@ -2274,7 +2274,7 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
                   onChange={(e) => setFormNovaDespesa({ ...formNovaDespesa, departamento: e.target.value })}
                   style={{ width: '100%', padding: '10px 14px', background: '#0f172a', border: '1px solid #334155', borderRadius: '8px', color: '#fff', fontSize: '13px' }}
                 >
-                  {departamentos.map(dep => <option key={dep} value={dep}>{dep}</option>)}
+                  {[...departamentos].sort().map(dep => <option key={dep} value={dep}>{dep}</option>)}
                 </select>
                 <button
                   type="button"
@@ -2366,8 +2366,8 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
                 >
                   <option value="">Selecione o Banco...</option>
                   {bancosComSaldo.length > 0
-                    ? bancosComSaldo.map(b => <option key={b.id} value={b.nome}>{b.nome} ({b.empresa || 'AÇOFORTE'})</option>)
-                    : bancos.map(b => <option key={b} value={b}>{b}</option>)
+                    ? [...bancosComSaldo].sort((a,b) => a.nome.localeCompare(b.nome)).map(b => <option key={b.id} value={b.nome}>{b.nome} ({b.empresa || 'AÇOFORTE'})</option>)
+                    : [...bancos].sort().map(b => <option key={b} value={b}>{b}</option>)
                   }
                 </select>
                 <button
@@ -2391,7 +2391,7 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
                 onChange={(e) => setFormNovaDespesa({ ...formNovaDespesa, formaPagamento: e.target.value })}
                 style={{ width: '100%', padding: '10px 14px', background: '#0f172a', border: '1px solid #334155', borderRadius: '8px', color: '#fff', fontSize: '13px', fontWeight: 600 }}
               >
-                {FORMAS_PAGAMENTO.map(fp => <option key={fp} value={fp}>{fp}</option>)}
+                {[...FORMAS_PAGAMENTO].sort().map(fp => <option key={fp} value={fp}>{fp}</option>)}
               </select>
             </div>
 
@@ -2578,7 +2578,7 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
                 style={{ padding: '8px 12px', background: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '8px', color: '#f8fafc', fontSize: '12px' }}
               >
                 <option value="">Todas as Empresas</option>
-                {empresas.map(e => <option key={e} value={e}>{e}</option>)}
+                {[...empresas].sort().map(e => <option key={e} value={e}>{e}</option>)}
               </select>
 
               {/* Filtro Departamento */}
@@ -2588,7 +2588,7 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
                 style={{ padding: '8px 12px', background: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '8px', color: '#f8fafc', fontSize: '12px' }}
               >
                 <option value="">Todos os Deptos</option>
-                {departamentos.map(d => <option key={d} value={d}>{d}</option>)}
+                {[...departamentos].sort().map(d => <option key={d} value={d}>{d}</option>)}
               </select>
 
               {/* Filtro Forma de Pagamento */}
@@ -2598,7 +2598,7 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
                 style={{ padding: '8px 12px', background: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '8px', color: '#f8fafc', fontSize: '12px' }}
               >
                 <option value="">Forma Pagto</option>
-                {FORMAS_PAGAMENTO.map(fp => <option key={fp} value={fp}>{fp}</option>)}
+                {[...FORMAS_PAGAMENTO].sort().map(fp => <option key={fp} value={fp}>{fp}</option>)}
               </select>
 
               {/* Filtro Banco Pagador */}
@@ -2609,8 +2609,8 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
               >
                 <option value="">Todos os Bancos</option>
                 {bancosComSaldo.length > 0
-                  ? bancosComSaldo.map(b => <option key={b.id} value={b.nome}>{b.nome}</option>)
-                  : bancos.map(b => <option key={b} value={b}>{b}</option>)
+                  ? [...bancosComSaldo].sort((a,b) => a.nome.localeCompare(b.nome)).map(b => <option key={b.id} value={b.nome}>{b.nome}</option>)
+                  : [...bancos].sort().map(b => <option key={b} value={b}>{b}</option>)
                 }
               </select>
 
@@ -2764,10 +2764,10 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
                                 }}
                               >
                                 {bancosComSaldo.length > 0
-                                  ? bancosComSaldo.map(b => (
+                                  ? [...bancosComSaldo].sort((a,b) => a.nome.localeCompare(b.nome)).map(b => (
                                     <option key={b.id} value={b.nome}>{b.nome} ({b.empresa || 'AÇOFORTE'})</option>
                                   ))
-                                  : bancos.map(b => (
+                                  : [...bancos].sort().map(b => (
                                     <option key={b} value={b}>{b}</option>
                                   ))
                                 }
@@ -2934,7 +2934,7 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
                                 }}
                                 title="Selecione de qual banco o saldo será abatido"
                               >
-                                {bancosComSaldo.map(b => (
+                                {[...bancosComSaldo].sort((a,b) => a.nome.localeCompare(b.nome)).map(b => (
                                   <option key={b.id} value={b.id}>
                                     🏦 {b.nome} (Saldo: {formatMoney(b.saldoAtual)})
                                   </option>
@@ -3206,7 +3206,7 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
                         </tr>
                       </thead>
                       <tbody>
-                        {dadosRelatorioMensal.departamentos.map(dep => (
+                        {dadosRelatorioMensal.[...departamentos].sort().map(dep => (
                           <tr key={dep.departamento} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.04)' }}>
                             <td style={{ padding: '8px 10px', fontWeight: 700, color: '#f8fafc' }}>{dep.departamento}</td>
                             <td 
@@ -3298,7 +3298,7 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
                     style={{ padding: '8px 12px', background: '#0f172a', border: '1px solid #334155', borderRadius: '8px', color: '#fff', fontSize: '12px' }}
                   >
                     <option value="">Todas as Empresas</option>
-                    {empresas.map(e => <option key={e} value={e}>{e}</option>)}
+                    {[...empresas].sort().map(e => <option key={e} value={e}>{e}</option>)}
                   </select>
 
                   {/* Filtro Departamento */}
@@ -3308,7 +3308,7 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
                     style={{ padding: '8px 12px', background: '#0f172a', border: '1px solid #334155', borderRadius: '8px', color: '#fff', fontSize: '12px' }}
                   >
                     <option value="">Todos os Deptos</option>
-                    {departamentos.map(d => <option key={d} value={d}>{d}</option>)}
+                    {[...departamentos].sort().map(d => <option key={d} value={d}>{d}</option>)}
                   </select>
 
                   {/* Filtro Banco */}
@@ -3319,8 +3319,8 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
                   >
                     <option value="">Todos os Bancos</option>
                     {bancosComSaldo.length > 0
-                      ? bancosComSaldo.map(b => <option key={b.id} value={b.nome}>{b.nome}</option>)
-                      : bancos.map(b => <option key={b} value={b}>{b}</option>)
+                      ? [...bancosComSaldo].sort((a,b) => a.nome.localeCompare(b.nome)).map(b => <option key={b.id} value={b.nome}>{b.nome}</option>)
+                      : [...bancos].sort().map(b => <option key={b} value={b}>{b}</option>)
                     }
                   </select>
 
@@ -3703,7 +3703,7 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
                     style={{ width: '100%', padding: '8px 12px', background: '#0f172a', border: '1px solid #334155', borderRadius: '8px', color: '#f8fafc', fontSize: '12px' }}
                   >
                     <option value="">Todas as Empresas</option>
-                    {empresas.map(emp => <option key={emp} value={emp}>{emp}</option>)}
+                    {[...empresas].sort().map(emp => <option key={emp} value={emp}>{emp}</option>)}
                   </select>
                 </div>
                 <div style={{ flex: 1 }}>
@@ -4019,7 +4019,7 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
             <div style={{ overflowY: 'auto', flex: 1 }}>
               <h4 style={{ fontSize: '12px', color: '#94a3b8', marginBottom: '10px', textTransform: 'uppercase', fontWeight: 700 }}>Empresas Cadastradas</h4>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                {empresas.map(emp => (
+                {[...empresas].sort().map(emp => (
                   <div key={emp} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#1e293b', padding: '10px 14px', borderRadius: '8px', border: '1px solid #334155' }}>
                     <span style={{ fontSize: '13px', color: '#f8fafc', fontWeight: 600 }}>{emp}</span>
                     <button 
@@ -4324,7 +4324,7 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
                   }}
                   style={{ width: '100%', padding: '10px 14px', background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', color: '#fff', fontSize: '13px', fontWeight: 700 }}
                 >
-                  {empresas.map(emp => <option key={emp} value={emp}>{emp}</option>)}
+                  {[...empresas].sort().map(emp => <option key={emp} value={emp}>{emp}</option>)}
                   <option value="NOVA_EMPRESA">+ Gerenciar Empresas</option>
                 </select>
               </div>
@@ -4340,7 +4340,7 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
                     onChange={(e) => setModalEditarDespesa({ ...modalEditarDespesa, departamento: e.target.value })}
                     style={{ width: '100%', padding: '10px 12px', background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', color: '#fff', fontSize: '13px' }}
                   >
-                    {departamentos.map(dep => <option key={dep} value={dep}>{dep}</option>)}
+                    {[...departamentos].sort().map(dep => <option key={dep} value={dep}>{dep}</option>)}
                   </select>
                   <button
                     type="button"
@@ -4422,8 +4422,8 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
                   >
                     <option value="">Selecione o Banco...</option>
                     {bancosComSaldo.length > 0
-                      ? bancosComSaldo.map(b => <option key={b.id} value={b.nome}>{b.nome} ({b.empresa || 'AÇOFORTE'})</option>)
-                      : bancos.map(b => <option key={b} value={b}>{b}</option>)
+                      ? [...bancosComSaldo].sort((a,b) => a.nome.localeCompare(b.nome)).map(b => <option key={b.id} value={b.nome}>{b.nome} ({b.empresa || 'AÇOFORTE'})</option>)
+                      : [...bancos].sort().map(b => <option key={b} value={b}>{b}</option>)
                     }
                   </select>
                   <button
@@ -4447,7 +4447,7 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
                   onChange={(e) => setModalEditarDespesa({ ...modalEditarDespesa, formaPagamento: e.target.value })}
                   style={{ width: '100%', padding: '10px 12px', background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', color: '#fff', fontSize: '13px' }}
                 >
-                  {FORMAS_PAGAMENTO.map(fp => <option key={fp} value={fp}>{fp}</option>)}
+                  {[...FORMAS_PAGAMENTO].sort().map(fp => <option key={fp} value={fp}>{fp}</option>)}
                 </select>
               </div>
 
@@ -4600,7 +4600,7 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
                   }}
                   style={{ width: '100%', padding: '10px 14px', background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', color: '#fff', fontSize: '13px' }}
                 >
-                  {empresas.map(emp => <option key={emp} value={emp}>{emp}</option>)}
+                  {[...empresas].sort().map(emp => <option key={emp} value={emp}>{emp}</option>)}
                   <option value="NOVA_EMPRESA">+ Gerenciar Empresas</option>
                 </select>
               </div>
@@ -4751,7 +4751,7 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
                   style={{ width: '100%', padding: '10px 14px', background: '#1e293b', border: '1px solid #60a5fa', borderRadius: '8px', color: '#60a5fa', fontSize: '13px', fontWeight: 700 }}
                 >
                   <option value="">Selecione a Conta Bancária...</option>
-                  {bancosComSaldo.map(b => (
+                  {[...bancosComSaldo].sort((a,b) => a.nome.localeCompare(b.nome)).map(b => (
                     <option key={b.id} value={b.id}>
                       {b.nome} (Saldo Atual: {formatMoney(b.saldoAtual)})
                     </option>
@@ -4857,7 +4857,7 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
                   style={{ width: '100%', padding: '10px 14px', background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', color: '#fff', fontSize: '13px' }}
                 >
                   <option value="">Selecione o Banco...</option>
-                  {bancosComSaldo.map(b => (
+                  {[...bancosComSaldo].sort((a,b) => a.nome.localeCompare(b.nome)).map(b => (
                     <option key={b.id} value={b.id}>{b.nome} (Ag: {b.agencia} / Cc: {b.conta})</option>
                   ))}
                 </select>
@@ -5023,7 +5023,7 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
                     style={{ width: '100%', padding: '10px', background: '#0f172a', border: '1px solid #334155', borderRadius: '8px', color: '#fff', fontSize: '13px' }}
                   >
                     <option value="">Selecione a Empresa...</option>
-                    {empresas.map((emp, idx) => (
+                    {[...empresas].sort().map((emp, idx) => (
                       <option key={idx} value={emp}>{emp}</option>
                     ))}
                   </select>
@@ -5129,7 +5129,7 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
                     style={{ width: '100%', padding: '10px', background: '#0f172a', border: '1px solid #334155', borderRadius: '8px', color: '#fff', fontSize: '13px' }}
                   >
                     <option value="">Selecione...</option>
-                    {bancosComSaldo.map(b => (
+                    {[...bancosComSaldo].sort((a,b) => a.nome.localeCompare(b.nome)).map(b => (
                       <option key={b.id} value={b.id}>{b.nome} (Ag: {b.agencia} / Cc: {b.conta})</option>
                     ))}
                   </select>
@@ -5243,7 +5243,7 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
                     style={{ width: '100%', padding: '8px', background: '#0f172a', border: '1px solid #334155', borderRadius: '6px', color: '#fff', fontSize: '12px' }}
                   >
                     <option value="">Todas</option>
-                    {empresas.map((emp, i) => <option key={i} value={emp}>{emp}</option>)}
+                    {[...empresas].sort().map((emp, i) => <option key={i} value={emp}>{emp}</option>)}
                   </select>
                 </div>
                 <div>
@@ -5274,7 +5274,7 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
                     style={{ width: '100%', padding: '8px', background: '#0f172a', border: '1px solid #334155', borderRadius: '6px', color: '#fff', fontSize: '12px' }}
                   >
                     <option value="">Todos</option>
-                    {bancosComSaldo.map(b => <option key={b.id} value={b.id}>{b.nome}</option>)}
+                    {[...bancosComSaldo].sort((a,b) => a.nome.localeCompare(b.nome)).map(b => <option key={b.id} value={b.id}>{b.nome}</option>)}
                   </select>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'flex-end' }}>
