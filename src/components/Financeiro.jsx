@@ -480,6 +480,11 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
   // Sub-abas da Tela Nova de Conciliação Bancária ('entradas' | 'bancos' | 'extrato')
   const [subTabConciliacao, setSubTabConciliacao] = useState('entradas');
 
+  const [filtrosBancosSaldos, setFiltrosBancosSaldos] = useState({
+    empresa: '',
+    banco: ''
+  });
+
   // Sub-abas da Tela de Faturamento ('nova' | 'fila' | 'recebidas')
   const [subTabFaturamento, setSubTabFaturamento] = useState('fila');
 
@@ -3673,9 +3678,41 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
                 </button>
               </div>
 
+              {/* Filtros da Lista de Bancos */}
+              <div style={{ display: 'flex', gap: '16px', background: 'rgba(15, 23, 42, 0.4)', padding: '16px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                <div style={{ flex: 1 }}>
+                  <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#94a3b8', marginBottom: '6px', textTransform: 'uppercase' }}>Filtrar por Empresa</label>
+                  <select
+                    value={filtrosBancosSaldos.empresa}
+                    onChange={e => setFiltrosBancosSaldos({ ...filtrosBancosSaldos, empresa: e.target.value })}
+                    style={{ width: '100%', padding: '8px 12px', background: '#0f172a', border: '1px solid #334155', borderRadius: '8px', color: '#f8fafc', fontSize: '12px' }}
+                  >
+                    <option value="">Todas as Empresas</option>
+                    {empresas.map(emp => <option key={emp} value={emp}>{emp}</option>)}
+                  </select>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#94a3b8', marginBottom: '6px', textTransform: 'uppercase' }}>Filtrar por Banco</label>
+                  <select
+                    value={filtrosBancosSaldos.banco}
+                    onChange={e => setFiltrosBancosSaldos({ ...filtrosBancosSaldos, banco: e.target.value })}
+                    style={{ width: '100%', padding: '8px 12px', background: '#0f172a', border: '1px solid #334155', borderRadius: '8px', color: '#f8fafc', fontSize: '12px' }}
+                  >
+                    <option value="">Todos os Bancos</option>
+                    {Array.from(new Set(bancosComSaldo.map(b => b.nome))).sort().map(b => <option key={b} value={b}>{b}</option>)}
+                  </select>
+                </div>
+              </div>
+
               {/* Lista de Bancos com Saldo Live */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {bancosComSaldo.map(banco => (
+                {bancosComSaldo.filter(b => {
+                  const fEmp = filtrosBancosSaldos.empresa;
+                  const fBanco = filtrosBancosSaldos.banco;
+                  if (fEmp && (b.empresa || 'AÇOFORTE') !== fEmp) return false;
+                  if (fBanco && b.nome !== fBanco) return false;
+                  return true;
+                }).map(banco => (
                   <div key={banco.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(15, 23, 42, 0.8)', padding: '16px 20px', borderRadius: '12px', borderLeft: `4px solid ${banco.cor || '#334155'}`, borderTop: '1px solid rgba(255,255,255,0.05)', borderRight: '1px solid rgba(255,255,255,0.05)', borderBottom: '1px solid rgba(255,255,255,0.05)', boxShadow: '0 4px 14px rgba(0,0,0,0.2)' }}>
                     
                     {/* Informações Principais */}
