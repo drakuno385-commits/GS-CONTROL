@@ -20,10 +20,104 @@ export default function Login({ onLoginSuccess }) {
       setDeferredPrompt(e);
     };
     window.addEventListener('beforeinstallprompt', handler);
-    return (
+    return () => window.removeEventListener('beforeinstallprompt', handler);
+  }, []);
+  
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      setDeferredPrompt(null);
+    }
+  };
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+
+    try {
+      const identifier = `${username.replace(/\s+/g, '')}@acoweb.sistema`;
+      
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email: identifier,
+        password: password
+      });
+
+      if (authError || !authData.user) {
+        setError('Usuário ou senha incorretos.');
+        setLoading(false);
+        return;
+      }
+
+      // Buscar os dados do usuário (role, primeiro_acesso) na tabela
+      const { data, error } = await supabase
+        .from('app_usuarios')
+        .select('*').limit(10000)
+        .eq('id', authData.user.id)
+        .single();
+
+      if (error || !data) {
+        setError('Erro ao recuperar perfil do usuário.');
+        setLoading(false);
+        return;
+      }
+
+      if (data.primeiro_acesso) {
+        setUserDoc(data);
+        setNeedsNewPass(true);
+        setLoading(false);
+        return;
+      }
+
+      onLoginSuccess(data);
+    } catch (err) {
+      setError('Erro ao conectar com servidor.');
+      setLoading(false);
+    }
+  };
+
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+    if (newPassword.length < 6) {
+      setError('A nova senha deve ter no mínimo 6 caracteres.');
+      return;
+    }
+    
+    setLoading(true);
+    try {
+      // Atualiza a senha no Supabase Auth
+      const { error: authError } = await supabase.auth.updateUser({
+        password: newPassword
+      });
+
+      if (authError) {
+        setError('Erro ao atualizar a senha de autenticação.');
+        setLoading(false);
+        return;
+      }
+
+      // Atualiza o status de primeiro_acesso na tabela através de RPC para contornar RLS
+      const { data, error } = await supabase.rpc('confirm_first_access');
+
+      if (error) {
+        setError('Erro ao atualizar status do usuário.');
+        setLoading(false);
+        return;
+      }
+
+      onLoginSuccess({...userDoc, primeiro_acesso: false});
+    } catch (err) {
+      setError('Erro ao conectar.');
+      setLoading(false);
+    }
+  };
+
+  return (
     <div style={{ display: 'flex', minHeight: '100vh', width: '100vw', background: '#0b1120', overflow: 'hidden' }}>
       
-      {/* Lado Esquerdo - Background Tecnolgico */}
+      {/* Lado Esquerdo - Background Tecnologico */}
       <div style={{ 
         flex: 1, 
         display: window.innerWidth > 768 ? 'block' : 'none',
@@ -31,7 +125,7 @@ export default function Login({ onLoginSuccess }) {
         background: 'linear-gradient(135deg, #0b1120 0%, #1e3a8a 100%)',
         overflow: 'hidden'
       }}>
-        {/* Efeito de Grid Ciberntico */}
+        {/* Efeito de Grid Cibernetico */}
         <div style={{
           position: 'absolute',
           top: 0, left: 0, right: 0, bottom: 0,
@@ -95,14 +189,14 @@ export default function Login({ onLoginSuccess }) {
           {!needsNewPass ? (
             <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
               <div>
-                <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8', fontSize: '13px', fontWeight: 500 }}>Nome de Usurio</label>
+                <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8', fontSize: '13px', fontWeight: 500 }}>Nome de Usuario</label>
                 <div style={{ position: 'relative' }}>
                   <User size={18} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: '#64748b' }} />
                   <input 
                     type="text" 
                     value={username} 
                     onChange={(e) => setUsername(e.target.value.toUpperCase())}
-                    placeholder="Seu usurio"
+                    placeholder="Seu usuario"
                     style={{ 
                       width: '100%', padding: '14px 16px 14px 46px', 
                       background: 'rgba(11, 17, 32, 0.5)', 
@@ -161,9 +255,9 @@ export default function Login({ onLoginSuccess }) {
               </button>
             </form>
           ) : (
-            <form onSubmit={handleSetNewPassword} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            <form onSubmit={handleChangePassword} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
               <div style={{ textAlign: 'center', color: '#94a3b8', fontSize: '14px', marginBottom: '8px' }}>
-                Este  o seu primeiro acesso. Por segurana, voc precisa definir uma nova senha.
+                Este e o seu primeiro acesso. Por seguranca, voce precisa definir uma nova senha.
               </div>
               <div>
                 <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8', fontSize: '13px', fontWeight: 500 }}>Nova Senha</label>
@@ -173,7 +267,7 @@ export default function Login({ onLoginSuccess }) {
                     type="password" 
                     value={newPassword} 
                     onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder="Mnimo 6 caracteres"
+                    placeholder="Minimo 6 caracteres"
                     style={{ 
                       width: '100%', padding: '14px 16px 14px 46px', 
                       background: 'rgba(11, 17, 32, 0.5)', 
@@ -221,7 +315,7 @@ export default function Login({ onLoginSuccess }) {
           )}
 
           <div style={{ textAlign: 'center', marginTop: '40px', color: '#475569', fontSize: '12px' }}>
-             2026 GSOLIMPIO. Todos os direitos reservados.
+            © 2026 GSOLIMPIO. Todos os direitos reservados.
           </div>
         </div>
       </div>
