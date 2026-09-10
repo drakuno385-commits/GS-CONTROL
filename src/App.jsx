@@ -1968,6 +1968,7 @@ const App = () => {
               currentUser={currentUser} 
               subSecaoProp={financeiroSubSecao}
               onSelectSubSecao={(sub) => setFinanceiroSubSecao(sub)}
+              clientesCadastrados={clientsList}
             />
           </ErrorBoundary>
         )}

@@ -153,7 +153,25 @@ const formatarMesExtenso = (anoMes) => {
 // Dados Iniciais cobrindo todas as etapas da esteira financeira (ZERADOS PARA PRODUÇÃO)
 const DESPESAS_INICIAIS = [];
 
-export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao }) {
+export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao, clientesCadastrados = [] }) {
+  // Estado de Faturas (Módulo Faturamento)
+  const [faturas, setFaturas] = useState(() => {
+    try {
+      const saved = localStorage.getItem('acoweb_financeiro_faturas_v1');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch(e){}
+    return [];
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('acoweb_financeiro_faturas_v1', JSON.stringify(faturas));
+    } catch(e){}
+  }, [faturas]);
+
   // Estado de Departamentos Customizados
   const [departamentos, setDepartamentos] = useState(() => {
     const saved = localStorage.getItem('acoweb_financeiro_deptos');
@@ -375,6 +393,23 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
 
   // Sub-abas da Tela Nova de Conciliação Bancária ('entradas' | 'bancos' | 'extrato')
   const [subTabConciliacao, setSubTabConciliacao] = useState('entradas');
+
+  // Sub-abas da Tela de Faturamento ('nova' | 'fila' | 'recebidas')
+  const [subTabFaturamento, setSubTabFaturamento] = useState('fila');
+
+  // Formulário de Nova Fatura
+  const [formNovaFatura, setFormNovaFatura] = useState({
+    cliente: '',
+    numeroNota: '',
+    valorBruto: '',
+    valorGlosa: '',
+    valorImpostos: '',
+    dataPrevista: new Date().toISOString().slice(0, 10),
+    observacao: ''
+  });
+
+  // Modal de Recebimento de Fatura
+  const [modalRecebimentoFatura, setModalRecebimentoFatura] = useState(null);
 
   // Modais de Cadastro de Bancos com Saldo e Entradas de Recursos
   const [showModalBancoSaldo, setShowModalBancoSaldo] = useState(false);
@@ -1365,6 +1400,112 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  };
+
+  const handleCadastrarFatura = (e) => {
+    e.preventDefault();
+    if (!formNovaFatura.cliente || !formNovaFatura.numeroNota || !formNovaFatura.valorBruto) return;
+    
+    const vBruto = parseFloat(formNovaFatura.valorBruto.replace(',', '.'));
+    const vGlosa = formNovaFatura.valorGlosa ? parseFloat(formNovaFatura.valorGlosa.replace(',', '.')) : 0;
+    const vImp = formNovaFatura.valorImpostos ? parseFloat(formNovaFatura.valorImpostos.replace(',', '.')) : 0;
+    const vReceber = vBruto - vGlosa - vImp;
+
+    const novaFatura = {
+      id: `fat_${Date.now()}`,
+      cliente: formNovaFatura.cliente,
+      numeroNota: formNovaFatura.numeroNota,
+      valorBruto: vBruto,
+      valorGlosa: vGlosa,
+      valorImpostos: vImp,
+      valorReceber: vReceber,
+      dataPrevista: formNovaFatura.dataPrevista,
+      observacao: formNovaFatura.observacao,
+      status: 'pendente', // pendente | recebida
+      criadaEm: new Date().toISOString()
+    };
+
+    setFaturas([novaFatura, ...faturas]);
+    setSubTabFaturamento('fila');
+    setFormNovaFatura({
+      cliente: '',
+      numeroNota: '',
+      valorBruto: '',
+      valorGlosa: '',
+      valorImpostos: '',
+      dataPrevista: new Date().toISOString().slice(0, 10),
+      observacao: ''
+    });
+    alert('Fatura cadastrada com sucesso!');
+  };
+
+  const handleReceberFatura = (e) => {
+    e.preventDefault();
+    if (!modalRecebimentoFatura || !modalRecebimentoFatura.bancoDestino || !modalRecebimentoFatura.valorRecebido) return;
+    
+    const vRecebido = parseFloat(modalRecebimentoFatura.valorRecebido.replace(',', '.'));
+    const faturaId = modalRecebimentoFatura.id;
+    const faturaInfo = faturas.find(f => f.id === faturaId);
+    
+    if (!faturaInfo) return;
+
+    // Atualiza status da fatura
+    const faturasAtualizadas = faturas.map(f => {
+      if (f.id === faturaId) {
+        return {
+          ...f,
+          status: 'recebida',
+          valorRecebido: vRecebido,
+          bancoRecebimentoId: modalRecebimentoFatura.bancoDestino,
+          dataRecebimento: new Date().toISOString()
+        };
+      }
+      return f;
+    });
+    setFaturas(faturasAtualizadas);
+
+    // Atualiza saldo do banco
+    const bancoObj = bancosComSaldo.find(b => b.id === modalRecebimentoFatura.bancoDestino);
+    if (bancoObj) {
+      setBancosComSaldo(bancosComSaldo.map(b => 
+        b.id === modalRecebimentoFatura.bancoDestino 
+        ? { ...b, saldoAtual: b.saldoAtual + vRecebido }
+        : b
+      ));
+    }
+
+    // Registra entrada de recursos na conciliação para rastreabilidade e histórico
+    const novaEntrada = {
+      id: `ent_fat_${Date.now()}`,
+      descricao: `Recebimento NFe ${faturaInfo.numeroNota} - ${faturaInfo.cliente}`,
+      valor: vRecebido,
+      bancoId: modalRecebimentoFatura.bancoDestino,
+      bancoNome: bancoObj ? bancoObj.nome : 'Banco Desconhecido',
+      dataEntrada: new Date().toISOString().slice(0, 10),
+      categoria: 'Faturamento / Vendas',
+      observacao: `Automático via Faturamento NFe ${faturaInfo.numeroNota}`
+    };
+    setEntradasRecursos([novaEntrada, ...entradasRecursos]);
+
+    setHistoricoMovimentacoes([
+      {
+        id: `hist_${Date.now()}_fat`,
+        dataStr: new Date().toISOString(),
+        tipo: 'ENTRADA',
+        descricao: `Recebimento Fatura NFe ${faturaInfo.numeroNota}`,
+        valor: vRecebido,
+        banco: bancoObj ? bancoObj.nome : 'Banco Desconhecido'
+      },
+      ...historicoMovimentacoes
+    ]);
+
+    setModalRecebimentoFatura(null);
+    alert('Fatura recebida e saldo atualizado com sucesso!');
+  };
+
+  const handleDeleteFatura = (id) => {
+    if (!window.confirm("Deseja realmente excluir esta fatura? Se ela já foi recebida, o saldo NÃO será estornado automaticamente do banco.")) return;
+    setFaturas(faturas.filter(f => f.id !== id));
   };
 
   const handleDeleteEntrada = (id) => {
@@ -4311,14 +4452,320 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
         </div>
       )}
 
+      {/* MODAL: RECEBIMENTO DE FATURA */}
+      {modalRecebimentoFatura && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ background: '#0f172a', padding: '32px', borderRadius: '20px', width: '90%', maxWidth: '400px', border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)' }}>
+            <h2 style={{ margin: '0 0 24px 0', fontSize: '18px', fontWeight: 800, color: '#f8fafc', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <DollarSign size={22} color="#10b981" />
+              Registrar Recebimento
+            </h2>
+
+            <form onSubmit={handleReceberFatura} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#94a3b8', marginBottom: '6px' }}>
+                  Valor Real Recebido (R$)
+                </label>
+                <input
+                  required
+                  type="text"
+                  value={modalRecebimentoFatura.valorRecebido}
+                  onChange={(e) => setModalRecebimentoFatura({ ...modalRecebimentoFatura, valorRecebido: e.target.value })}
+                  style={{ width: '100%', padding: '10px 14px', background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', color: '#10b981', fontSize: '18px', fontWeight: 800 }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#94a3b8', marginBottom: '6px' }}>
+                  Banco de Destino (Conta que recebeu o dinheiro)
+                </label>
+                <select
+                  required
+                  value={modalRecebimentoFatura.bancoDestino}
+                  onChange={(e) => setModalRecebimentoFatura({ ...modalRecebimentoFatura, bancoDestino: e.target.value })}
+                  style={{ width: '100%', padding: '10px 14px', background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', color: '#fff', fontSize: '13px' }}
+                >
+                  <option value="">Selecione o Banco...</option>
+                  {bancosComSaldo.map(b => (
+                    <option key={b.id} value={b.id}>{b.nome} (Ag: {b.agencia} / Cc: {b.conta})</option>
+                  ))}
+                </select>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '10px' }}>
+                <button
+                  type="button"
+                  onClick={() => setModalRecebimentoFatura(null)}
+                  style={{ padding: '10px 16px', background: 'rgba(148, 163, 184, 0.15)', color: '#cbd5e1', border: 'none', borderRadius: '8px', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  style={{ padding: '10px 20px', background: 'linear-gradient(135deg, #10b981, #059669)', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 800, cursor: 'pointer', boxShadow: '0 4px 14px rgba(16, 185, 129, 0.4)' }}
+                >
+                  Confirmar Baixa
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* SEÇÃO 3: FATURAMENTO */}
       {/* SEÇÃO 3: FATURAMENTO */}
       {moduloSubSecao === 'faturamento' && (
-        <div style={{ background: 'rgba(30, 41, 59, 0.4)', borderRadius: '16px', padding: '40px', textAlign: 'center', border: '1px dashed rgba(245, 158, 11, 0.3)', marginTop: '24px' }}>
-          <DollarSign size={48} color="#fbbf24" style={{ marginBottom: '16px', opacity: 0.8 }} />
-          <h2 style={{ color: '#f8fafc', fontSize: '20px', fontWeight: 800, marginBottom: '8px' }}>Módulo de Faturamento em Desenvolvimento</h2>
-          <p style={{ color: '#94a3b8', fontSize: '14px', maxWidth: '500px', margin: '0 auto' }}>
-            A esteira de faturamento, controle de contas a receber, emissão de boletos e integração de NFe será disponibilizada nas próximas atualizações.
-          </p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          
+          {/* Menu de Sub-abas (Faturamento) */}
+          <div style={{ display: 'flex', gap: '8px', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '12px', overflowX: 'auto' }}>
+            <button
+              onClick={() => setSubTabFaturamento('fila')}
+              style={{
+                background: subTabFaturamento === 'fila' ? 'rgba(245, 158, 11, 0.15)' : 'transparent',
+                color: subTabFaturamento === 'fila' ? '#fbbf24' : '#94a3b8',
+                border: 'none',
+                padding: '8px 16px',
+                borderRadius: '8px',
+                fontSize: '13px',
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                transition: 'all 0.2s',
+                whiteSpace: 'nowrap'
+              }}
+            >
+              <Layers size={16} />
+              Fila de Recebimento ({faturas.filter(f => f.status === 'pendente').length})
+            </button>
+            <button
+              onClick={() => setSubTabFaturamento('nova')}
+              style={{
+                background: subTabFaturamento === 'nova' ? 'rgba(245, 158, 11, 0.15)' : 'transparent',
+                color: subTabFaturamento === 'nova' ? '#fbbf24' : '#94a3b8',
+                border: 'none',
+                padding: '8px 16px',
+                borderRadius: '8px',
+                fontSize: '13px',
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                transition: 'all 0.2s',
+                whiteSpace: 'nowrap'
+              }}
+            >
+              <PlusCircle size={16} />
+              Nova Fatura (NFe)
+            </button>
+            <button
+              onClick={() => setSubTabFaturamento('recebidas')}
+              style={{
+                background: subTabFaturamento === 'recebidas' ? 'rgba(245, 158, 11, 0.15)' : 'transparent',
+                color: subTabFaturamento === 'recebidas' ? '#fbbf24' : '#94a3b8',
+                border: 'none',
+                padding: '8px 16px',
+                borderRadius: '8px',
+                fontSize: '13px',
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                transition: 'all 0.2s',
+                whiteSpace: 'nowrap'
+              }}
+            >
+              <CheckCircle2 size={16} />
+              Histórico Recebidas
+            </button>
+          </div>
+
+          {/* CONTEÚDO: NOVA FATURA */}
+          {subTabFaturamento === 'nova' && (
+            <div style={{ background: 'rgba(30, 41, 59, 0.5)', padding: '24px', borderRadius: '16px', border: '1px solid rgba(245, 158, 11, 0.2)' }}>
+              <h3 style={{ margin: '0 0 20px 0', color: '#f8fafc', fontSize: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <FileText size={20} color="#fbbf24" /> Lançar Nova Fatura no Sistema
+              </h3>
+              
+              <form onSubmit={handleCadastrarFatura} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '16px' }}>
+                <div style={{ gridColumn: '1 / -1' }}>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#94a3b8', marginBottom: '6px' }}>Cliente (Planilha de Efetivo)</label>
+                  <select
+                    required
+                    value={formNovaFatura.cliente}
+                    onChange={(e) => setFormNovaFatura({ ...formNovaFatura, cliente: e.target.value })}
+                    style={{ width: '100%', padding: '10px', background: '#0f172a', border: '1px solid #334155', borderRadius: '8px', color: '#fff', fontSize: '13px' }}
+                  >
+                    <option value="">Selecione o Cliente...</option>
+                    {clientesCadastrados.map((cli, idx) => (
+                      <option key={idx} value={cli}>{cli}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#94a3b8', marginBottom: '6px' }}>Número da NFe</label>
+                  <input
+                    required
+                    type="text"
+                    placeholder="Ex: 8852"
+                    value={formNovaFatura.numeroNota}
+                    onChange={(e) => setFormNovaFatura({ ...formNovaFatura, numeroNota: e.target.value })}
+                    style={{ width: '100%', padding: '10px', background: '#0f172a', border: '1px solid #334155', borderRadius: '8px', color: '#fff', fontSize: '13px' }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#94a3b8', marginBottom: '6px' }}>Valor Bruto da Nota (R$)</label>
+                  <input
+                    required
+                    type="text"
+                    placeholder="0,00"
+                    value={formNovaFatura.valorBruto}
+                    onChange={(e) => setFormNovaFatura({ ...formNovaFatura, valorBruto: e.target.value })}
+                    style={{ width: '100%', padding: '10px', background: '#0f172a', border: '1px solid #334155', borderRadius: '8px', color: '#fff', fontSize: '13px' }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#94a3b8', marginBottom: '6px' }}>Valor Glosa (Opcional)</label>
+                  <input
+                    type="text"
+                    placeholder="0,00"
+                    value={formNovaFatura.valorGlosa}
+                    onChange={(e) => setFormNovaFatura({ ...formNovaFatura, valorGlosa: e.target.value })}
+                    style={{ width: '100%', padding: '10px', background: '#0f172a', border: '1px solid #334155', borderRadius: '8px', color: '#fff', fontSize: '13px' }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#94a3b8', marginBottom: '6px' }}>Impostos Retidos (Opcional)</label>
+                  <input
+                    type="text"
+                    placeholder="0,00"
+                    value={formNovaFatura.valorImpostos}
+                    onChange={(e) => setFormNovaFatura({ ...formNovaFatura, valorImpostos: e.target.value })}
+                    style={{ width: '100%', padding: '10px', background: '#0f172a', border: '1px solid #334155', borderRadius: '8px', color: '#fff', fontSize: '13px' }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#94a3b8', marginBottom: '6px' }}>Data Prevista para Pagamento</label>
+                  <input
+                    required
+                    type="date"
+                    value={formNovaFatura.dataPrevista}
+                    onChange={(e) => setFormNovaFatura({ ...formNovaFatura, dataPrevista: e.target.value })}
+                    style={{ width: '100%', padding: '10px', background: '#0f172a', border: '1px solid #334155', borderRadius: '8px', color: '#fff', fontSize: '13px', colorScheme: 'dark' }}
+                  />
+                </div>
+
+                <div style={{ gridColumn: '1 / -1' }}>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#94a3b8', marginBottom: '6px' }}>Observações</label>
+                  <input
+                    type="text"
+                    placeholder="Ex: Fatura referente ao posto A, contrato B..."
+                    value={formNovaFatura.observacao}
+                    onChange={(e) => setFormNovaFatura({ ...formNovaFatura, observacao: e.target.value })}
+                    style={{ width: '100%', padding: '10px', background: '#0f172a', border: '1px solid #334155', borderRadius: '8px', color: '#fff', fontSize: '13px' }}
+                  />
+                </div>
+
+                <div style={{ gridColumn: '1 / -1', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '16px', background: 'rgba(245, 158, 11, 0.1)', padding: '16px', borderRadius: '12px' }}>
+                  <div>
+                    <span style={{ fontSize: '12px', color: '#94a3b8', display: 'block' }}>Valor Líquido a Receber</span>
+                    <strong style={{ fontSize: '20px', color: '#fbbf24' }}>
+                      {formatMoney(
+                        (parseFloat(formNovaFatura.valorBruto.replace(',','.') || 0)) -
+                        (parseFloat(formNovaFatura.valorGlosa.replace(',','.') || 0)) -
+                        (parseFloat(formNovaFatura.valorImpostos.replace(',','.') || 0))
+                      )}
+                    </strong>
+                  </div>
+                  <button type="submit" style={{ padding: '12px 24px', background: 'linear-gradient(135deg, #f59e0b, #d97706)', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '14px', fontWeight: 800, cursor: 'pointer', boxShadow: '0 4px 14px rgba(245, 158, 11, 0.4)' }}>
+                    Cadastrar Fatura e Enviar p/ Fila
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
+
+          {/* CONTEÚDO: FILA DE RECEBIMENTO & HISTÓRICO */}
+          {(subTabFaturamento === 'fila' || subTabFaturamento === 'recebidas') && (
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', textAlign: 'left' }}>
+                <thead>
+                  <tr style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.1)', color: '#94a3b8', fontSize: '10px', textTransform: 'uppercase' }}>
+                    <th style={{ padding: '12px' }}>NFe</th>
+                    <th style={{ padding: '12px' }}>Cliente</th>
+                    <th style={{ padding: '12px' }}>Previsão</th>
+                    <th style={{ padding: '12px', textAlign: 'right' }}>Valor NFe</th>
+                    <th style={{ padding: '12px', textAlign: 'right' }}>Descontos</th>
+                    <th style={{ padding: '12px', textAlign: 'right', color: '#fbbf24' }}>A Receber</th>
+                    {subTabFaturamento === 'recebidas' && <th style={{ padding: '12px' }}>Recebido Em / Banco</th>}
+                    <th style={{ padding: '12px', textAlign: 'center' }}>Ações</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {faturas.filter(f => subTabFaturamento === 'fila' ? f.status === 'pendente' : f.status === 'recebida').length === 0 ? (
+                    <tr><td colSpan={8} style={{ padding: '32px', textAlign: 'center', color: '#64748b' }}>Nenhuma fatura nesta lista.</td></tr>
+                  ) : (
+                    faturas.filter(f => subTabFaturamento === 'fila' ? f.status === 'pendente' : f.status === 'recebida').map((fat, idx) => (
+                      <tr key={fat.id} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.04)', background: idx % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.01)' }}>
+                        <td style={{ padding: '12px', color: '#cbd5e1', fontWeight: 700 }}>#{fat.numeroNota}</td>
+                        <td style={{ padding: '12px', color: '#f8fafc', fontWeight: 600 }}>{fat.cliente}</td>
+                        <td style={{ padding: '12px', color: fat.status === 'pendente' && new Date(fat.dataPrevista) < new Date() ? '#ef4444' : '#94a3b8' }}>
+                          {formatDate(fat.dataPrevista)}
+                        </td>
+                        <td style={{ padding: '12px', textAlign: 'right', color: '#94a3b8' }}>{formatMoney(fat.valorBruto)}</td>
+                        <td style={{ padding: '12px', textAlign: 'right', color: '#ef4444' }}>
+                          {fat.valorGlosa + fat.valorImpostos > 0 ? `-${formatMoney(fat.valorGlosa + fat.valorImpostos)}` : '-'}
+                        </td>
+                        <td style={{ padding: '12px', textAlign: 'right', fontWeight: 800, color: '#fbbf24', fontSize: '14px' }}>
+                          {formatMoney(fat.valorReceber)}
+                        </td>
+                        {subTabFaturamento === 'recebidas' && (
+                          <td style={{ padding: '12px' }}>
+                            <span style={{ display: 'block', color: '#34d399', fontWeight: 700 }}>{formatDate(fat.dataRecebimento)}</span>
+                            <span style={{ fontSize: '10px', color: '#94a3b8' }}>
+                              {bancosComSaldo.find(b => b.id === fat.bancoRecebimentoId)?.nome || 'Banco Excluído'}
+                            </span>
+                          </td>
+                        )}
+                        <td style={{ padding: '12px', textAlign: 'center' }}>
+                          <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                            {fat.status === 'pendente' && (
+                              <button
+                                onClick={() => setModalRecebimentoFatura({ id: fat.id, valorRecebido: fat.valorReceber.toFixed(2).replace('.', ','), bancoDestino: bancosComSaldo[0]?.id || '' })}
+                                title="Registrar Recebimento"
+                                style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#34d399', border: 'none', padding: '6px 10px', borderRadius: '6px', cursor: 'pointer', fontWeight: 700, fontSize: '11px', display: 'flex', alignItems: 'center', gap: '4px' }}
+                              >
+                                <CheckCircle2 size={14} /> Receber
+                              </button>
+                            )}
+                            {currentUser?.role === 'MASTER' && (
+                              <button
+                                onClick={() => handleDeleteFatura(fat.id)}
+                                title="Excluir Fatura"
+                                style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '4px' }}
+                              >
+                                <Trash2 size={16} color="#ef4444" />
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
+
         </div>
       )}
 
