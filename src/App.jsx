@@ -862,7 +862,7 @@ const App = () => {
     Papa.parse(file, {
       header: true,
       skipEmptyLines: true,
-      complete: function(results) {
+      complete: async function(results) {
         const data = results.data;
         if (!data || data.length === 0) return alert("Planilha vazia.");
         const firstRowKeys = Object.keys(data[0]);
@@ -924,13 +924,69 @@ const App = () => {
             codhosp: getField(row, 'codhosp'), nomehosp: getField(row, 'nomehosp'), crm: getField(row, 'crm'), nomemedi: getField(row, 'nomemedi')
           }), true);
         } else if (sheetType === 'frota') {
-          setActiveMenu('frota');
-          const mapped = data.map(row => ({
-            placa: getField(row, 'placa'), data: getField(row, 'data'), motorista: getField(row, 'motorista'), produto: getField(row, 'produto'),
-            distancia: parseFloatBR(getField(row, 'distancia')), consumo: parseFloatBR(getField(row, 'consumo')), valor_total: getFrotaValor(row)
-          }));
-          uploadToSupabase('frota', mapped, row => row, false);
-        } else alert("Planilha não reconhecida.");
+            setActiveMenu('frota');
+            const getFlex = (r, possibleKeys) => {
+              const firstRowKeys = Object.keys(r);
+              for (const pk of possibleKeys) {
+                const k1 = firstRowKeys.find(k => k.toLowerCase().trim() === pk.toLowerCase());
+                if (k1 && r[k1]) return r[k1];
+                const incKey = firstRowKeys.find(k => k.toLowerCase().includes(pk.toLowerCase()));
+                if (incKey && r[incKey]) return r[incKey];
+              }
+              return '';
+            };
+            const mapped = data.map(row => ({
+              placa: getFlex(row, ['placa', 'veículo', 'veiculo', 'carro']),
+              data: getFlex(row, ['data', 'emissão', 'emissao']),
+              motorista: getFlex(row, ['motorista', 'condutor', 'funcionario']),
+              produto: getFlex(row, ['produto', 'combustivel', 'combustível']),
+              distancia: parseFloatBR(getFlex(row, ['distancia', 'distância', 'km', 'odometro', 'odômetro'])),
+              consumo: parseFloatBR(getFlex(row, ['consumo', 'litros', 'qtde', 'quantidade'])),
+              valor_total: getFrotaValor(row) || parseFloatBR(getFlex(row, ['valor', 'total', 'quantia']))
+            }));
+
+            setIsSyncing(true);
+            setSyncStatus('Limpando meses repetidos na frota...');
+
+            try {
+                const monthsToClear = new Set();
+                for (const row of mapped) {
+                    if (row.data) {
+                        const parsed = parseDateBR(row.data);
+                        if (parsed) {
+                            const y = parsed.getFullYear();
+                            const m = String(parsed.getMonth() + 1).padStart(2, '0');
+                            monthsToClear.add(`${y}-${m}`);
+                        }
+                    }
+                }
+                
+                const idsToDelete = [];
+                for (const item of rawFrota) {
+                    if (item.data) {
+                        const parsed = parseDateBR(item.data);
+                        if (parsed) {
+                            const y = parsed.getFullYear();
+                            const m = String(parsed.getMonth() + 1).padStart(2, '0');
+                            if (monthsToClear.has(`${y}-${m}`)) {
+                                idsToDelete.push(item.id);
+                            }
+                        }
+                    }
+                }
+                
+                // Excluir em lotes de 200
+                const BATCH_DEL = 200;
+                for (let i = 0; i < idsToDelete.length; i += BATCH_DEL) {
+                    const batchIds = idsToDelete.slice(i, i + BATCH_DEL);
+                    await supabase.from('frota').delete().in('id', batchIds);
+                }
+            } catch (err) {
+                console.error("Error clearing old frota months:", err);
+            }
+
+            uploadToSupabase('frota', mapped, row => row, false);
+          } else alert("Planilha não reconhecida.");
       }
     });
   };
