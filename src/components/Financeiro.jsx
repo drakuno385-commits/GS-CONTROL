@@ -1455,7 +1455,7 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
     return {
       meses: listaMeses,
       empresas: Object.values(mapEmpresa),
-      departamentos: Object.values(mapDepto).filter(d => d.total > 0)
+      departamentos: Object.values(mapDepto).filter(d => d.total > 0).sort((a, b) => a.departamento.localeCompare(b.departamento, undefined, { numeric: true }))
     };
   }, [despesas, departamentos]);
 
@@ -2294,7 +2294,7 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
                   onChange={(e) => setFormNovaDespesa({ ...formNovaDespesa, departamento: e.target.value })}
                   style={{ width: '100%', padding: '10px 14px', background: '#0f172a', border: '1px solid #334155', borderRadius: '8px', color: '#fff', fontSize: '13px' }}
                 >
-                  {[...departamentos].sort().map(dep => <option key={dep} value={dep}>{dep}</option>)}
+                  {[...departamentos].sort((a, b) => a.localeCompare(b, undefined, { numeric: true })).map(dep => <option key={dep} value={dep}>{dep}</option>)}
                 </select>
                 <button
                   type="button"
@@ -2608,7 +2608,7 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
                 style={{ padding: '8px 12px', background: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '8px', color: '#f8fafc', fontSize: '12px' }}
               >
                 <option value="">Todos os Deptos</option>
-                {[...departamentos].sort().map(d => <option key={d} value={d}>{d}</option>)}
+                {[...departamentos].sort((a, b) => a.localeCompare(b, undefined, { numeric: true })).map(d => <option key={d} value={d}>{d}</option>)}
               </select>
 
               {/* Filtro Forma de Pagamento */}
@@ -3328,7 +3328,7 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
                     style={{ padding: '8px 12px', background: '#0f172a', border: '1px solid #334155', borderRadius: '8px', color: '#fff', fontSize: '12px' }}
                   >
                     <option value="">Todos os Deptos</option>
-                    {[...departamentos].sort().map(d => <option key={d} value={d}>{d}</option>)}
+                    {[...departamentos].sort((a, b) => a.localeCompare(b, undefined, { numeric: true })).map(d => <option key={d} value={d}>{d}</option>)}
                   </select>
 
                   {/* Filtro Banco */}
@@ -4360,7 +4360,7 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
                     onChange={(e) => setModalEditarDespesa({ ...modalEditarDespesa, departamento: e.target.value })}
                     style={{ width: '100%', padding: '10px 12px', background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', color: '#fff', fontSize: '13px' }}
                   >
-                    {[...departamentos].sort().map(dep => <option key={dep} value={dep}>{dep}</option>)}
+                    {[...departamentos].sort((a, b) => a.localeCompare(b, undefined, { numeric: true })).map(dep => <option key={dep} value={dep}>{dep}</option>)}
                   </select>
                   <button
                     type="button"
