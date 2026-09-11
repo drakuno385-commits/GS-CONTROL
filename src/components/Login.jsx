@@ -124,9 +124,15 @@ export default function Login({ onLoginSuccess }) {
         position: 'relative',
         backgroundImage: 'url("/bg-left.jpg")',
         backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        borderRight: '1px solid rgba(59, 130, 246, 0.1)'
+        backgroundPosition: 'center'
       }}>
+        {/* Gradiente de transição suave na borda direita do mapa */}
+        <div style={{
+          position: 'absolute',
+          top: 0, right: 0, bottom: 0, width: '250px',
+          background: 'linear-gradient(to right, rgba(11, 17, 32, 0) 0%, rgba(11, 17, 32, 1) 100%)',
+          pointerEvents: 'none'
+        }}></div>
       </div>
 
       {/* Lado Direito - Painel de Login com Fundo de Cidade */}
@@ -141,6 +147,14 @@ export default function Login({ onLoginSuccess }) {
         backgroundSize: 'cover',
         backgroundPosition: 'center'
       }}>
+        {/* Gradiente de transição suave na borda esquerda da cidade */}
+        <div style={{
+          position: 'absolute',
+          top: 0, left: 0, bottom: 0, width: '250px',
+          background: 'linear-gradient(to left, rgba(11, 17, 32, 0) 0%, rgba(11, 17, 32, 1) 100%)',
+          pointerEvents: 'none',
+          zIndex: 1
+        }}></div>
 
         {/* Fundo Translúcido Glassmorphism Escuro */}
         <div style={{
