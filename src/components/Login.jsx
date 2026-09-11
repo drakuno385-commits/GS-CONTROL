@@ -115,9 +115,9 @@ export default function Login({ onLoginSuccess }) {
   };
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', width: '100vw', background: '#0b1120', overflow: 'hidden', fontFamily: "'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" }}>
+    <div style={{ display: 'flex', minHeight: '100vh', width: '100vw', background: '#0b1120', overflow: 'hidden', fontFamily: "'Outfit', 'Segoe UI', Roboto, sans-serif" }}>
       
-      {/* Lado Esquerdo - Cyber Radar Globe EXATO */}
+      {/* Lado Esquerdo */}
       <div style={{ 
         flex: 1, 
         display: window.innerWidth > 768 ? 'block' : 'none',
@@ -129,7 +129,7 @@ export default function Login({ onLoginSuccess }) {
       }}>
       </div>
 
-      {/* Lado Direito - Painel de Login com Fundo de Cidade EXATO */}
+      {/* Lado Direito */}
       <div style={{ 
         width: window.innerWidth > 768 ? '50%' : '100%', 
         display: 'flex', 
@@ -137,22 +137,21 @@ export default function Login({ onLoginSuccess }) {
         justifyContent: 'center',
         position: 'relative',
         zIndex: 10,
-        backgroundImage: 'url("/bg-right.jpg")',
+        backgroundImage: 'url("/bg-right-clean.jpg")',
         backgroundSize: 'cover',
         backgroundPosition: 'center'
       }}>
 
-        {/* Form HTML overlay that covers the baked-in form */}
         <div style={{
           width: '80%',
           maxWidth: '450px',
-          background: 'rgba(25, 33, 48, 0.95)', // Forte o suficiente para tapar o fake form
-          backdropFilter: 'blur(20px)',
-          WebkitBackdropFilter: 'blur(20px)',
+          background: 'rgba(255, 255, 255, 0.03)',
+          backdropFilter: 'blur(30px)',
+          WebkitBackdropFilter: 'blur(30px)',
           borderRadius: '24px',
           padding: '48px 40px',
-          border: '1px solid rgba(255, 255, 255, 0.15)',
-          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.8)',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(255,255,255,0.02)',
           position: 'relative',
           zIndex: 20
         }}>
@@ -183,7 +182,7 @@ export default function Login({ onLoginSuccess }) {
                     placeholder="Your Email"
                     style={{ 
                       width: '100%', padding: '16px 20px', 
-                      background: '#111827', 
+                      background: 'rgba(15, 23, 42, 0.6)', 
                       border: '1px solid #3b82f6', 
                       borderRadius: '12px', color: '#f8fafc', 
                       outline: 'none', fontSize: '16px', textTransform: 'uppercase',
@@ -205,8 +204,8 @@ export default function Login({ onLoginSuccess }) {
                     placeholder="••••••••"
                     style={{ 
                       width: '100%', padding: '16px 20px', 
-                      background: '#111827', 
-                      border: '1px solid #1e293b', 
+                      background: 'rgba(15, 23, 42, 0.6)', 
+                      border: '1px solid rgba(255,255,255,0.1)', 
                       borderRadius: '12px', color: '#f8fafc', 
                       outline: 'none', fontSize: '16px',
                       transition: 'all 0.3s ease'
@@ -251,7 +250,7 @@ export default function Login({ onLoginSuccess }) {
                     placeholder="Minimo 6 caracteres"
                     style={{ 
                       width: '100%', padding: '16px 20px', 
-                      background: '#111827', 
+                      background: 'rgba(15, 23, 42, 0.6)', 
                       border: '1px solid #3b82f6', 
                       borderRadius: '12px', color: '#f8fafc', 
                       outline: 'none', fontSize: '16px'
