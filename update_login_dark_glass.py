@@ -1,165 +1,13 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { supabase } from '../supabaseClient';
-import Globe from 'react-globe.gl';
+﻿import re
+FILE_PATH = 'C:/Users/User/.gemini/antigravity/scratch/acoweb/src/components/Login.jsx'
 
-// Componente do Globo 3D
-const GlobeContainer = () => {
-  const globeRef = useRef();
-  const [dimensions, setDimensions] = useState({ width: window.innerWidth / 2, height: window.innerHeight });
+with open(FILE_PATH, 'r', encoding='utf-8') as f:
+    content = f.read()
 
-  useEffect(() => {
-    const handleResize = () => setDimensions({ width: window.innerWidth / 2, height: window.innerHeight });
-    window.addEventListener('resize', handleResize);
-    
-    if (globeRef.current) {
-      globeRef.current.controls().autoRotate = true;
-      globeRef.current.controls().autoRotateSpeed = 1.0;
-      globeRef.current.controls().enableZoom = false;
-      globeRef.current.pointOfView({ altitude: 2.2 });
-    }
+index = content.rfind("  return (")
+logic_part = content[:index]
 
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  const arcsData = [
-    { startLat: 40.7128, startLng: -74.0060, endLat: 51.5074, endLng: -0.1278, color: '#3b82f6' },
-    { startLat: -23.5505, startLng: -46.6333, endLat: 40.7128, endLng: -74.0060, color: '#60a5fa' },
-    { startLat: 35.6762, startLng: 139.6503, endLat: -23.5505, endLng: -46.6333, color: '#3b82f6' },
-    { startLat: 48.8566, startLng: 2.3522, endLat: 35.6762, endLng: 139.6503, color: '#93c5fd' },
-    { startLat: 51.5074, startLng: -0.1278, endLat: 1.3521, endLng: 103.8198, color: '#3b82f6' }
-  ];
-
-  return (
-    <Globe
-      ref={globeRef}
-      width={dimensions.width}
-      height={dimensions.height}
-      backgroundColor="rgba(0,0,0,0)"
-      globeImageUrl="//unpkg.com/three-globe/example/img/earth-dark.jpg"
-      arcsData={arcsData}
-      arcColor="color"
-      arcDashLength={0.4}
-      arcDashGap={0.2}
-      arcDashAnimateTime={1500}
-      arcsTransitionDuration={1000}
-      arcStroke={1.5}
-    />
-  );
-};
-
-export default function Login({ onLoginSuccess }) {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  
-  const [needsNewPass, setNeedsNewPass] = useState(false);
-  const [newPassword, setNewPassword] = useState('');
-  const [userDoc, setUserDoc] = useState(null);
-  
-  const [deferredPrompt, setDeferredPrompt] = useState(null);
-  
-  React.useEffect(() => {
-    const handler = (e) => {
-      e.preventDefault();
-      setDeferredPrompt(e);
-    };
-    window.addEventListener('beforeinstallprompt', handler);
-    return () => window.removeEventListener('beforeinstallprompt', handler);
-  }, []);
-  
-  const handleInstallClick = async () => {
-    if (!deferredPrompt) return;
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    if (outcome === 'accepted') {
-      setDeferredPrompt(null);
-    }
-  };
-
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    setError('');
-    setLoading(true);
-
-    try {
-      const identifier = `${username.replace(/\s+/g, '')}@acoweb.sistema`;
-      
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-        email: identifier,
-        password: password
-      });
-
-      if (authError || !authData.user) {
-        setError('Usuário ou senha incorretos.');
-        setLoading(false);
-        return;
-      }
-
-      // Buscar os dados do usuário (role, primeiro_acesso) na tabela
-      const { data, error } = await supabase
-        .from('app_usuarios')
-        .select('*').limit(10000)
-        .eq('id', authData.user.id)
-        .single();
-
-      if (error || !data) {
-        setError('Erro ao recuperar perfil do usuário.');
-        setLoading(false);
-        return;
-      }
-
-      if (data.primeiro_acesso) {
-        setUserDoc(data);
-        setNeedsNewPass(true);
-        setLoading(false);
-        return;
-      }
-
-      onLoginSuccess(data);
-    } catch (err) {
-      setError('Erro ao conectar com servidor.');
-      setLoading(false);
-    }
-  };
-
-  const handleChangePassword = async (e) => {
-    e.preventDefault();
-    if (newPassword.length < 6) {
-      setError('A nova senha deve ter no mínimo 6 caracteres.');
-      return;
-    }
-    
-    setLoading(true);
-    try {
-      // Atualiza a senha no Supabase Auth
-      const { error: authError } = await supabase.auth.updateUser({
-        password: newPassword
-      });
-
-      if (authError) {
-        setError('Erro ao atualizar a senha de autenticação.');
-        setLoading(false);
-        return;
-      }
-
-      // Atualiza o status de primeiro_acesso na tabela através de RPC para contornar RLS
-      const { data, error } = await supabase.rpc('confirm_first_access');
-
-      if (error) {
-        setError('Erro ao atualizar status do usuário.');
-        setLoading(false);
-        return;
-      }
-
-      onLoginSuccess({...userDoc, primeiro_acesso: false});
-    } catch (err) {
-      setError('Erro ao conectar.');
-      setLoading(false);
-    }
-  };
-
-  return (
+new_jsx = """  return (
     <div style={{ display: 'flex', minHeight: '100vh', width: '100vw', background: '#0b1120', overflow: 'hidden', fontFamily: "'Outfit', 'Segoe UI', Roboto, sans-serif" }}>
       
       {/* Lado Esquerdo - Cyber Radar Globe EXATO */}
@@ -167,21 +15,11 @@ export default function Login({ onLoginSuccess }) {
         flex: 1, 
         display: window.innerWidth > 768 ? 'block' : 'none',
         position: 'relative',
-        overflow: 'hidden',
-        background: '#040b16'
+        backgroundImage: 'url("/bg-left.jpg")',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        borderRight: '1px solid rgba(59, 130, 246, 0.1)'
       }}>
-        {/* Globo 3D Gerado por Código (Sem controles, 100% nítido) */}
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, opacity: 0.9 }}>
-           <GlobeContainer />
-        </div>
-
-        {/* Gradiente de transição suave na borda direita do vídeo */}
-        <div style={{
-          position: 'absolute',
-          top: 0, right: 0, bottom: 0, width: '250px',
-          background: 'linear-gradient(to right, rgba(11, 17, 32, 0) 0%, rgba(11, 17, 32, 1) 100%)',
-          pointerEvents: 'none'
-        }}></div>
       </div>
 
       {/* Lado Direito - Painel de Login com Fundo de Cidade */}
@@ -196,14 +34,6 @@ export default function Login({ onLoginSuccess }) {
         backgroundSize: 'cover',
         backgroundPosition: 'center'
       }}>
-        {/* Gradiente de transição suave na borda esquerda da cidade */}
-        <div style={{
-          position: 'absolute',
-          top: 0, left: 0, bottom: 0, width: '250px',
-          background: 'linear-gradient(to left, rgba(11, 17, 32, 0) 0%, rgba(11, 17, 32, 1) 100%)',
-          pointerEvents: 'none',
-          zIndex: 1
-        }}></div>
 
         {/* Fundo Translúcido Glassmorphism Escuro */}
         <div style={{
@@ -237,13 +67,13 @@ export default function Login({ onLoginSuccess }) {
           {!needsNewPass ? (
             <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
               <div>
-                <label style={{ display: 'block', marginBottom: '10px', color: '#ffffff', fontSize: '15px', fontWeight: 500, letterSpacing: '0.3px', textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}>Usuário</label>
+                <label style={{ display: 'block', marginBottom: '10px', color: '#ffffff', fontSize: '15px', fontWeight: 500, letterSpacing: '0.3px', textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}>Username</label>
                 <div style={{ position: 'relative' }}>
                   <input 
                     type="text" 
                     value={username} 
                     onChange={(e) => setUsername(e.target.value.toUpperCase())}
-                    placeholder="Seu e-mail"
+                    placeholder="Your Email"
                     style={{ 
                       width: '100%', padding: '15px 18px', 
                       background: 'rgba(15, 23, 38, 0.7)', 
@@ -262,7 +92,7 @@ export default function Login({ onLoginSuccess }) {
               </div>
               
               <div>
-                <label style={{ display: 'block', marginBottom: '10px', color: '#ffffff', fontSize: '15px', fontWeight: 500, letterSpacing: '0.3px', textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}>Senha</label>
+                <label style={{ display: 'block', marginBottom: '10px', color: '#ffffff', fontSize: '15px', fontWeight: 500, letterSpacing: '0.3px', textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}>Password</label>
                 <div style={{ position: 'relative' }}>
                   <input 
                     type="password" 
@@ -355,8 +185,8 @@ export default function Login({ onLoginSuccess }) {
           )}
 
           <div style={{ textAlign: 'center', marginTop: '36px', color: '#e2e8f0', fontSize: '15px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px', fontWeight: 400 }}>
-            <span style={{ cursor: 'pointer', transition: 'color 0.2s', textShadow: '0 1px 2px rgba(0,0,0,0.5)' }} onMouseOver={(e) => e.target.style.color='#ffffff'} onMouseOut={(e) => e.target.style.color='#e2e8f0'}>Esqueceu a senha?</span>
-            <span style={{ cursor: 'pointer', transition: 'color 0.2s', textShadow: '0 1px 2px rgba(0,0,0,0.5)' }} onMouseOver={(e) => e.target.style.color='#ffffff'} onMouseOut={(e) => e.target.style.color='#e2e8f0'}>Cadastre-se agora</span>
+            <span style={{ cursor: 'pointer', transition: 'color 0.2s', textShadow: '0 1px 2px rgba(0,0,0,0.5)' }} onMouseOver={(e) => e.target.style.color='#ffffff'} onMouseOut={(e) => e.target.style.color='#e2e8f0'}>Forgot Password?</span>
+            <span style={{ cursor: 'pointer', transition: 'color 0.2s', textShadow: '0 1px 2px rgba(0,0,0,0.5)' }} onMouseOver={(e) => e.target.style.color='#ffffff'} onMouseOut={(e) => e.target.style.color='#e2e8f0'}>Sign Up Now</span>
           </div>
 
         </div>
@@ -365,3 +195,9 @@ export default function Login({ onLoginSuccess }) {
     </div>
   );
 }
+"""
+
+with open(FILE_PATH, 'w', encoding='utf-8') as f:
+    f.write(logic_part + new_jsx)
+
+print("Login updated to perfectly match dark glassmorphism.")

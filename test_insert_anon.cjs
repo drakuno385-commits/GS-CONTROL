@@ -1,18 +1,18 @@
 ﻿const { createClient } = require('@supabase/supabase-js');
 const supabase = createClient('https://nrppkksgtmtfodmefgim.supabase.co', 'sb_publishable_u67N88FRnfSCoTEDaJB3tw_3bWwwzCq');
 
-async function testInsert() {
+async function doInsert() {
   const payload = {
     id: `b_${Date.now()}`,
-    nome: "TESTE",
+    nome: "BANCO DO BRASIL (TESTE)",
     empresa: "AÇOFORTE",
-    agencia: "0001",
-    conta: "00000-0",
-    saldo_inicial: 100,
-    saldo_atual: 100,
-    cor: "#38bdf8"
+    agencia: "1234",
+    conta: "5678-9",
+    saldo_inicial: 500,
+    saldo_atual: 500,
+    cor: "#000000"
   };
   const { data, error } = await supabase.from('financeiro_bancos_saldos').insert([payload]);
-  console.log("Insert result:", data, "Error:", error);
+  console.log("Insert API result:", data, "Error:", error);
 }
-testInsert();
+doInsert();
