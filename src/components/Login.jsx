@@ -115,9 +115,9 @@ export default function Login({ onLoginSuccess }) {
   };
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', width: '100vw', background: '#0b1120', overflow: 'hidden', fontFamily: "'Outfit', 'Segoe UI', Roboto, sans-serif" }}>
+    <div style={{ display: 'flex', minHeight: '100vh', width: '100vw', background: '#0b1120', overflow: 'hidden', fontFamily: "'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" }}>
       
-      {/* Lado Esquerdo */}
+      {/* Lado Esquerdo - Cyber Radar Globe EXATO */}
       <div style={{ 
         flex: 1, 
         display: window.innerWidth > 768 ? 'block' : 'none',
@@ -129,7 +129,7 @@ export default function Login({ onLoginSuccess }) {
       }}>
       </div>
 
-      {/* Lado Direito */}
+      {/* Lado Direito - Painel de Login com Fundo de Cidade EXATO */}
       <div style={{ 
         width: window.innerWidth > 768 ? '50%' : '100%', 
         display: 'flex', 
@@ -143,29 +143,32 @@ export default function Login({ onLoginSuccess }) {
       }}>
 
         <div style={{
-          width: '80%',
-          maxWidth: '450px',
-          background: 'rgba(255, 255, 255, 0.03)',
-          backdropFilter: 'blur(30px)',
-          WebkitBackdropFilter: 'blur(30px)',
-          borderRadius: '24px',
+          width: '85%',
+          maxWidth: '460px',
+          background: 'rgba(235, 235, 235, 0.95)', 
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+          borderRadius: '16px',
           padding: '48px 40px',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
-          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(255,255,255,0.02)',
+          border: '1px solid rgba(255, 255, 255, 0.5)',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.3)',
           position: 'relative',
           zIndex: 20
         }}>
           
           <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-            <h2 style={{ fontSize: '28px', fontWeight: 800, color: '#ffffff', letterSpacing: '1px', marginBottom: '4px' }}>GSOLIMPIO</h2>
-            <h1 style={{ fontSize: '42px', fontWeight: 800, color: '#4ba0fa', margin: 0 }}>
-              GS-<span style={{ color: '#4ba0fa' }}>Control</span>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '8px' }}>
+              <div style={{ background: '#0d6efd', borderRadius: '50%', width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 'bold', fontSize: '12px' }}>GS</div>
+              <h2 style={{ fontSize: '24px', fontWeight: 700, color: '#1a1a1a', letterSpacing: '0.5px', margin: 0 }}>GSOLIMPIO</h2>
+            </div>
+            <h1 style={{ fontSize: '32px', fontWeight: 600, color: '#1a1a1a', margin: 0 }}>
+              GS-Control
             </h1>
-            <p style={{ color: '#e2e8f0', fontSize: '15px', marginTop: '8px', fontWeight: 400 }}>Enterprise Control Panel</p>
+            <p style={{ color: '#4a4a4a', fontSize: '15px', marginTop: '8px', fontWeight: 400 }}>Enterprise Control Panel</p>
           </div>
 
           {error && (
-            <div style={{ background: 'rgba(239, 68, 68, 0.2)', color: '#fca5a5', padding: '12px', borderRadius: '8px', marginBottom: '24px', fontSize: '14px', border: '1px solid rgba(239, 68, 68, 0.3)', textAlign: 'center' }}>
+            <div style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', padding: '12px', borderRadius: '8px', marginBottom: '24px', fontSize: '14px', border: '1px solid rgba(239, 68, 68, 0.2)', textAlign: 'center' }}>
               {error}
             </div>
           )}
@@ -173,7 +176,7 @@ export default function Login({ onLoginSuccess }) {
           {!needsNewPass ? (
             <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
               <div>
-                <label style={{ display: 'block', marginBottom: '8px', color: '#f8fafc', fontSize: '16px', fontWeight: 500 }}>Username</label>
+                <label style={{ display: 'block', marginBottom: '8px', color: '#1a1a1a', fontSize: '14px', fontWeight: 500 }}>Username</label>
                 <div style={{ position: 'relative' }}>
                   <input 
                     type="text" 
@@ -181,41 +184,40 @@ export default function Login({ onLoginSuccess }) {
                     onChange={(e) => setUsername(e.target.value.toUpperCase())}
                     placeholder="Your Email"
                     style={{ 
-                      width: '100%', padding: '16px 20px', 
-                      background: 'rgba(15, 23, 42, 0.6)', 
-                      border: '1px solid #3b82f6', 
-                      borderRadius: '12px', color: '#f8fafc', 
-                      outline: 'none', fontSize: '16px', textTransform: 'uppercase',
-                      transition: 'all 0.3s ease',
-                      boxShadow: '0 0 15px rgba(59,130,246,0.3)'
+                      width: '100%', padding: '14px 16px', 
+                      background: '#ffffff', 
+                      border: '1px solid #d1d5db', 
+                      borderRadius: '8px', color: '#1a1a1a', 
+                      outline: 'none', fontSize: '15px', textTransform: 'uppercase',
+                      transition: 'all 0.3s ease'
                     }}
+                    onFocus={(e) => { e.target.style.border = '1px solid #0d6efd'; e.target.style.boxShadow = '0 0 0 3px rgba(13, 110, 253, 0.15)'; }}
+                    onBlur={(e) => { e.target.style.border = '1px solid #d1d5db'; e.target.style.boxShadow = 'none'; }}
                     required
                   />
                 </div>
               </div>
               
               <div>
-                <label style={{ display: 'block', marginBottom: '8px', color: '#f8fafc', fontSize: '16px', fontWeight: 500 }}>Password</label>
+                <label style={{ display: 'block', marginBottom: '8px', color: '#1a1a1a', fontSize: '14px', fontWeight: 500 }}>Password</label>
                 <div style={{ position: 'relative' }}>
                   <input 
                     type="password" 
                     value={password} 
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
+                    placeholder="Password"
                     style={{ 
-                      width: '100%', padding: '16px 20px', 
-                      background: 'rgba(15, 23, 42, 0.6)', 
-                      border: '1px solid rgba(255,255,255,0.1)', 
-                      borderRadius: '12px', color: '#f8fafc', 
-                      outline: 'none', fontSize: '16px',
+                      width: '100%', padding: '14px 16px', 
+                      background: '#ffffff', 
+                      border: '1px solid #d1d5db', 
+                      borderRadius: '8px', color: '#1a1a1a', 
+                      outline: 'none', fontSize: '15px',
                       transition: 'all 0.3s ease'
                     }}
+                    onFocus={(e) => { e.target.style.border = '1px solid #0d6efd'; e.target.style.boxShadow = '0 0 0 3px rgba(13, 110, 253, 0.15)'; }}
+                    onBlur={(e) => { e.target.style.border = '1px solid #d1d5db'; e.target.style.boxShadow = 'none'; }}
                     required
                   />
-                  {/* Eye icon fake */}
-                  <div style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', color: '#3b82f6' }}>
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
-                  </div>
                 </div>
               </div>
 
@@ -223,25 +225,26 @@ export default function Login({ onLoginSuccess }) {
                 type="submit" 
                 disabled={loading}
                 style={{ 
-                  width: '100%', padding: '16px', marginTop: '8px',
-                  background: loading ? '#2563eb' : '#3b82f6', 
-                  color: '#ffffff', border: 'none', borderRadius: '12px', 
-                  fontWeight: 700, fontSize: '18px', cursor: loading ? 'not-allowed' : 'pointer',
+                  width: '100%', padding: '14px', marginTop: '8px',
+                  background: loading ? '#0b5ed7' : '#0d6efd', 
+                  color: '#ffffff', border: 'none', borderRadius: '8px', 
+                  fontWeight: 500, fontSize: '16px', cursor: loading ? 'not-allowed' : 'pointer',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  boxShadow: '0 4px 15px rgba(59, 130, 246, 0.4)',
                   transition: 'all 0.3s ease'
                 }}
+                onMouseOver={(e) => !loading && (e.target.style.background = '#0b5ed7')}
+                onMouseOut={(e) => !loading && (e.target.style.background = '#0d6efd')}
               >
                 {loading ? 'Autenticando...' : 'Entrar'}
               </button>
             </form>
           ) : (
             <form onSubmit={handleChangePassword} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              <div style={{ textAlign: 'center', color: '#cbd5e1', fontSize: '15px', marginBottom: '8px' }}>
+              <div style={{ textAlign: 'center', color: '#4a4a4a', fontSize: '14px', marginBottom: '8px' }}>
                 Primeiro acesso. Defina uma nova senha.
               </div>
               <div>
-                <label style={{ display: 'block', marginBottom: '8px', color: '#f8fafc', fontSize: '16px', fontWeight: 500 }}>Nova Senha</label>
+                <label style={{ display: 'block', marginBottom: '8px', color: '#1a1a1a', fontSize: '14px', fontWeight: 500 }}>Nova Senha</label>
                 <div style={{ position: 'relative' }}>
                   <input 
                     type="password" 
@@ -249,12 +252,14 @@ export default function Login({ onLoginSuccess }) {
                     onChange={(e) => setNewPassword(e.target.value)}
                     placeholder="Minimo 6 caracteres"
                     style={{ 
-                      width: '100%', padding: '16px 20px', 
-                      background: 'rgba(15, 23, 42, 0.6)', 
-                      border: '1px solid #3b82f6', 
-                      borderRadius: '12px', color: '#f8fafc', 
-                      outline: 'none', fontSize: '16px'
+                      width: '100%', padding: '14px 16px', 
+                      background: '#ffffff', 
+                      border: '1px solid #d1d5db', 
+                      borderRadius: '8px', color: '#1a1a1a', 
+                      outline: 'none', fontSize: '15px'
                     }}
+                    onFocus={(e) => { e.target.style.border = '1px solid #0d6efd'; e.target.style.boxShadow = '0 0 0 3px rgba(13, 110, 253, 0.15)'; }}
+                    onBlur={(e) => { e.target.style.border = '1px solid #d1d5db'; e.target.style.boxShadow = 'none'; }}
                     required 
                     minLength={6}
                   />
@@ -265,11 +270,10 @@ export default function Login({ onLoginSuccess }) {
                 type="submit" 
                 disabled={loading}
                 style={{ 
-                  width: '100%', padding: '16px', 
-                  background: loading ? '#059669' : '#10b981', 
-                  color: '#fff', border: 'none', borderRadius: '12px', 
-                  fontWeight: 700, fontSize: '18px', cursor: loading ? 'not-allowed' : 'pointer',
-                  boxShadow: '0 4px 15px rgba(16, 185, 129, 0.5)'
+                  width: '100%', padding: '14px', 
+                  background: loading ? '#157347' : '#198754', 
+                  color: '#fff', border: 'none', borderRadius: '8px', 
+                  fontWeight: 500, fontSize: '16px', cursor: loading ? 'not-allowed' : 'pointer',
                 }}
               >
                 {loading ? 'Salvando...' : 'Salvar Nova Senha'}
@@ -277,7 +281,7 @@ export default function Login({ onLoginSuccess }) {
             </form>
           )}
 
-          <div style={{ textAlign: 'center', marginTop: '32px', color: '#e2e8f0', fontSize: '16px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div style={{ textAlign: 'center', marginTop: '24px', color: '#6c757d', fontSize: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '24px' }}>
             <span style={{ cursor: 'pointer' }}>Forgot Password?</span>
             <span style={{ cursor: 'pointer' }}>Sign Up Now</span>
           </div>
