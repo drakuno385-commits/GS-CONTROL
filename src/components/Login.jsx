@@ -115,9 +115,9 @@ export default function Login({ onLoginSuccess }) {
   };
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', width: '100vw', background: '#0b1120', overflow: 'hidden', fontFamily: "'Inter', 'Segoe UI', Roboto, sans-serif" }}>
+    <div style={{ display: 'flex', minHeight: '100vh', width: '100vw', background: '#0b1120', overflow: 'hidden', fontFamily: "'Outfit', 'Segoe UI', Roboto, sans-serif" }}>
       
-      {/* Lado Esquerdo - Cyber Radar Globe */}
+      {/* Lado Esquerdo - Cyber Radar Globe EXATO */}
       <div style={{ 
         flex: 1, 
         display: window.innerWidth > 768 ? 'block' : 'none',
@@ -125,11 +125,11 @@ export default function Login({ onLoginSuccess }) {
         backgroundImage: 'url("/bg-left.jpg")',
         backgroundSize: 'cover',
         backgroundPosition: 'center',
-        borderRight: '1px solid rgba(255,255,255,0.05)'
+        borderRight: '1px solid rgba(59, 130, 246, 0.1)'
       }}>
       </div>
 
-      {/* Lado Direito - Fundo da Cidade */}
+      {/* Lado Direito - Painel de Login com Fundo de Cidade */}
       <div style={{ 
         width: window.innerWidth > 768 ? '50%' : '100%', 
         display: 'flex', 
@@ -142,66 +142,64 @@ export default function Login({ onLoginSuccess }) {
         backgroundPosition: 'center'
       }}>
 
-        {/* Formulario Melhorado (Corporate Clean) */}
+        {/* Fundo Translúcido Glassmorphism Escuro */}
         <div style={{
-          width: '85%',
-          maxWidth: '420px',
-          background: 'rgba(255, 255, 255, 0.98)', 
-          backdropFilter: 'blur(10px)',
-          WebkitBackdropFilter: 'blur(10px)',
+          width: '80%',
+          maxWidth: '440px',
+          background: 'rgba(20, 27, 45, 0.45)', 
+          backdropFilter: 'blur(24px)',
+          WebkitBackdropFilter: 'blur(24px)',
           borderRadius: '20px',
           padding: '48px 40px',
-          border: '1px solid rgba(255, 255, 255, 1)',
-          boxShadow: '0 20px 40px rgba(0, 0, 0, 0.15), 0 1px 5px rgba(0,0,0,0.05)',
+          border: '1px solid rgba(255, 255, 255, 0.15)',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.6), inset 0 0 20px rgba(255,255,255,0.02)',
           position: 'relative',
           zIndex: 20
         }}>
           
-          <div style={{ textAlign: 'center', marginBottom: '36px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', marginBottom: '12px' }}>
-              <div style={{ background: '#007BFF', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: '800', fontSize: '13px', boxShadow: '0 4px 10px rgba(0,123,255,0.3)' }}>GS</div>
-              <h2 style={{ fontSize: '24px', fontWeight: 800, color: '#111827', letterSpacing: '0.5px', margin: 0 }}>GSOLIMPIO</h2>
-            </div>
-            <h1 style={{ fontSize: '28px', fontWeight: 700, color: '#1f2937', margin: 0 }}>
+          <div style={{ textAlign: 'center', marginBottom: '40px' }}>
+            <h2 style={{ fontSize: '32px', fontWeight: 800, color: '#ffffff', letterSpacing: '0.5px', margin: '0 0 4px 0', textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>GSOLIMPIO</h2>
+            <h1 style={{ fontSize: '40px', fontWeight: 800, color: '#4ba0fa', margin: 0, textShadow: '0 2px 10px rgba(75, 160, 250, 0.3)' }}>
               GS-Control
             </h1>
-            <p style={{ color: '#6b7280', fontSize: '14px', marginTop: '6px', fontWeight: 500 }}>Enterprise Control Panel</p>
+            <p style={{ color: '#e2e8f0', fontSize: '15px', marginTop: '12px', fontWeight: 400, textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}>Enterprise Control Panel</p>
           </div>
 
           {error && (
-            <div style={{ background: '#fef2f2', color: '#ef4444', padding: '12px', borderRadius: '8px', marginBottom: '24px', fontSize: '14px', border: '1px solid #fecaca', textAlign: 'center' }}>
+            <div style={{ background: 'rgba(239, 68, 68, 0.2)', color: '#fca5a5', padding: '12px', borderRadius: '8px', marginBottom: '24px', fontSize: '14px', border: '1px solid rgba(239, 68, 68, 0.3)', textAlign: 'center' }}>
               {error}
             </div>
           )}
 
           {!needsNewPass ? (
-            <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '22px' }}>
+            <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
               <div>
-                <label style={{ display: 'block', marginBottom: '6px', color: '#374151', fontSize: '13px', fontWeight: 600, letterSpacing: '0.3px' }}>Username</label>
+                <label style={{ display: 'block', marginBottom: '10px', color: '#ffffff', fontSize: '15px', fontWeight: 500, letterSpacing: '0.3px', textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}>Username</label>
                 <div style={{ position: 'relative' }}>
                   <input 
                     type="text" 
                     value={username} 
                     onChange={(e) => setUsername(e.target.value.toUpperCase())}
-                    placeholder="YOUR EMAIL"
+                    placeholder="Your Email"
                     style={{ 
-                      width: '100%', padding: '14px 16px', 
-                      background: '#f9fafb', 
-                      border: '1px solid #e5e7eb', 
-                      borderRadius: '10px', color: '#111827', 
-                      outline: 'none', fontSize: '14px', textTransform: 'uppercase',
-                      transition: 'all 0.2s ease',
-                      fontWeight: 500
+                      width: '100%', padding: '15px 18px', 
+                      background: 'rgba(15, 23, 38, 0.7)', 
+                      border: '1px solid #4ba0fa', 
+                      borderRadius: '12px', color: '#ffffff', 
+                      outline: 'none', fontSize: '15px', textTransform: 'uppercase',
+                      transition: 'all 0.3s ease',
+                      boxShadow: '0 0 12px rgba(75, 160, 250, 0.25)',
+                      fontFamily: 'inherit'
                     }}
-                    onFocus={(e) => { e.target.style.background = '#ffffff'; e.target.style.border = '1px solid #007BFF'; e.target.style.boxShadow = '0 0 0 4px rgba(0, 123, 255, 0.1)'; }}
-                    onBlur={(e) => { e.target.style.background = '#f9fafb'; e.target.style.border = '1px solid #e5e7eb'; e.target.style.boxShadow = 'none'; }}
+                    onFocus={(e) => { e.target.style.boxShadow = '0 0 16px rgba(75, 160, 250, 0.5)'; }}
+                    onBlur={(e) => { e.target.style.boxShadow = '0 0 12px rgba(75, 160, 250, 0.25)'; }}
                     required
                   />
                 </div>
               </div>
               
               <div>
-                <label style={{ display: 'block', marginBottom: '6px', color: '#374151', fontSize: '13px', fontWeight: 600, letterSpacing: '0.3px' }}>Password</label>
+                <label style={{ display: 'block', marginBottom: '10px', color: '#ffffff', fontSize: '15px', fontWeight: 500, letterSpacing: '0.3px', textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}>Password</label>
                 <div style={{ position: 'relative' }}>
                   <input 
                     type="password" 
@@ -209,18 +207,22 @@ export default function Login({ onLoginSuccess }) {
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
                     style={{ 
-                      width: '100%', padding: '14px 16px', 
-                      background: '#f9fafb', 
-                      border: '1px solid #e5e7eb', 
-                      borderRadius: '10px', color: '#111827', 
-                      outline: 'none', fontSize: '14px',
-                      transition: 'all 0.2s ease',
-                      fontWeight: 500
+                      width: '100%', padding: '15px 18px', 
+                      background: 'rgba(15, 23, 38, 0.7)', 
+                      border: '1px solid rgba(255,255,255,0.08)', 
+                      borderRadius: '12px', color: '#ffffff', 
+                      outline: 'none', fontSize: '15px',
+                      transition: 'all 0.3s ease',
+                      fontFamily: 'inherit'
                     }}
-                    onFocus={(e) => { e.target.style.background = '#ffffff'; e.target.style.border = '1px solid #007BFF'; e.target.style.boxShadow = '0 0 0 4px rgba(0, 123, 255, 0.1)'; }}
-                    onBlur={(e) => { e.target.style.background = '#f9fafb'; e.target.style.border = '1px solid #e5e7eb'; e.target.style.boxShadow = 'none'; }}
+                    onFocus={(e) => { e.target.style.border = '1px solid #4ba0fa'; e.target.style.boxShadow = '0 0 16px rgba(75, 160, 250, 0.5)'; }}
+                    onBlur={(e) => { e.target.style.border = '1px solid rgba(255,255,255,0.08)'; e.target.style.boxShadow = 'none'; }}
                     required
                   />
+                  {/* Eye icon fake */}
+                  <div style={{ position: 'absolute', right: '18px', top: '50%', transform: 'translateY(-50%)', color: '#4ba0fa', pointerEvents: 'none' }}>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                  </div>
                 </div>
               </div>
 
@@ -228,27 +230,28 @@ export default function Login({ onLoginSuccess }) {
                 type="submit" 
                 disabled={loading}
                 style={{ 
-                  width: '100%', padding: '15px', marginTop: '6px',
-                  background: loading ? '#2563eb' : '#007BFF', 
-                  color: '#ffffff', border: 'none', borderRadius: '10px', 
-                  fontWeight: 600, fontSize: '15px', cursor: loading ? 'not-allowed' : 'pointer',
+                  width: '100%', padding: '16px', marginTop: '12px',
+                  background: loading ? '#2563eb' : '#4ba0fa', 
+                  color: '#ffffff', border: 'none', borderRadius: '12px', 
+                  fontWeight: 700, fontSize: '18px', cursor: loading ? 'not-allowed' : 'pointer',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  transition: 'all 0.2s ease',
-                  boxShadow: '0 4px 12px rgba(0, 123, 255, 0.25)'
+                  boxShadow: '0 4px 15px rgba(75, 160, 250, 0.3)',
+                  transition: 'all 0.3s ease',
+                  fontFamily: 'inherit'
                 }}
-                onMouseOver={(e) => !loading && (e.target.style.transform = 'translateY(-1px)', e.target.style.boxShadow = '0 6px 16px rgba(0, 123, 255, 0.3)')}
-                onMouseOut={(e) => !loading && (e.target.style.transform = 'translateY(0)', e.target.style.boxShadow = '0 4px 12px rgba(0, 123, 255, 0.25)')}
+                onMouseOver={(e) => !loading && (e.target.style.background = '#3b82f6')}
+                onMouseOut={(e) => !loading && (e.target.style.background = '#4ba0fa')}
               >
                 {loading ? 'Autenticando...' : 'Entrar'}
               </button>
             </form>
           ) : (
-            <form onSubmit={handleChangePassword} style={{ display: 'flex', flexDirection: 'column', gap: '22px' }}>
-              <div style={{ textAlign: 'center', color: '#6b7280', fontSize: '14px', marginBottom: '4px' }}>
+            <form onSubmit={handleChangePassword} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+              <div style={{ textAlign: 'center', color: '#e2e8f0', fontSize: '15px', marginBottom: '8px' }}>
                 Primeiro acesso. Defina uma nova senha.
               </div>
               <div>
-                <label style={{ display: 'block', marginBottom: '6px', color: '#374151', fontSize: '13px', fontWeight: 600 }}>Nova Senha</label>
+                <label style={{ display: 'block', marginBottom: '10px', color: '#ffffff', fontSize: '15px', fontWeight: 500, textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}>Nova Senha</label>
                 <div style={{ position: 'relative' }}>
                   <input 
                     type="password" 
@@ -256,14 +259,15 @@ export default function Login({ onLoginSuccess }) {
                     onChange={(e) => setNewPassword(e.target.value)}
                     placeholder="Minimo 6 caracteres"
                     style={{ 
-                      width: '100%', padding: '14px 16px', 
-                      background: '#f9fafb', 
-                      border: '1px solid #e5e7eb', 
-                      borderRadius: '10px', color: '#111827', 
-                      outline: 'none', fontSize: '14px'
+                      width: '100%', padding: '15px 18px', 
+                      background: 'rgba(15, 23, 38, 0.7)', 
+                      border: '1px solid #4ba0fa', 
+                      borderRadius: '12px', color: '#ffffff', 
+                      outline: 'none', fontSize: '15px',
+                      fontFamily: 'inherit'
                     }}
-                    onFocus={(e) => { e.target.style.background = '#ffffff'; e.target.style.border = '1px solid #007BFF'; e.target.style.boxShadow = '0 0 0 4px rgba(0, 123, 255, 0.1)'; }}
-                    onBlur={(e) => { e.target.style.background = '#f9fafb'; e.target.style.border = '1px solid #e5e7eb'; e.target.style.boxShadow = 'none'; }}
+                    onFocus={(e) => { e.target.style.boxShadow = '0 0 16px rgba(75, 160, 250, 0.5)'; }}
+                    onBlur={(e) => { e.target.style.boxShadow = '0 0 12px rgba(75, 160, 250, 0.25)'; }}
                     required 
                     minLength={6}
                   />
@@ -274,11 +278,12 @@ export default function Login({ onLoginSuccess }) {
                 type="submit" 
                 disabled={loading}
                 style={{ 
-                  width: '100%', padding: '15px', 
+                  width: '100%', padding: '16px', 
                   background: loading ? '#059669' : '#10b981', 
-                  color: '#fff', border: 'none', borderRadius: '10px', 
-                  fontWeight: 600, fontSize: '15px', cursor: loading ? 'not-allowed' : 'pointer',
-                  boxShadow: '0 4px 12px rgba(16, 185, 129, 0.25)'
+                  color: '#fff', border: 'none', borderRadius: '12px', 
+                  fontWeight: 700, fontSize: '18px', cursor: loading ? 'not-allowed' : 'pointer',
+                  boxShadow: '0 4px 15px rgba(16, 185, 129, 0.3)',
+                  fontFamily: 'inherit'
                 }}
               >
                 {loading ? 'Salvando...' : 'Salvar Nova Senha'}
@@ -286,9 +291,9 @@ export default function Login({ onLoginSuccess }) {
             </form>
           )}
 
-          <div style={{ textAlign: 'center', marginTop: '28px', color: '#9ca3af', fontSize: '13px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '32px', fontWeight: 500 }}>
-            <span style={{ cursor: 'pointer', transition: 'color 0.2s ease' }} onMouseOver={(e) => e.target.style.color='#4b5563'} onMouseOut={(e) => e.target.style.color='#9ca3af'}>Forgot Password?</span>
-            <span style={{ cursor: 'pointer', transition: 'color 0.2s ease' }} onMouseOver={(e) => e.target.style.color='#4b5563'} onMouseOut={(e) => e.target.style.color='#9ca3af'}>Sign Up Now</span>
+          <div style={{ textAlign: 'center', marginTop: '36px', color: '#e2e8f0', fontSize: '15px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px', fontWeight: 400 }}>
+            <span style={{ cursor: 'pointer', transition: 'color 0.2s', textShadow: '0 1px 2px rgba(0,0,0,0.5)' }} onMouseOver={(e) => e.target.style.color='#ffffff'} onMouseOut={(e) => e.target.style.color='#e2e8f0'}>Forgot Password?</span>
+            <span style={{ cursor: 'pointer', transition: 'color 0.2s', textShadow: '0 1px 2px rgba(0,0,0,0.5)' }} onMouseOver={(e) => e.target.style.color='#ffffff'} onMouseOut={(e) => e.target.style.color='#e2e8f0'}>Sign Up Now</span>
           </div>
 
         </div>
