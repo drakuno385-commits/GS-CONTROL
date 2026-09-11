@@ -238,23 +238,7 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
 
   const [clientesFaturamento, setClientesFaturamento] = useState([]);
 
-  // Sincroniza clientes da planilha (App.jsx) com os clientes do faturamento sem duplicar
-  useEffect(() => {
-    if (clientesCadastrados && clientesCadastrados.length > 0) {
-      setClientesFaturamento(prev => {
-        const novos = [...prev];
-        let mudou = false;
-        clientesCadastrados.forEach(c => {
-          if (!novos.includes(c)) {
-            novos.push(c);
-            mudou = true;
-          }
-        });
-        if (mudou) return novos.sort();
-        return prev;
-      });
-    }
-  }, [clientesCadastrados]);
+  
 
   const [showModalClientesFat, setShowModalClientesFat] = useState(false);
   const [novoClienteFat, setNovoClienteFat] = useState('');
@@ -274,7 +258,9 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
 
   const handleRemoveClienteFat = (cliente) => {
     if (!window.confirm(`Tem certeza que deseja remover "${cliente}" da lista de faturamento?`)) return;
-    setClientesFaturamento(prev => prev.filter(c => c !== cliente));
+    const novaLista = clientesFaturamento.filter(c => c !== cliente);
+    setClientesFaturamento(novaLista);
+    supabase.from('financeiro_config').upsert({ chave: 'clientes_fat', valor: novaLista });
   };
 
   // Estado de Departamentos Customizados
@@ -1627,7 +1613,7 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
       criadaEm: new Date().toISOString()
     };
 
-    setFaturas([novaFatura, ...faturas]);
+    setFaturas(prev => [novaFatura, ...prev]);
     registrarAuditoria('CADASTRAR_FATURA', `Fatura gerada: NFe ${novaFatura.numeroNota} | Cliente: ${novaFatura.cliente} | R$ ${vReceber}`);
     setSubTabFaturamento('fila');
     setFormNovaFatura({
@@ -1697,7 +1683,7 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
       categoria: 'Faturamento / Vendas',
       observacao: `Automático via Faturamento NFe ${faturaInfo.numeroNota}`
     };
-    setEntradasRecursos([novaEntrada, ...entradasRecursos]);
+    setEntradasRecursos(prev => [novaEntrada, ...prev]);
 
     setHistoricoMovimentacoes([
       {
@@ -1724,7 +1710,7 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
     }
     if (!window.confirm("Deseja realmente excluir esta fatura? Se ela já foi recebida, o saldo NÃO será estornado automaticamente do banco.")) return;
     const fatParaExcluir = faturas.find(f => f.id === id);
-    setFaturas(faturas.filter(f => f.id !== id));
+    setFaturas(prev => prev.filter(f => f.id !== id));
     if (fatParaExcluir) registrarAuditoria('EXCLUIR_FATURA', `Fatura NFe ${fatParaExcluir.numeroNota} do cliente ${fatParaExcluir.cliente} excluída.`);
   };
 
