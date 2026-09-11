@@ -28,6 +28,7 @@ const RelatorioVisitas = ({ rawEfetivos = [], rawPresencas = [] }) => {
   const [dataFim, setDataFim] = useState(endOfMonth);
   const [buscaSupervisor, setBuscaSupervisor] = useState('');
   const [supHistory, setSupHistory] = useState(null);
+  const [diaSelecionado, setDiaSelecionado] = useState(null);
 
   useEffect(() => {
     fetchVisitas();
@@ -194,6 +195,29 @@ const RelatorioVisitas = ({ rawEfetivos = [], rawPresencas = [] }) => {
     return Object.values(mapa).sort((a, b) => b.value - a.value);
   }, [visitasFiltradas]);
 
+  // Visitas por Dia
+  const visitasPorDia = useMemo(() => {
+    const mapa = {};
+    visitasFiltradas.forEach(v => {
+      const dateObj = new Date(v.created_at);
+      if (isNaN(dateObj.getTime())) return;
+      const dataStr = dateObj.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+      if (!mapa[dataStr]) {
+        mapa[dataStr] = {
+           data: dataStr,
+           timestamp: dateObj.setHours(0,0,0,0),
+           total: 0,
+           supervisores: {}
+        };
+      }
+      mapa[dataStr].total++;
+      const sup = v.nome_supervisor || 'Não Identificado';
+      if (!mapa[dataStr].supervisores[sup]) mapa[dataStr].supervisores[sup] = 0;
+      mapa[dataStr].supervisores[sup]++;
+    });
+    return Object.values(mapa).sort((a, b) => a.timestamp - b.timestamp);
+  }, [visitasFiltradas]);
+
   const CustomTooltipTempo = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
       const minutos = payload[0].value;
@@ -270,6 +294,31 @@ const RelatorioVisitas = ({ rawEfetivos = [], rawPresencas = [] }) => {
         </div>
       ) : (
         <>
+          
+          <div className="card glass-panel" style={{ padding: '24px', borderRadius: '16px', boxShadow: '0 8px 20px -6px rgba(0, 0, 0, 0.25)', border: '1px solid rgba(255,255,255,0.05)', marginBottom: '24px' }}>
+            <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#e2e8f0', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Calendar size={18} color="#3b82f6" /> 
+              Evolução Diária de Visitas (Clique na barra para detalhes)
+            </h3>
+            {visitasPorDia.length === 0 ? (
+               <div style={{ height: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b' }}>Sem dados no período</div>
+            ) : (
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={visitasPorDia} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                  <XAxis dataKey="data" stroke="#64748b" tick={{fill: '#64748b', fontSize: 12}} />
+                  <YAxis stroke="#64748b" tick={{fill: '#64748b', fontSize: 12}} />
+                  <Tooltip contentStyle={{ background: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff' }} cursor={{fill: 'rgba(255,255,255,0.05)'}}/>
+                  <Bar dataKey="total" fill="#3b82f6" radius={[4, 4, 0, 0]} onClick={(data) => setDiaSelecionado(data)} cursor="pointer">
+                     {visitasPorDia.map((entry, index) => (
+                       <Cell key={`cell-${index}`} fill={diaSelecionado?.data === entry.data ? '#60a5fa' : '#3b82f6'} />
+                     ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '20px', marginBottom: '24px' }}>
             
             {/* Gráfico Supervisor */}
@@ -388,6 +437,33 @@ const RelatorioVisitas = ({ rawEfetivos = [], rawPresencas = [] }) => {
         </>
       )}
     
+      
+      {diaSelecionado && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(2, 6, 23, 0.8)', backdropFilter: 'blur(4px)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setDiaSelecionado(null)}>
+          <div style={{ background: 'linear-gradient(145deg, #0f172a 0%, #1e293b 100%)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px', padding: '24px', width: '90%', maxWidth: '500px', maxHeight: '80vh', overflowY: 'auto', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)' }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '12px' }}>
+              <h3 style={{ margin: 0, color: '#f8fafc', fontSize: '18px', display: 'flex', alignItems: 'center', gap: '8px' }}><Calendar size={20} color="#3b82f6"/> Visitas em {diaSelecionado.data}</h3>
+              <button onClick={() => setDiaSelecionado(null)} style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer', fontSize: '20px' }}>&times;</button>
+            </div>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {Object.entries(diaSelecionado.supervisores).sort((a, b) => b[1] - a[1]).map(([sup, count]) => (
+                <div key={sup} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.05)', padding: '12px 16px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                  <div style={{ color: '#e2e8f0', fontWeight: 600 }}>{sup}</div>
+                  <div style={{ background: 'rgba(59, 130, 246, 0.2)', color: '#60a5fa', padding: '4px 12px', borderRadius: '12px', fontSize: '14px', fontWeight: 700 }}>
+                    {count} {count === 1 ? 'visita' : 'visitas'}
+                  </div>
+                </div>
+              ))}
+            </div>
+            
+            <div style={{ marginTop: '20px', textAlign: 'right', color: '#94a3b8', fontSize: '13px', fontWeight: 600 }}>
+              Total no dia: {diaSelecionado.total}
+            </div>
+          </div>
+        </div>
+      )}
+
       {supHistory && (() => {
         const supVisitas = visitasFiltradas.filter(v => (v.nome_supervisor || 'Não Identificado') === supHistory);
         const postosAgrupados = Object.values(supVisitas.reduce((acc, v) => {
