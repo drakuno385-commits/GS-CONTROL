@@ -46,6 +46,7 @@ const SupervisorApp = ({ currentUser, rawEfetivos = [], rawPresencas = [] }) => 
   // Photos for the active visit (Extra)
   const [fotos, setFotos] = useState([]);
   const [previews, setPreviews] = useState([]);
+  const [observacaoVisita, setObservacaoVisita] = useState('');
   
   const [loading, setLoading] = useState(false);
   const [fetchingData, setFetchingData] = useState(true);
@@ -272,6 +273,7 @@ const SupervisorApp = ({ currentUser, rawEfetivos = [], rawPresencas = [] }) => 
       setActiveVisit(null);
       setFotos([]);
       setPreviews([]);
+      setObservacaoVisita('');
       setChecklist(defaultChecklist);
       setChecklistFotos({});
       setChecklistPreviews({});
@@ -461,6 +463,7 @@ const SupervisorApp = ({ currentUser, rawEfetivos = [], rawPresencas = [] }) => 
       setActiveVisit(null);
       setFotos([]);
       setPreviews([]);
+      setObservacaoVisita('');
       setChecklist(defaultChecklist);
       setChecklistFotos({});
       setChecklistPreviews({});
@@ -659,6 +662,25 @@ const SupervisorApp = ({ currentUser, rawEfetivos = [], rawPresencas = [] }) => 
                   <span style={{ color: '#cbd5e1', fontSize: '12px', textAlign: 'center', padding: '0 4px' }}>Adicionar Foto</span>
                 </label>
               </div>
+            </div>
+            
+            {/* Observação Geral */}
+            <div className="form-group" style={{ background: 'rgba(15, 23, 42, 0.4)', padding: '16px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+              <label style={{ display: 'block', marginBottom: '12px', color: '#e2e8f0', fontWeight: 600, fontSize: '15px' }}>
+                Observação Geral da Visita (Opcional)
+              </label>
+              <textarea 
+                rows="3"
+                value={observacaoVisita}
+                onChange={(e) => setObservacaoVisita(e.target.value)}
+                placeholder="Digite alguma observação extra sobre a visita ao posto..."
+                style={{ 
+                  width: '100%', padding: '12px', borderRadius: '6px', 
+                  background: 'rgba(15, 23, 42, 0.6)', color: '#fff', 
+                  border: '1px solid rgba(255,255,255,0.1)', outline: 'none', 
+                  fontSize: '14px', resize: 'vertical'
+                }}
+              />
             </div>
 
             <div style={{ display: 'flex', gap: '12px' }}>
