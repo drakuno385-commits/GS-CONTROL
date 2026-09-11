@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '../supabaseClient';
 import { 
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, 
+  AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, 
   PieChart, Pie, Cell 
 } from 'recharts';
 import { Calendar, Search, Loader2, FileText, CheckCircle, Clock, AlertTriangle } from 'lucide-react';
@@ -144,45 +144,7 @@ const RelatorioVisitas = ({ rawEfetivos = [], rawPresencas = [] }) => {
     })).sort((a, b) => b.minutosMedios - a.minutosMedios).slice(0, 15);
   }, [visitasFiltradas]);
 
-  // Postos Não Visitados
-  const postosNaoVisitados = useMemo(() => {
-    // 1. Gather all unique postos from Efetivos and Presencas
-    const todosPostos = new Map();
-    
-    const isValid = p => p && !p.toString().toUpperCase().includes('FALTA INJUSTIFICADA') && p.toString().trim() !== '';
-
-    rawEfetivos.forEach(r => {
-      if (!isClientAllowed(r.cliente, r.posto)) return;
-      if (isValid(r.posto)) {
-        todosPostos.set(r.posto.trim().toUpperCase(), { posto: r.posto.trim(), cliente: (r.cliente || '').trim() });
-      }
-    });
-    rawPresencas.forEach(r => {
-      if (!isClientAllowed(r.cliente, r.posto)) return;
-      if (isValid(r.posto)) {
-        todosPostos.set(r.posto.trim().toUpperCase(), { posto: r.posto.trim(), cliente: (r.cliente || '').trim() });
-      }
-    });
-
-    // 2. Gather visited postos in the filtered period
-    const postosVisitados = new Set();
-    visitasFiltradas.forEach(v => {
-      if (v.nomepos) {
-        postosVisitados.add(v.nomepos.trim().toUpperCase());
-      }
-    });
-
-    // 3. Filter out the ones that were visited
-    const naoVisitados = [];
-    todosPostos.forEach((data, postoUpper) => {
-      if (!postosVisitados.has(postoUpper)) {
-        naoVisitados.push(data);
-      }
-    });
-
-    // Sort by client, then posto
-    return naoVisitados.sort((a, b) => a.cliente.localeCompare(b.cliente) || a.posto.localeCompare(b.posto));
-  }, [rawEfetivos, rawPresencas, visitasFiltradas]);
+  
 
   // Visitas por Supervisor
   const dataSupervisor = useMemo(() => {
@@ -304,17 +266,19 @@ const RelatorioVisitas = ({ rawEfetivos = [], rawPresencas = [] }) => {
                <div style={{ height: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b' }}>Sem dados no período</div>
             ) : (
               <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={visitasPorDia} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <AreaChart data={visitasPorDia} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="colorVisitas" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8}/>
+                      <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
                   <XAxis dataKey="data" stroke="#64748b" tick={{fill: '#64748b', fontSize: 12}} />
                   <YAxis stroke="#64748b" tick={{fill: '#64748b', fontSize: 12}} />
-                  <Tooltip contentStyle={{ background: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff' }} cursor={{fill: 'rgba(255,255,255,0.05)'}}/>
-                  <Bar dataKey="total" fill="#3b82f6" radius={[4, 4, 0, 0]} onClick={(data) => setDiaSelecionado(data)} cursor="pointer">
-                     {visitasPorDia.map((entry, index) => (
-                       <Cell key={`cell-${index}`} fill={diaSelecionado?.data === entry.data ? '#60a5fa' : '#3b82f6'} />
-                     ))}
-                  </Bar>
-                </BarChart>
+                  <Tooltip contentStyle={{ background: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff' }} />
+                  <Area type="monotone" dataKey="total" stroke="#3b82f6" strokeWidth={3} fillOpacity={1} fill="url(#colorVisitas)" onClick={(data) => setDiaSelecionado(data?.activePayload?.[0]?.payload || data)} cursor="pointer" activeDot={{ r: 6, onClick: (_, e) => setDiaSelecionado(e.payload) }} />
+                </AreaChart>
               </ResponsiveContainer>
             )}
           </div>
@@ -384,57 +348,7 @@ const RelatorioVisitas = ({ rawEfetivos = [], rawPresencas = [] }) => {
             </div>
           </div>
 
-          {/* Postos Não Visitados */}
-          <div className="card glass-panel" style={{ padding: '24px', borderRadius: '16px', boxShadow: '0 8px 20px -6px rgba(0, 0, 0, 0.25)', border: '1px solid rgba(255,255,255,0.05)' }}>
-            <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#e2e8f0', marginBottom: '20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <div style={{ width: '4px', height: '16px', background: '#ef4444', borderRadius: '2px' }} />
-                Postos Não Visitados no Período
-              </div>
-              <span style={{ fontSize: '13px', fontWeight: 600, background: 'linear-gradient(90deg, rgba(239, 68, 68, 0.2), rgba(244, 63, 94, 0.1))', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#fca5a5', padding: '6px 14px', borderRadius: '24px', boxShadow: '0 2px 10px rgba(239,68,68,0.1)' }}>
-                {postosNaoVisitados.length} postos pendentes
-              </span>
-            </h3>
-            
-            {postosNaoVisitados.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '40px', color: '#10b981' }}>
-                <CheckCircle size={40} style={{ margin: '0 auto 12px', opacity: 0.8 }} />
-                <p style={{ margin: 0, fontWeight: 600 }}>Excelente!</p>
-                <p style={{ fontSize: '14px', marginTop: '4px' }}>Todos os postos ativos receberam visita no período selecionado.</p>
-              </div>
-            ) : (
-              <div style={{ overflowX: 'auto', maxHeight: '400px' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '600px' }}>
-                  <thead style={{ background: 'rgba(255,255,255,0.05)', position: 'sticky', top: 0 }}>
-                    <tr>
-                      <th style={{ padding: '12px 16px', color: '#cbd5e1', fontWeight: 600, fontSize: '13px' }}>Cliente</th>
-                      <th style={{ padding: '12px 16px', color: '#cbd5e1', fontWeight: 600, fontSize: '13px' }}>Nome do Posto</th>
-                      <th style={{ padding: '12px 16px', color: '#cbd5e1', fontWeight: 600, fontSize: '13px', textAlign: 'center' }}>Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {postosNaoVisitados.map((p, idx) => (
-                      <tr key={idx} style={{ borderBottom: '1px solid rgba(148, 163, 184, 0.1)', transition: 'all 0.2s ease', cursor: 'default' }} onMouseEnter={e => {e.currentTarget.style.background = 'rgba(59, 130, 246, 0.05)'; e.currentTarget.style.transform = 'translateY(-1px)';}} onMouseLeave={e => {e.currentTarget.style.background = 'transparent'; e.currentTarget.style.transform = 'none';}}>
-                        <td style={{ padding: '12px 16px', color: '#94a3b8', fontSize: '13px', fontWeight: 500 }}>
-                          {p.cliente || 'Sem Cliente'}
-                        </td>
-                        <td style={{ padding: '12px 16px', color: '#e2e8f0', fontSize: '14px' }}>
-                          {p.posto}
-                        </td>
-                        <td style={{ padding: '12px 16px', textAlign: 'center' }}>
-                           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '11px', background: 'rgba(239, 68, 68, 0.15)', color: '#fca5a5', padding: '6px 10px', borderRadius: '12px', fontWeight: 700, border: '1px solid rgba(239, 68, 68, 0.2)' }}>
-                              <AlertTriangle size={12} />
-                              Sem Visita
-                           </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-        </>
+          </>
       )}
     
       
