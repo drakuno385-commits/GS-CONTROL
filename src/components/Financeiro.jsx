@@ -95,15 +95,24 @@ import {
 const EMPRESAS_PADRAO = ['AÇOFORTE', 'LÓGICA', 'BELLS', 'REGIONAL', 'LGA', 'CORRENTE DO SOL', 'CORRENTE SERVIÇOS'];
 
 const DEPARTAMENTOS_PADRAO = [
-  'Operacional',
-  'RH',
-  'Frota',
-  'Comercial',
-  'TI',
-  'Diretoria',
-  'Suprimentos',
-  'Financeiro',
-  'Jurídico'
+  '1 - DIRETORIA',
+  '2 - GERENCIA',
+  '3 - PESSOAL',
+  '4 - RH',
+  '5 - FINANCEIRO',
+  '6 - COMERCIAL',
+  '7 - JURIDICO',
+  '8 - COMPRAS',
+  '9 - OPERACIONAL',
+  '10 - MONITORAMENTO',
+  '11 - COPA/LIMPEZA',
+  '12 - CONTROLADORIA',
+  '15 - CONTABILIDADE',
+  '16 - SAC',
+  '17 - FROTAS',
+  '18 - QUALIDADE',
+  '19 - TI',
+  '20 - MIGRACAO DADOS'
 ];
 
 const BANCOS_PADRAO = [
