@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '../supabaseClient';
 import { 
-  AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, 
+  LineChart, Line, AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, 
   PieChart, Pie, Cell 
 } from 'recharts';
 import { Calendar, Search, Loader2, FileText, CheckCircle, Clock, AlertTriangle } from 'lucide-react';
@@ -266,19 +266,13 @@ const RelatorioVisitas = ({ rawEfetivos = [], rawPresencas = [] }) => {
                <div style={{ height: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b' }}>Sem dados no período</div>
             ) : (
               <ResponsiveContainer width="100%" height={300}>
-                <AreaChart data={visitasPorDia} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="colorVisitas" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8}/>
-                      <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
+                <LineChart data={visitasPorDia} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
                   <XAxis dataKey="data" stroke="#64748b" tick={{fill: '#64748b', fontSize: 12}} />
                   <YAxis stroke="#64748b" tick={{fill: '#64748b', fontSize: 12}} />
-                  <Tooltip contentStyle={{ background: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff' }} />
-                  <Area type="monotone" dataKey="total" stroke="#3b82f6" strokeWidth={3} fillOpacity={1} fill="url(#colorVisitas)" onClick={(data) => setDiaSelecionado(data?.activePayload?.[0]?.payload || data)} cursor="pointer" activeDot={{ r: 6, onClick: (_, e) => setDiaSelecionado(e.payload) }} />
-                </AreaChart>
+                  <Tooltip contentStyle={{ background: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff' }} cursor={{fill: 'rgba(255,255,255,0.05)'}} />
+                  <Line type="monotone" dataKey="total" stroke="#3b82f6" strokeWidth={3} dot={{ r: 4, fill: '#1e293b', strokeWidth: 2 }} activeDot={{ r: 6, onClick: (_, e) => setDiaSelecionado(e.payload), cursor: 'pointer' }} onClick={(data) => setDiaSelecionado(data?.activePayload?.[0]?.payload || data)} />
+                </LineChart>
               </ResponsiveContainer>
             )}
           </div>
