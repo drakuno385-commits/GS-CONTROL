@@ -451,13 +451,22 @@ const App = () => {
     if (filters.posto && row.posto) {
       if (row.posto.toString().toUpperCase().trim() !== filters.posto.toString().toUpperCase().trim()) return false;
     }
-    if ((filters.dataInicio || filters.dataFim) && dateKey && row[dateKey]) {
+        if ((filters.dataInicio || filters.dataFim) && dateKey && row[dateKey]) {
       const rowDate = parseDateBR(row[dateKey]);
       if (rowDate) {
         if (filters.dataInicio && rowDate < new Date(filters.dataInicio + 'T00:00:00')) return false;
         if (filters.dataFim && rowDate > new Date(filters.dataFim + 'T23:59:59')) return false;
       } else {
-        // Se a data existe mas não conseguiu parsear, exclui do filtro para não dar falso positivo
+        return false;
+      }
+    }
+    if (filters.mesAno && dateKey && row[dateKey]) {
+      const rowDate = parseDateBR(row[dateKey]);
+      if (rowDate) {
+        const rowMonth = String(rowDate.getMonth() + 1).padStart(2, '0');
+        const rowYear = String(rowDate.getFullYear());
+        if (`${rowYear}-${rowMonth}` !== filters.mesAno) return false;
+      } else {
         return false;
       }
     }
