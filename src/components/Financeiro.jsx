@@ -760,6 +760,19 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
     if (!modalEditarDespesa.valor || Number(modalEditarDespesa.valor) <= 0) return alert('Por favor, informe um valor válido para a despesa.');
     if (modalEditarDespesa.temOP && !modalEditarDespesa.numeroOP.trim()) return alert('Por favor, informe o Número da OP.');
 
+    if (modalEditarDespesa.temOP && modalEditarDespesa.numeroOP.trim()) {
+      const isDuplicate = despesas.some(d => 
+        d.id !== modalEditarDespesa.id &&
+        d.status !== 'RECUSADA' &&
+        d.departamento === modalEditarDespesa.departamento &&
+        d.numeroOP === modalEditarDespesa.numeroOP.trim()
+      );
+      if (isDuplicate) {
+        alert(`Não é possível editar! Já existe outra despesa com a OP n° ${modalEditarDespesa.numeroOP} cadastrada no departamento ${modalEditarDespesa.departamento}.`);
+        return;
+      }
+    }
+
     setDespesas(prev => prev.map(d => {
       if (d.id === modalEditarDespesa.id) {
         return {
@@ -1101,6 +1114,18 @@ export default function Financeiro({ currentUser, subSecaoProp, onSelectSubSecao
     if (!formNovaDespesa.nome.trim()) return alert('Por favor, informe a descrição/nome da despesa.');
     if (!formNovaDespesa.valor || Number(formNovaDespesa.valor) <= 0) return alert('Por favor, informe um valor válido para a despesa.');
     if (formNovaDespesa.temOP && !formNovaDespesa.numeroOP.trim()) return alert('Por favor, informe o Número da OP.');
+
+    if (formNovaDespesa.temOP && formNovaDespesa.numeroOP.trim()) {
+      const isDuplicate = despesas.some(d => 
+        d.status !== 'RECUSADA' &&
+        d.departamento === formNovaDespesa.departamento &&
+        d.numeroOP === formNovaDespesa.numeroOP.trim()
+      );
+      if (isDuplicate) {
+        alert(`Não é possível cadastrar! Já existe uma despesa com a OP n° ${formNovaDespesa.numeroOP} cadastrada no departamento ${formNovaDespesa.departamento}.`);
+        return;
+      }
+    }
 
     const numParc = Math.max(1, parseInt(formNovaDespesa.parcelas, 10) || 1);
     const valTotal = parseFloat(formNovaDespesa.valor) || 0;
