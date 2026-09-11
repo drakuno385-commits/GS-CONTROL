@@ -868,7 +868,20 @@ const App = () => {
         else if (hasField('nomevigil')) sheetType = 'efetivos';
         else if (hasField('nomeocor') || hasField('codocor')) sheetType = 'disciplina';
         else if (hasField('sithoje')) sheetType = 'presencas';
-        else if (hasField('placa') || hasField('veículo') || hasField('veiculo') || hasField('placa do veículo')) sheetType = 'frota';
+        else if (
+          hasField('placa') || 
+          hasField('veículo') || 
+          hasField('veiculo') || 
+          hasField('placa do veículo') ||
+          hasField('motorista') ||
+          hasField('produto') ||
+          hasField('consumo') ||
+          firstRowKeys.some(k => k.toLowerCase().includes('placa')) ||
+          firstRowKeys.some(k => k.toLowerCase().includes('combustivel')) ||
+          firstRowKeys.some(k => k.toLowerCase().includes('combustível')) ||
+          firstRowKeys.some(k => k.toLowerCase().includes('abastecimento')) ||
+          firstRowKeys.some(k => k.toLowerCase().includes('motorista'))
+        ) sheetType = 'frota';
 
         let isValidForPage = false;
         if (activeMenu === 'rh' && (sheetType === 'efetivos' || sheetType === 'presencas')) isValidForPage = true;
