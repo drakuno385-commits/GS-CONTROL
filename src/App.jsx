@@ -126,6 +126,15 @@ const App = () => {
     localStorage.setItem('acoweb_dashboards_open', isDashboardsOpen);
   }, [isDashboardsOpen]);
 
+  const [isOperacionalOpen, setIsOperacionalOpen] = useState(() => {
+    const saved = localStorage.getItem('acoweb_operacional_open');
+    return saved !== null ? saved === 'true' : true;
+  });
+
+  useEffect(() => {
+    localStorage.setItem('acoweb_operacional_open', isOperacionalOpen);
+  }, [isOperacionalOpen]);
+
   const [isFinanceiroOpen, setIsFinanceiroOpen] = useState(() => {
     const saved = localStorage.getItem('acoweb_financeiro_open');
     return saved !== null ? saved === 'true' : true;
@@ -1801,10 +1810,49 @@ const App = () => {
                 </div>
               )}
               {hasAccess(currentUser, 'monitoramento') && (
-                <a className={`nav-item ${activeMenu === 'monitoramento' ? 'active' : ''}`} onClick={() => setActiveMenu('monitoramento')}>
-                  <MapPin size={20} />
-                  <span>Monitoramento</span>
-                </a>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <a 
+                    className={`nav-item ${activeMenu === 'monitoramento' ? 'active' : ''}`} 
+                    onClick={() => {
+                      if (activeMenu !== 'monitoramento') {
+                        setActiveMenu('monitoramento');
+                      }
+                      setIsOperacionalOpen(!isOperacionalOpen);
+                    }}
+                    style={{ justifyContent: 'space-between', paddingRight: '12px' }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <Activity size={20} />
+                      <span>Operacional</span>
+                    </div>
+                    <motion.div
+                      animate={{ rotate: isOperacionalOpen ? 180 : 0 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <ChevronDown size={16} color="rgba(255,255,255,0.5)" />
+                    </motion.div>
+                  </a>
+                  
+                  <AnimatePresence>
+                    {isOperacionalOpen && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                        style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column', paddingLeft: '16px', gap: '2px', marginTop: '2px' }}
+                      >
+                        <a 
+                          className={`nav-item ${activeMenu === 'monitoramento' ? 'active' : ''}`} 
+                          onClick={() => setActiveMenu('monitoramento')}
+                        >
+                          <MapPin size={18} />
+                          <span style={{ fontSize: '13px' }}>Monitoramento</span>
+                        </a>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
               )}
             </>
           )}
