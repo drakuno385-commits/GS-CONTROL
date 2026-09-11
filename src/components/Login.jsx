@@ -174,13 +174,13 @@ export default function Login({ onLoginSuccess }) {
           {!needsNewPass ? (
             <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
               <div>
-                <label style={{ display: 'block', marginBottom: '10px', color: '#ffffff', fontSize: '15px', fontWeight: 500, letterSpacing: '0.3px', textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}>Username</label>
+                <label style={{ display: 'block', marginBottom: '10px', color: '#ffffff', fontSize: '15px', fontWeight: 500, letterSpacing: '0.3px', textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}>Usuário</label>
                 <div style={{ position: 'relative' }}>
                   <input 
                     type="text" 
                     value={username} 
                     onChange={(e) => setUsername(e.target.value.toUpperCase())}
-                    placeholder="Your Email"
+                    placeholder="Seu e-mail"
                     style={{ 
                       width: '100%', padding: '15px 18px', 
                       background: 'rgba(15, 23, 38, 0.7)', 
@@ -199,7 +199,7 @@ export default function Login({ onLoginSuccess }) {
               </div>
               
               <div>
-                <label style={{ display: 'block', marginBottom: '10px', color: '#ffffff', fontSize: '15px', fontWeight: 500, letterSpacing: '0.3px', textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}>Password</label>
+                <label style={{ display: 'block', marginBottom: '10px', color: '#ffffff', fontSize: '15px', fontWeight: 500, letterSpacing: '0.3px', textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}>Senha</label>
                 <div style={{ position: 'relative' }}>
                   <input 
                     type="password" 
@@ -292,8 +292,8 @@ export default function Login({ onLoginSuccess }) {
           )}
 
           <div style={{ textAlign: 'center', marginTop: '36px', color: '#e2e8f0', fontSize: '15px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px', fontWeight: 400 }}>
-            <span style={{ cursor: 'pointer', transition: 'color 0.2s', textShadow: '0 1px 2px rgba(0,0,0,0.5)' }} onMouseOver={(e) => e.target.style.color='#ffffff'} onMouseOut={(e) => e.target.style.color='#e2e8f0'}>Forgot Password?</span>
-            <span style={{ cursor: 'pointer', transition: 'color 0.2s', textShadow: '0 1px 2px rgba(0,0,0,0.5)' }} onMouseOver={(e) => e.target.style.color='#ffffff'} onMouseOut={(e) => e.target.style.color='#e2e8f0'}>Sign Up Now</span>
+            <span style={{ cursor: 'pointer', transition: 'color 0.2s', textShadow: '0 1px 2px rgba(0,0,0,0.5)' }} onMouseOver={(e) => e.target.style.color='#ffffff'} onMouseOut={(e) => e.target.style.color='#e2e8f0'}>Esqueceu a senha?</span>
+            <span style={{ cursor: 'pointer', transition: 'color 0.2s', textShadow: '0 1px 2px rgba(0,0,0,0.5)' }} onMouseOver={(e) => e.target.style.color='#ffffff'} onMouseOut={(e) => e.target.style.color='#e2e8f0'}>Cadastre-se agora</span>
           </div>
 
         </div>
