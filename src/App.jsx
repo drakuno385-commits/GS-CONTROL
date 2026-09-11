@@ -886,7 +886,7 @@ const App = () => {
         let isValidForPage = false;
         if (activeMenu === 'rh' && (sheetType === 'efetivos' || sheetType === 'presencas')) isValidForPage = true;
         else if (activeMenu === 'disciplina' && sheetType === 'disciplina') isValidForPage = true;
-        else if (activeMenu === 'frota' && sheetType === 'frota') isValidForPage = true;
+        else if (activeMenu === 'frota') { isValidForPage = true; sheetType = 'frota'; }
         else if (activeMenu === 'atestados' && sheetType === 'atestados') isValidForPage = true;
         else if (activeMenu === 'medicao' && sheetType === 'presencas') isValidForPage = true;
 
